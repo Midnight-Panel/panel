@@ -1,4 +1,4 @@
-import { BoxIcon, BrushIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon } from "@/icons";
+import { BoxIcon, BrushIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon, PluginIcon } from "@/icons";
 import { Permissions } from "@/lib/permissions";
 import type { NavItem } from "./types";
 
@@ -38,6 +38,13 @@ export const adminItems: NavItem[] = [
     path: "/admin/shards",
     matchPrefix: "/admin/shards",
     permission: Permissions.AdminShardsRead,
+  },
+  {
+    icon: <PluginIcon className="size-6" />,
+    key: "Nav.Admin.Extensions",
+    path: "/admin/extensions",
+    matchPrefix: "/admin/extensions",
+    permission: Permissions.AdminExtensionsRead,
   },
   {
     icon: <BrushIcon className="size-6" />,

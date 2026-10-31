@@ -48,6 +48,7 @@ public static class Program
             new DoctorCommand(doctorService),
             new ConfigureCommand(stateService, fileSystem, console),
             new CreateAdminCommand(processRunner, console),
+            new ExtensionCommand(processRunner, console),
             new SslCommand(processRunner, console),
             new CompletionCommand(completionService),
             new UninstallCommand(processRunner, fileSystem, console),

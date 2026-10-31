@@ -435,3 +435,50 @@ export interface ValidateVariablesResponse {
   resolvedEnvironment: Record<string, string>;
   resolvedStartupCommand?: string | null;
 }
+
+// Extensions
+
+export interface ExtensionSummary {
+  id: number;
+  identifier: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  category: string;
+  websiteUrl?: string | null;
+  icon?: string | null;
+  isEnabled: boolean;
+  installedAt: string;
+  updatedAt: string;
+}
+
+export interface ExtensionDetail extends ExtensionSummary {
+  configSchemaJson?: string | null;
+  configValuesJson?: string | null;
+  readmeMarkdown?: string | null;
+  requiredPermissions: string[];
+}
+
+export interface ExtensionInstallRequest {
+  identifier: string;
+  name: string;
+  description: string;
+  version?: string;
+  author?: string;
+  category?: string;
+  websiteUrl?: string | null;
+  icon?: string | null;
+  configSchemaJson?: string | null;
+  configValuesJson?: string | null;
+  readmeMarkdown?: string | null;
+}
+
+export interface ExtensionConfigUpdateRequest {
+  configValuesJson: string;
+}
+
+export interface ExtensionToggleRequest {
+  isEnabled: boolean;
+}
+

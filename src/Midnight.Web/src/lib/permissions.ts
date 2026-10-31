@@ -17,6 +17,8 @@ export const Permissions = {
   AdminNodesWrite: "admin.nodes.write",
   AdminShardsRead: "admin.shards.read",
   AdminShardsWrite: "admin.shards.write",
+  AdminExtensionsRead: "admin.extensions.read",
+  AdminExtensionsWrite: "admin.extensions.write",
   AdminImagesRead: "admin.images.read",
   AdminImagesWrite: "admin.images.write",
   AdminServersRead: "admin.servers.read",
@@ -36,6 +38,7 @@ export const PermissionGroups: PermissionGroup[] = [
   { name: "admin.system", permissions: [Permissions.AdminSystemRead, Permissions.AdminSystemWrite] },
   { name: "admin.nodes", permissions: [Permissions.AdminNodesRead, Permissions.AdminNodesWrite] },
   { name: "admin.shards", permissions: [Permissions.AdminShardsRead, Permissions.AdminShardsWrite] },
+  { name: "admin.extensions", permissions: [Permissions.AdminExtensionsRead, Permissions.AdminExtensionsWrite] },
   { name: "admin.images", permissions: [Permissions.AdminImagesRead, Permissions.AdminImagesWrite] },
   { name: "admin.servers", permissions: [Permissions.AdminServersRead, Permissions.AdminServersWrite] }
 ];
