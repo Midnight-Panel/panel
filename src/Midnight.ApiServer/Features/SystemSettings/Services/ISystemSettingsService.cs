@@ -1,6 +1,6 @@
 using Midnight.Shared.Http.Admin;
 
-namespace Midnight.ApiServer.Features.System.Services;
+namespace Midnight.ApiServer.Features.SystemSettings.Services;
 
 public interface ISystemSettingsService
 {

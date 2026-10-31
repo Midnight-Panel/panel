@@ -13,7 +13,7 @@ using Midnight.ApiServer.Features.Auth.Http;
 using Midnight.ApiServer.Features.Auth.Services;
 using Midnight.ApiServer.Features.Nodes.Services;
 using Midnight.ApiServer.Features.Shards.Services;
-using Midnight.ApiServer.Features.System.Services;
+using Midnight.ApiServer.Features.SystemSettings.Services;
 using Midnight.ApiServer.Features.Users.Services;
 using Midnight.Shared.Http;
 using Scalar.AspNetCore;

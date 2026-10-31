@@ -54,8 +54,6 @@ public class ApiKeyService
         if (scopes.Count == 0)
             throw HttpApiException.BadRequest("Select at least one scope");
 
-        var granted = ownerPermissions.ToList();
-
         foreach (var scope in scopes)
         {
             if (!Permissions.IsValid(scope))

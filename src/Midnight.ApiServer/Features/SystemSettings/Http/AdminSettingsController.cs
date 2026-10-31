@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Midnight.ApiServer.Core.Security;
-using Midnight.ApiServer.Features.System.Services;
+using Midnight.ApiServer.Features.SystemSettings.Services;
 using Midnight.Shared;
 using Midnight.Shared.Http.Admin;
 
-namespace Midnight.ApiServer.Features.System.Http;
+namespace Midnight.ApiServer.Features.SystemSettings.Http;
 
 [ApiController]
 [Route("api/admin/settings")]

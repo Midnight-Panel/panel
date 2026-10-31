@@ -12,7 +12,7 @@ using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
 using Midnight.Shared.Http.Admin;
 
-namespace Midnight.ApiServer.Features.System.Services;
+namespace Midnight.ApiServer.Features.SystemSettings.Services;
 
 public partial class SystemSettingsService : ISystemSettingsService
 {
