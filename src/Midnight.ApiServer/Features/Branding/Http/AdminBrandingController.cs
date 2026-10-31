@@ -41,6 +41,14 @@ public class AdminBrandingController : ControllerBase
         return await _brandingService.UploadFaviconAsync(stream, file.FileName, User.GetUserId(), cancellationToken);
     }
 
+    [HttpDelete("logo")]
+    public Task<BrandingResponse> DeleteLogo([FromQuery] LogoThemeType theme, CancellationToken cancellationToken)
+        => _brandingService.DeleteLogoAsync(theme, User.GetUserId(), cancellationToken);
+
+    [HttpDelete("favicon")]
+    public Task<BrandingResponse> DeleteFavicon(CancellationToken cancellationToken)
+        => _brandingService.DeleteFaviconAsync(User.GetUserId(), cancellationToken);
+
     [HttpPost("reset")]
     public Task<BrandingResponse> Reset(CancellationToken cancellationToken)
         => _brandingService.ResetToDefaultsAsync(User.GetUserId(), cancellationToken);

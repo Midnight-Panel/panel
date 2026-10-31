@@ -13,11 +13,17 @@ export const brandingApi = {
     return api.post<BrandingResponse>(`/api/admin/branding/logo?theme=${theme}`, formData);
   },
 
+  deleteLogo: (theme: "light" | "dark") =>
+    api.delete(`/api/admin/branding/logo?theme=${theme}`),
+
   uploadFavicon: (file: File) => {
     const formData = new FormData();
     formData.append("file", file, file.name);
     return api.post<BrandingResponse>("/api/admin/branding/favicon", formData);
   },
+
+  deleteFavicon: () =>
+    api.delete("/api/admin/branding/favicon"),
 
   reset: () => api.post<BrandingResponse>("/api/admin/branding/reset"),
 };

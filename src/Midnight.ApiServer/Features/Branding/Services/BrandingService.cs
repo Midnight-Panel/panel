@@ -109,6 +109,28 @@ public class BrandingService : IBrandingService
         return MapToResponse(entity);
     }
 
+    public async Task<BrandingResponse> DeleteLogoAsync(LogoThemeType theme, int actorUserId, CancellationToken cancellationToken)
+    {
+        var entity = await GetOrCreateSettingsAsync(cancellationToken);
+        if (theme == LogoThemeType.Light)
+        {
+            DeleteOldFile(entity.LogoLightFileName);
+            entity.LogoLightFileName = null;
+        }
+        else
+        {
+            DeleteOldFile(entity.LogoDarkFileName);
+            entity.LogoDarkFileName = null;
+        }
+
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+        _cache.Remove(CacheKey);
+
+        _logger.LogInformation("Audit: User {UserId} hat das Logo ({Theme}) gelöscht.", actorUserId, theme);
+        return MapToResponse(entity);
+    }
+
     public async Task<BrandingResponse> UploadFaviconAsync(Stream content, string originalName, int actorUserId, CancellationToken cancellationToken)
     {
         var fileName = await SaveUploadedFileAsync(content, originalName, "favicon", cancellationToken);
@@ -123,6 +145,20 @@ public class BrandingService : IBrandingService
 
         _logger.LogInformation("Audit: User {UserId} hat das Favicon aktualisiert: {FileName}", actorUserId, fileName);
 
+        return MapToResponse(entity);
+    }
+
+    public async Task<BrandingResponse> DeleteFaviconAsync(int actorUserId, CancellationToken cancellationToken)
+    {
+        var entity = await GetOrCreateSettingsAsync(cancellationToken);
+        DeleteOldFile(entity.FaviconFileName);
+        entity.FaviconFileName = null;
+
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+        _cache.Remove(CacheKey);
+
+        _logger.LogInformation("Audit: User {UserId} hat das Favicon gelöscht.", actorUserId);
         return MapToResponse(entity);
     }
 
