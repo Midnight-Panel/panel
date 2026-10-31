@@ -15,7 +15,21 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Midnight-Panel/installer/mai
 ```
 
 The [installer](https://github.com/Midnight-Panel/installer) runs the panel as Docker Compose stack (panel, PostgreSQL,
-Caddy with automatic HTTPS) and installs the `midnight` command (`midnight status`, `midnight logs panel -f`, ...).
+Caddy with automatic HTTPS) and installs the `midnight` management CLI.
+
+### Midnight CLI Commands (`midnight`)
+
+| Command | Description |
+|---|---|
+| `midnight install [panel\|daemon\|both]` | Run pre-flight checks (OS, RAM, disk, ports, firewall) and install components with repair/reconfigure support. |
+| `midnight status [--json]` | View real-time container states, database health, daemon status, and disk space (or emit JSON for monitoring). |
+| `midnight backup [dir] [--encrypt] [--keep N]` | Dump PostgreSQL, `.env`, storage & state into `.tar.gz` (permissions 600) with SHA-256 and optional AES-256 encryption. |
+| `midnight restore <archive>` | Verify checksum, inspect manifest, create pre-restore safety backup, stop stack, restore DB & storage, restart and health-check. |
+| `midnight update [target] [--use-images]` | Pre-update safety backup, update via GHCR images or source build, post-update health check with **automatic rollback** on failure. |
+| `midnight rollback [target]` | Revert to previous version and restore database dump from pre-update backup. |
+| `midnight doctor` | Deep diagnostic audit: pre-flight checks, verify strict 600 permissions on secrets, Docker daemon, SSL and logs. |
+| `midnight logs [target] [-f] [--tail N]` | Inspect logs for `panel`, `db`, `caddy`, `daemon`, or `installer`. |
+| `midnight completion [bash\|zsh]` | Generate shell tab-completion scripts. |
 
 ## Requirements
 
