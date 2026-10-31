@@ -295,9 +295,7 @@ public class BrandingService : IBrandingService
 
         if (extension == ".svg")
         {
-            var rawSvg = System.Text.Encoding.UTF8.GetString(buffer);
-            var sanitizedSvg = SvgSanitizer.Sanitize(rawSvg);
-            buffer = System.Text.Encoding.UTF8.GetBytes(sanitizedSvg);
+            buffer = SvgSanitizer.Sanitize(buffer);
         }
 
         Directory.CreateDirectory(_brandingDirectory);

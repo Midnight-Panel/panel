@@ -19,7 +19,7 @@ public class BrandingController : ControllerBase
     }
 
     /// <summary>
-    /// Öffentlicher Endpunkt: Lädt die aktuellen Branding-Einstellungen für Login-Page & Panel.
+    /// Öffentlicher Endpunkt: Lädt die aktuellen Branding-Einstellungen für Login-Page und Panel.
     /// </summary>
     [HttpGet]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
