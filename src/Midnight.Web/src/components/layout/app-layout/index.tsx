@@ -56,9 +56,9 @@ export default function AppLayout() {
             <Outlet />
           </div>
 
-          <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-5 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-            <span>© {new Date().getFullYear()} {settings.appName || "Midnight Panel"} · v{settings.version}</span>
-            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <footer className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-gray-200 pt-5 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span>© {new Date().getFullYear()} {settings.appName || "Midnight Panel"} · v{settings.version}</span>
               {footerLinks.map((link) => (
                 <a
                   key={link.id || link.url}
@@ -70,12 +70,10 @@ export default function AppLayout() {
                   {link.label}
                 </a>
               ))}
-            </span>
-          </footer>
+            </div>
 
-          <div className="mt-4">
             <PoweredByFooter />
-          </div>
+          </footer>
         </div>
       </SidebarInset>
       <ScrollToTop />

@@ -55,7 +55,9 @@ export default function AuthLayout() {
       </div>
 
       {/* Unveränderbarer Footer auf Login/Auth-Seiten */}
-      <PoweredByFooter />
+      <div className="py-4 flex justify-center border-t border-gray-200/80 dark:border-white/5 bg-white/40 dark:bg-black/20 backdrop-blur-xs">
+        <PoweredByFooter />
+      </div>
     </div>
   );
 }
