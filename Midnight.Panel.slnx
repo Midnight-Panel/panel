@@ -1,10 +1,12 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Midnight.ApiServer/Midnight.ApiServer.csproj" />
+    <Project Path="src/Midnight.Cli/Midnight.Cli.csproj" />
     <Project Path="src/Midnight.Plugins.Abstractions/Midnight.Plugins.Abstractions.csproj" />
     <Project Path="src/Midnight.Shared/Midnight.Shared.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Midnight.Cli.Tests/Midnight.Cli.Tests.csproj" />
     <Project Path="tests/Midnight.Panel.Tests/Midnight.Panel.Tests.csproj" />
   </Folder>
 </Solution>
