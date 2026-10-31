@@ -9,6 +9,25 @@ public class FooterLinkItem
     public string Label { get; set; } = "";
     public string Url { get; set; } = "";
     public bool NewTab { get; set; } = true;
+
+    /// <summary>Only http(s) and mailto links or paths on the panel itself, never javascript: or data: urls</summary>
+    public static bool IsSafeUrl(string? url)
+    {
+        url = url?.Trim();
+
+        if (string.IsNullOrEmpty(url))
+            return false;
+
+        if (url.StartsWith('/'))
+            return !url.StartsWith("//", StringComparison.Ordinal) && !url.StartsWith("/\\", StringComparison.Ordinal);
+
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeMailto);
+    }
+
+    /// <summary>Absolute http(s) url, e.g. the public url of the panel used in mails and the daemon config</summary>
+    public static bool IsHttpUrl(string? url)
+        => Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 }
 
 /// <summary>

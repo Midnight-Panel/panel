@@ -74,7 +74,7 @@ export default function ProfilePage() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">{t("Profile.Avatar")}</h4>
         <div className="flex flex-col items-center text-center">
           <UserAvatar userId={user.id} hasAvatar={user.hasAvatar} name={user.username} version={avatarVersion} className="size-28! text-3xl" />
@@ -96,7 +96,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">{t("Profile.Details")}</h4>
         <form onSubmit={handleSubmit(save)} className="space-y-5" noValidate>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

@@ -111,7 +111,7 @@ public class ShardVariableValidationTests
     [Fact]
     public void ValidateValue_Regex_ValidatesPattern()
     {
-        var rules = @"required|regex:^[a-zA-Z0-9_-]+\.jar$";
+        var rules = @"required|regex:^[a-zA-Z0-9._-]+\.jar$";
 
         var (validPass, _) = ShardVariableValidator.ValidateValue("paper-1.20.4.jar", rules, "JAR");
         var (validFail, _) = ShardVariableValidator.ValidateValue("paper/../../etc/passwd", rules, "JAR");

@@ -25,8 +25,9 @@ public class NodeClient
         _logger = logger;
     }
 
+    // UriBuilder adds the brackets ipv6 addresses need, string concatenation would throw for "::1"
     public static Uri GetBaseUri(Node node)
-        => new($"{(node.UseSsl ? "https" : "http")}://{node.Fqdn}:{node.HttpPort}/");
+        => new UriBuilder(node.UseSsl ? "https" : "http", node.Fqdn, node.HttpPort, "/").Uri;
 
     /// <summary>Never throws for connection problems, they are reported in the response</summary>
     public async Task<NodeStatusResponse> GetStatusAsync(Node node, CancellationToken cancellationToken)

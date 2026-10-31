@@ -9,6 +9,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useT } from "@/i18n";
 import { EyeIcon, OctagonAlertIcon } from "@/icons";
 import { PoweredByFooter } from "@/components/shared/powered-by-footer";
+import { isSafeLink } from "@/lib/returnUrl";
 import { Outlet, useNavigate } from "react-router";
 
 export default function AppLayout() {
@@ -28,11 +29,11 @@ export default function AppLayout() {
             { id: "github", label: "GitHub", url: "https://github.com/Midnight-Panel/panel", newTab: true },
           ];
 
-  // Strikt deduplizieren: Jeder Link (nach URL oder ID) erscheint nur einmal
+  // Strict dedupe: each link (by URL or ID) appears only once
   const seenLinks = new Set<string>();
   const footerLinks = rawLinks.filter((link) => {
     const key = (link.url || link.id || "").toLowerCase().trim();
-    if (!key || seenLinks.has(key)) return false;
+    if (!key || seenLinks.has(key) || !isSafeLink(link.url)) return false;
     seenLinks.add(key);
     return true;
   });
@@ -46,11 +47,9 @@ export default function AppLayout() {
 
         <div className="mx-auto flex w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4 md:p-6">
           {settings.maintenanceMode && (
-            <Alert variant="warning" className="mb-6 px-4 py-3 border-amber-500/30 bg-amber-500/10 text-amber-200">
-              <OctagonAlertIcon className="size-4 text-amber-400" />
-              <AlertDescription className="text-amber-200 text-xs">
-                Maintenance mode is currently active. Some features may be restricted.
-              </AlertDescription>
+            <Alert variant="warning" className="mb-6 px-4 py-3">
+              <OctagonAlertIcon />
+              <AlertDescription className="text-gray-700 dark:text-gray-300">{t("Footer.Maintenance")}</AlertDescription>
             </Alert>
           )}
 

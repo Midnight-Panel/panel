@@ -82,7 +82,7 @@ export default function NodeOverviewPage() {
           [t("Dashboard.Memory"), memory],
           [t("Dashboard.Disk"), disk],
         ].map(([label, value]) => (
-          <div key={label as string} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+          <div key={label as string} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.02]">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500 dark:text-gray-400">{label}</span>
               <span className="font-semibold text-gray-800 dark:text-white/90">{Math.round(value as number)} %</span>
@@ -100,7 +100,7 @@ export default function NodeOverviewPage() {
         </Alert>
       )}
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">{t("AdminOverview.System")}</h3>
         <dl className="divide-y divide-gray-100 dark:divide-white/5">
           {rows.map(([label, value]) => (

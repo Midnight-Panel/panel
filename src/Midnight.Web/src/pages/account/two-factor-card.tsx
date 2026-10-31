@@ -49,7 +49,7 @@ export function TwoFactorCard() {
     }
   };
 
-  const card = "h-full rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3";
+  const card = "h-full rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]";
 
   if (user?.twoFactorEnabled) {
     return (

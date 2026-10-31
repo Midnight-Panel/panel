@@ -9,7 +9,7 @@ export function EmptyState({ icon, title, description, children, className }: {
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center dark:border-gray-800 dark:bg-white/3", className)}>
+    <div className={cn("flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center dark:border-gray-800 dark:bg-white/[0.02]", className)}>
       <div className="mb-5 flex size-16 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 [&>svg]:size-8">
         {icon}
       </div>

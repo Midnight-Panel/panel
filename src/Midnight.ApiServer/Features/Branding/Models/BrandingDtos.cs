@@ -5,7 +5,7 @@ using Midnight.Shared.Http.Admin;
 namespace Midnight.ApiServer.Features.Branding.Models;
 
 /// <summary>
-/// Unveränderbarer Footer-Bestandteil, der serverseitig erzwungen wird.
+/// Immutable footer part, enforced on the server.
 /// </summary>
 public record PoweredByInfo(
     string Text,
@@ -14,7 +14,7 @@ public record PoweredByInfo(
 );
 
 /// <summary>
-/// Öffentliche Branding-Informationen für alle Clients.
+/// Public branding information for all clients.
 /// </summary>
 public record BrandingResponse(
     string PanelName,
@@ -36,8 +36,8 @@ public record BrandingResponse(
 );
 
 /// <summary>
-/// Admin-Anfrage zur Aktualisierung des Brandings.
-/// Das Feld 'PoweredBy' existiert hier bewusst nicht.
+/// Admin request to update the branding.
+/// The 'PoweredBy' field is intentionally absent here.
 /// </summary>
 public record BrandingUpdateRequest(
     string PanelName,

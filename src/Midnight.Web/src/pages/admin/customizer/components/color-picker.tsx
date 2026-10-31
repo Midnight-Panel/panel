@@ -16,7 +16,7 @@ export function getContrast(c1: string, c2: string): number {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
-// Wandelt Hex in HSL um, passt die Helligkeit an und gibt den neuen Hex-Wert zurück
+// Converts hex to HSL, adjusts lightness and returns the new hex value
 export function autoAdjustContrast(hex: string, targetContrast = 4.5, onDark = true): string {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!match) return hex;
@@ -50,7 +50,7 @@ export function autoAdjustContrast(hex: string, targetContrast = 4.5, onDark = t
 
   const bg = onDark ? "#0F172A" : "#FFFFFF";
 
-  // Schrittweise anpassen
+  // Adjust step by step
   let currentHex = hex;
   for (let i = 0; i < 40; i++) {
     if (getContrast(currentHex, bg) >= targetContrast) {
@@ -58,7 +58,7 @@ export function autoAdjustContrast(hex: string, targetContrast = 4.5, onDark = t
     }
     l = onDark ? Math.min(0.95, l + 0.02) : Math.max(0.05, l - 0.02);
 
-    // HSL zurück zu Hex
+    // HSL back to hex
     const hue2rgb = (p: number, q: number, t: number) => {
       if (t < 0) t += 1;
       if (t > 1) t -= 1;
@@ -123,7 +123,7 @@ export function ColorPicker({
             value={value || "#465FFF"}
             onChange={(e) => onChange(e.target.value.toUpperCase())}
             className="size-11 cursor-pointer rounded-xl border border-gray-200 dark:border-white/10 bg-transparent p-1 transition hover:scale-105"
-            title="Farbe auswählen"
+            title="Pick color"
           />
         </div>
 
@@ -137,7 +137,7 @@ export function ColorPicker({
               onChange(val.startsWith("#") ? val.toUpperCase() : `#${val.toUpperCase()}`);
             }}
             placeholder="#465FFF"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm uppercase text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-slate-800/80 dark:text-white"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm uppercase text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-800/80 dark:text-white"
           />
         </div>
       </div>
@@ -152,7 +152,7 @@ export function ColorPicker({
             style={{ backgroundColor: c }}
             className={`size-6 rounded-lg transition-transform hover:scale-115 ${
               value.toUpperCase() === c.toUpperCase()
-                ? "ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110"
+                ? "ring-2 ring-white ring-offset-2 ring-offset-gray-900 scale-110"
                 : "opacity-80 hover:opacity-100"
             }`}
             title={c}
@@ -160,9 +160,9 @@ export function ColorPicker({
         ))}
       </div>
 
-      {/* WCAG Kontrastindikator mit Ein-Klick-Anpassung */}
+      {/* WCAG contrast indicator with one-click adjustment */}
       {showContrastBadge && (
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200/60 bg-gray-50/70 p-2.5 text-xs dark:border-white/5 dark:bg-slate-800/50">
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200/60 bg-gray-50/70 p-2.5 text-xs dark:border-white/5 dark:bg-gray-800/50">
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -171,10 +171,10 @@ export function ColorPicker({
                   : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
               }`}
             >
-              {isAccessible ? "✓ WCAG AA (Gut)" : "⚠ Kontrast zu gering"}
+              {isAccessible ? "✓ WCAG AA (Good)" : "⚠ Contrast too low"}
             </span>
             <span className="text-gray-500 dark:text-gray-400 font-mono text-[11px]">
-              {contrastOnDark.toFixed(1)}:1 (Dunkel)
+              {contrastOnDark.toFixed(1)}:1 (Dark)
             </span>
           </div>
 
@@ -183,10 +183,10 @@ export function ColorPicker({
               type="button"
               onClick={handleAutoAdjust}
               className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-500 hover:text-brand-400 transition"
-              title="Passt die Helligkeit automatisch an, um WCAG AA (4.5:1) zu erreichen"
+              title="Automatically adjusts lightness to reach WCAG AA (4.5:1)"
             >
               <SparkIcon className="size-3.5" />
-              Automatisch anpassen
+              Auto-adjust
             </button>
           )}
         </div>

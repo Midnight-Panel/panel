@@ -25,7 +25,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Datei schreiben: {path} (Geheim: {isSecret})");
+            _console.WriteInfo($"[DRY-RUN] Would write file: {path} (secret: {isSecret})");
             return;
         }
 
@@ -47,7 +47,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Verzeichnis anlegen: {path}");
+            _console.WriteInfo($"[DRY-RUN] Would create directory: {path}");
             return;
         }
 
@@ -61,7 +61,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Datei löschen: {path}");
+            _console.WriteInfo($"[DRY-RUN] Would delete file: {path}");
             return;
         }
 
@@ -75,7 +75,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Verzeichnis löschen: {path}");
+            _console.WriteInfo($"[DRY-RUN] Would delete directory: {path}");
             return;
         }
 
@@ -95,7 +95,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Rechte {octalMode} auf {path} setzen");
+            _console.WriteInfo($"[DRY-RUN] Would set permissions {octalMode} on {path}");
             return Task.CompletedTask;
         }
 
@@ -123,7 +123,7 @@ public class FileSystem : IFileSystem
             }
             catch (Exception ex)
             {
-                _console.WriteWarning($"Konnte Dateirechte für {path} nicht setzen: {ex.Message}");
+                _console.WriteWarning($"Could not set file permissions for {path}: {ex.Message}");
             }
         }
 
@@ -165,7 +165,7 @@ public class FileSystem : IFileSystem
         }
         catch
         {
-            // Fallback für Tests/Virtualisierungen: 50 GB simulieren
+            // Fallback for tests/virtualized environments: simulate 50 GB
             return 50L * 1024 * 1024 * 1024;
         }
     }
@@ -173,7 +173,7 @@ public class FileSystem : IFileSystem
     public async Task<string> ComputeSha256Async(string filePath)
     {
         if (!File.Exists(filePath))
-            throw new FileNotFoundException("Datei nicht gefunden", filePath);
+            throw new FileNotFoundException("File not found", filePath);
 
         using var sha256 = SHA256.Create();
         await using var stream = File.OpenRead(filePath);
@@ -185,7 +185,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Backup-Archiv {archivePath} packen ({filesToInclude.Count} Elemente)");
+            _console.WriteInfo($"[DRY-RUN] Would pack backup archive {archivePath} ({filesToInclude.Count} items)");
             return;
         }
 
@@ -207,7 +207,7 @@ public class FileSystem : IFileSystem
             }
             else if (Directory.Exists(sourcePath))
             {
-                // Verzeichnis rekursiv ins Tar schreiben
+                // Write directory recursively into the tar
                 foreach (var file in Directory.GetFiles(sourcePath, "*", SearchOption.AllDirectories))
                 {
                     var relative = Path.GetRelativePath(sourcePath, file).Replace('\\', '/');
@@ -222,7 +222,7 @@ public class FileSystem : IFileSystem
     {
         if (_context.DryRun)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Backup-Archiv {archivePath} nach {destinationDir} entpacken");
+            _console.WriteInfo($"[DRY-RUN] Would extract backup archive {archivePath} to {destinationDir}");
             return;
         }
 
@@ -233,11 +233,8 @@ public class FileSystem : IFileSystem
 
         await using var fileStream = File.OpenRead(archivePath);
         await using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
-        await using var tarReader = new TarReader(gzipStream);
 
-        while (await tarReader.GetNextEntryAsync() is { } entry)
-        {
-            await entry.ExtractRelativeToDirectoryAsync(destinationDir, overwrite: true);
-        }
+        // TarFile rejects entries and link targets that would end up outside of destinationDir
+        await TarFile.ExtractToDirectoryAsync(gzipStream, destinationDir, overwriteFiles: true);
     }
 }

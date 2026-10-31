@@ -3,13 +3,12 @@ import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
 
 import en from "../messages/en.json";
-import de from "../messages/de.json";
-import { routing } from "./routing";
+import { isLocale, routing } from "./routing";
 
 const STORAGE_KEY = "midnight.language";
 
 i18n.on("languageChanged", (lng) => {
-  const locale = lng === "de" || lng === "en" ? lng : routing.defaultLocale;
+  const locale = isLocale(lng) ? lng : routing.defaultLocale;
   document.documentElement.lang = locale;
   document.documentElement.dir = "ltr";
 
@@ -20,11 +19,13 @@ i18n.on("languageChanged", (lng) => {
   }
 });
 
+// The panel is English only, older installs may still have "de" stored
 const savedLang = (() => {
   try {
-    return localStorage.getItem(STORAGE_KEY) || "de";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return isLocale(stored) ? stored : routing.defaultLocale;
   } catch {
-    return "de";
+    return routing.defaultLocale;
   }
 })();
 
@@ -33,12 +34,11 @@ i18n
   .use(initReactI18next)
   .init({
     resources: {
-      de: { translation: de },
       en: { translation: en },
     },
     lng: savedLang,
-    supportedLngs: ["de", "en"],
-    fallbackLng: "de",
+    supportedLngs: [...routing.locales],
+    fallbackLng: "en",
     load: "languageOnly",
     keySeparator: ".",
     nsSeparator: false,

@@ -14,6 +14,9 @@ namespace Midnight.ApiServer.Features.Branding.Http;
 [RequirePermission(Permissions.AdminSystemWrite)]
 public class AdminBrandingController : ControllerBase
 {
+    // 2 MB file limit of the branding service plus multipart overhead
+    private const long MaxUploadRequestSize = 2 * 1024 * 1024 + 64 * 1024;
+
     private readonly IBrandingService _brandingService;
 
     public AdminBrandingController(IBrandingService brandingService)
@@ -27,6 +30,7 @@ public class AdminBrandingController : ControllerBase
 
     [HttpPost("logo")]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(MaxUploadRequestSize)]
     public async Task<BrandingResponse> UploadLogo([FromQuery] LogoThemeType theme, IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
@@ -35,6 +39,7 @@ public class AdminBrandingController : ControllerBase
 
     [HttpPost("favicon")]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(MaxUploadRequestSize)]
     public async Task<BrandingResponse> UploadFavicon(IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();

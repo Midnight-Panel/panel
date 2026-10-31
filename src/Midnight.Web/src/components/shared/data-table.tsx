@@ -55,7 +55,7 @@ export function DataTable<T>({ queryKey, load, columns, rowKey, title, descripti
   const last = data ? first + Math.max(0, data.items.length - 1) : 0;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.02]">
       <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-gray-800">
         {title ? (
           <div>

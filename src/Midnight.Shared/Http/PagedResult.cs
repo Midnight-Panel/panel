@@ -20,6 +20,7 @@ public class PagedQuery
 
     public const int MaxPageSize = 100;
 
-    public int SafePage => Math.Max(1, Page);
+    // Upper bound keeps (page - 1) * pageSize from overflowing
+    public int SafePage => Math.Clamp(Page, 1, int.MaxValue / MaxPageSize);
     public int SafePageSize => Math.Clamp(PageSize, 1, MaxPageSize);
 }

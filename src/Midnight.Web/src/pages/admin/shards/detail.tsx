@@ -6,6 +6,8 @@ import type {
   ShardVariableRequest,
 } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
+import { PageHeader } from "@/components/shared/page-header";
+import NotFoundPage from "@/pages/not-found";
 import { RequirePermission } from "@/components/shared/guards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/i18n";
 import {
-  ArrowLeftIcon,
   BoxIcon,
   CodeIcon,
   DownloadIcon,
@@ -33,7 +34,7 @@ import { Permissions } from "@/lib/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { CodeEditor } from "./components/code-editor";
 
 export default function ShardDetailPage() {
@@ -41,7 +42,6 @@ export default function ShardDetailPage() {
   const shardId = Number(id);
   const { t } = useT();
   const { can } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState("general");
@@ -64,7 +64,7 @@ export default function ShardDetailPage() {
   const [newImageUri, setNewImageUri] = useState("");
 
   // Data Fetching
-  const { data: shard, isLoading } = useQuery({
+  const { data: shard, isLoading, isError } = useQuery({
     queryKey: ["admin", "shards", shardId],
     queryFn: () => shardsApi.getShard(shardId),
     enabled: !isNaN(shardId),
@@ -133,6 +133,8 @@ export default function ShardDetailPage() {
       });
     }
   }, [shard, form]);
+
+  if (isNaN(shardId) || isError) return <NotFoundPage />;
 
   if (isLoading || !shard) {
     return (
@@ -246,9 +248,10 @@ export default function ShardDetailPage() {
   };
 
   const handleSaveConfigFile = () => {
-    let mappings: Record<string, string> = {};
+    let mappings: Record<string, string>;
     try {
       mappings = JSON.parse(cfgMappingsJson);
+      if (!mappings || typeof mappings !== "object" || Array.isArray(mappings)) throw new Error();
     } catch {
       notifyError("Invalid JSON in mappings.");
       return;
@@ -297,66 +300,58 @@ export default function ShardDetailPage() {
 
   const handleDeleteDockerImage = (label: string) => {
     const current = { ...(form.getValues("dockerImages") || {}) };
+    const removedUri = current[label];
     delete current[label];
     form.setValue("dockerImages", current, { shouldDirty: true });
 
-    if (form.getValues("defaultDockerImage") === label) {
+    // The default is stored as image uri, not as label
+    if (form.getValues("defaultDockerImage") === removedUri) {
       form.setValue("defaultDockerImage", Object.values(current)[0] || "", { shouldDirty: true });
     }
   };
 
   return (
     <RequirePermission permission={Permissions.AdminShardsRead}>
-      {/* Top Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => navigate("/admin/shards")}
-            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
-          >
-            <ArrowLeftIcon className="size-5" />
-          </Button>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90 tracking-tight">{shard.name}</h1>
-              <Badge variant="light" color="primary">
-                {shard.collectionName}
-              </Badge>
-              <span className="text-xs text-gray-400 dark:text-gray-500">UUID: {shard.uuid}</span>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Author: {shard.author} • v{shard.version}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="outline"
-            onClick={() => shardsApi.exportShard(shard.id, shard.name)}
-            className="w-full sm:w-auto"
-          >
-            <DownloadIcon className="size-4 mr-1.5 text-brand-500" />
-            {t("Shards.Export")}
-          </Button>
-
-          {can(Permissions.AdminShardsWrite) && (
+      <PageHeader
+        icon={<BoxIcon />}
+        title={shard.name}
+        crumbs={[{ label: t("Shards.Title"), to: "/admin/shards" }]}
+        description={
+          <span className="flex flex-wrap items-center gap-2">
+            <Badge variant="light" color="primary" size="sm">{shard.collectionName}</Badge>
+            <span>{shard.author} · v{shard.version}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">UUID: {shard.uuid}</span>
+          </span>
+        }
+        actions={
+          <>
             <Button
-              onClick={form.handleSubmit(handleSaveMain)}
-              disabled={busy}
+              variant="outline"
+              onClick={() => shardsApi.exportShard(shard.id, shard.name)}
               className="w-full sm:w-auto"
             >
-              <FloppyDiscIcon className="size-4 mr-1.5" />
-              {busy ? "Saving..." : t("Common.Save")}
+              <DownloadIcon className="size-4 mr-1.5 text-brand-500" />
+              {t("Shards.Export")}
             </Button>
-          )}
-        </div>
-      </div>
+
+            {can(Permissions.AdminShardsWrite) && (
+              <Button
+                onClick={form.handleSubmit(handleSaveMain)}
+                disabled={busy}
+                className="w-full sm:w-auto"
+              >
+                <FloppyDiscIcon className="size-4 mr-1.5" />
+                {busy ? "Saving..." : t("Common.Save")}
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+        <div>
+          <TabsList variant="line">
             <TabsTrigger value="general" className="gap-2">
               <BoxIcon className="size-4" />
               {t("Shards.Tabs.General")}
@@ -515,7 +510,7 @@ export default function ShardDetailPage() {
                   form.watch("configFiles")?.map((cfg, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-3 text-xs dark:border-gray-800 dark:bg-white/3"
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-3 text-xs dark:border-gray-800 dark:bg-white/[0.02]"
                     >
                       <div className="space-y-0.5">
                         <span className="font-mono font-medium text-brand-600 dark:text-brand-400">{cfg.path}</span>
@@ -564,7 +559,7 @@ export default function ShardDetailPage() {
                 shard.variables.map((v) => (
                   <div
                     key={v.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/3 dark:hover:border-gray-700"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/[0.02] dark:hover:border-gray-700"
                   >
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -658,7 +653,7 @@ export default function ShardDetailPage() {
                 return (
                   <div
                     key={label}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5 text-xs dark:border-gray-800 dark:bg-white/3"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5 text-xs dark:border-gray-800 dark:bg-white/[0.02]"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">

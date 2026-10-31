@@ -8,7 +8,7 @@ export interface TabNavItem {
   icon?: ReactNode;
 }
 
-/** Route based line tabs. The longest matching path is the active tab. */
+/** Route based underline tabs (customizer style). The longest matching path is the active tab. */
 export function TabNav({ items }: { items: TabNavItem[] }) {
   const { pathname } = useLocation();
 
@@ -17,24 +17,28 @@ export function TabNav({ items }: { items: TabNavItem[] }) {
     .find((item) => pathname === item.to || pathname.startsWith(item.to + "/"));
 
   return (
-    <div className="mb-6 overflow-x-auto border-b border-gray-200 dark:border-gray-800">
-      <nav className="-mb-px flex gap-2">
-        {items.map((item) => (
+    <nav className="scrollbar-none mb-6 flex items-center gap-6 overflow-x-auto border-b border-gray-200 text-sm dark:border-gray-800">
+      {items.map((item) => {
+        const isActive = active?.to === item.to;
+
+        return (
           <Link
             key={item.to}
             to={item.to}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "inline-flex h-12 items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap transition-colors [&>svg]:size-5",
-              active?.to === item.to
-                ? "border-brand-500 text-brand-500 dark:border-brand-400 dark:text-brand-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+              "relative flex items-center gap-2 rounded-sm py-3.5 whitespace-nowrap transition-colors select-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none [&>svg]:size-4",
+              isActive
+                ? "font-semibold text-gray-900 dark:text-white"
+                : "font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200",
             )}
           >
             {item.icon}
             {item.label}
+            {isActive && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-brand-500" />}
           </Link>
-        ))}
-      </nav>
-    </div>
+        );
+      })}
+    </nav>
   );
 }

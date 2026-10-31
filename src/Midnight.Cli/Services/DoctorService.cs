@@ -31,36 +31,36 @@ public class DoctorService : IDoctorService
 
     public async Task<bool> RunDoctorAsync(CancellationToken cancellationToken = default)
     {
-        _console.WriteHeader("Midnight Doctor (Diagnose & Integritätsprüfung)");
+        _console.WriteHeader("Midnight Doctor (diagnostics & integrity check)");
 
         var doctorItems = new List<CheckItem>();
 
-        // 1. Pre-Flight Basistests wiederverwenden
+        // 1. Reuse the basic pre-flight checks
         var preFlight = await _preFlightService.RunAllChecksAsync(cancellationToken: cancellationToken);
         doctorItems.AddRange(preFlight.Checks);
 
-        // 2. Sicherheits- und Dateirechteprüfung (Sensible Dateien müssen 600 sein)
+        // 2. Security and file permission check (sensitive files must be 600)
         doctorItems.Add(await CheckFilePermissionsAsync("/opt/midnight/panel/.env", "600"));
         doctorItems.Add(await CheckFilePermissionsAsync("/etc/midnight/midnight.json", "600"));
         doctorItems.Add(await CheckDirectoryPermissionsAsync("/var/backups/midnight", "700"));
 
-        // 3. SSL / Zertifikats-Check
+        // 3. SSL / certificate check
         doctorItems.Add(await CheckSslCertificatesAsync(cancellationToken));
 
-        // 4. Log-Dateien auf Fehler prüfen
+        // 4. Check log files for errors
         doctorItems.Add(CheckInstallerLogs());
 
-        _console.WriteChecklist("Diagnose-Ergebnisse", doctorItems);
+        _console.WriteChecklist("Diagnostic results", doctorItems);
 
         var hasFailures = doctorItems.Any(i => i.Status == CheckStatus.Failed);
         if (hasFailures)
         {
-            _console.WriteError("Midnight Doctor hat Probleme gefunden, die behoben werden sollten.");
+            _console.WriteError("Midnight Doctor found problems that should be fixed.");
             _console.ShowLogTail(_context.LogFilePath, 20);
             return false;
         }
 
-        _console.WriteSuccess("Alle Diagnose-Prüfungen erfolgreich abgeschlossen. System ist gesund!");
+        _console.WriteSuccess("All diagnostic checks passed. System is healthy!");
         return true;
     }
 
@@ -69,46 +69,46 @@ public class DoctorService : IDoctorService
         if (!_fileSystem.FileExists(path))
         {
             return new CheckItem(
-                $"Dateirechte: {Path.GetFileName(path)}",
+                $"File permissions: {Path.GetFileName(path)}",
                 CheckStatus.Warning,
-                $"Datei {path} existiert nicht",
-                "Wird bei der Installation oder Konfiguration automatisch angelegt.");
+                $"File {path} does not exist",
+                "Created automatically during installation or configuration.");
         }
 
         var (mode, owner) = await _fileSystem.GetPermissionsAsync(path);
         if (mode == expectedMode || mode == "600")
         {
             return new CheckItem(
-                $"Dateirechte: {Path.GetFileName(path)}",
+                $"File permissions: {Path.GetFileName(path)}",
                 CheckStatus.Ok,
-                $"Rechte {mode} (Besitzer: {owner}) - Zugriff sicher beschränkt");
+                $"Permissions {mode} (owner: {owner}) - access securely restricted");
         }
 
         return new CheckItem(
-            $"Dateirechte: {Path.GetFileName(path)}",
+            $"File permissions: {Path.GetFileName(path)}",
             CheckStatus.Warning,
-            $"Rechte sind {mode} statt {expectedMode} (potenziell für andere lesbar!)",
-            $"Rechte korrigieren mit: chmod {expectedMode} {path}");
+            $"Permissions are {mode} instead of {expectedMode} (potentially readable by others!)",
+            $"Fix permissions with: chmod {expectedMode} {path}");
     }
 
     private async Task<CheckItem> CheckDirectoryPermissionsAsync(string path, string expectedMode)
     {
         if (!_fileSystem.DirectoryExists(path))
         {
-            return new CheckItem($"Verzeichnis: {Path.GetFileName(path)}", CheckStatus.Ok, "Verzeichnis noch nicht angelegt");
+            return new CheckItem($"Directory: {Path.GetFileName(path)}", CheckStatus.Ok, "Directory not created yet");
         }
 
         var (mode, owner) = await _fileSystem.GetPermissionsAsync(path);
         if (mode == expectedMode || mode == "700")
         {
-            return new CheckItem($"Verzeichnis: {Path.GetFileName(path)}", CheckStatus.Ok, $"Rechte {mode} sicher");
+            return new CheckItem($"Directory: {Path.GetFileName(path)}", CheckStatus.Ok, $"Permissions {mode} secure");
         }
 
         return new CheckItem(
-            $"Verzeichnis: {Path.GetFileName(path)}",
+            $"Directory: {Path.GetFileName(path)}",
             CheckStatus.Warning,
-            $"Rechte sind {mode} statt {expectedMode}",
-            $"Rechte korrigieren mit: chmod {expectedMode} {path}");
+            $"Permissions are {mode} instead of {expectedMode}",
+            $"Fix permissions with: chmod {expectedMode} {path}");
     }
 
     private async Task<CheckItem> CheckSslCertificatesAsync(CancellationToken cancellationToken)
@@ -120,10 +120,10 @@ public class DoctorService : IDoctorService
 
         if (res.Success && !string.IsNullOrWhiteSpace(res.StandardOutput))
         {
-            return new CheckItem("SSL / Zertifikate", CheckStatus.Ok, "Caddy verwaltet aktive SSL-Zertifikate");
+            return new CheckItem("SSL / certificates", CheckStatus.Ok, "Caddy is managing active SSL certificates");
         }
 
-        return new CheckItem("SSL / Zertifikate", CheckStatus.Ok, "Caddy Managed HTTPS (automatische Zertifikatsverwaltung)");
+        return new CheckItem("SSL / certificates", CheckStatus.Ok, "Caddy managed HTTPS (automatic certificate management)");
     }
 
     private CheckItem CheckInstallerLogs()
@@ -131,7 +131,7 @@ public class DoctorService : IDoctorService
         var logPath = _context.LogFilePath;
         if (!_fileSystem.FileExists(logPath))
         {
-            return new CheckItem("Installer-Log", CheckStatus.Ok, "Keine Fehler protokolliert");
+            return new CheckItem("Installer log", CheckStatus.Ok, "No errors logged");
         }
 
         try
@@ -141,17 +141,17 @@ public class DoctorService : IDoctorService
             if (recentErrors > 0)
             {
                 return new CheckItem(
-                    "Installer-Log",
+                    "Installer log",
                     CheckStatus.Warning,
-                    $"{recentErrors} Fehler in den letzten 100 Log-Zeilen gefunden",
-                    $"Prüfe das Log mit: midnight logs installer");
+                    $"{recentErrors} errors found in the last 100 log lines",
+                    $"Check the log with: midnight logs installer");
             }
         }
         catch
         {
-            // Ignorieren
+            // Ignore
         }
 
-        return new CheckItem("Installer-Log", CheckStatus.Ok, "Keine kritischen Fehler im Log");
+        return new CheckItem("Installer log", CheckStatus.Ok, "No critical errors in the log");
     }
 }

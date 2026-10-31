@@ -6,7 +6,7 @@ export default function NotFoundPage() {
   const { t } = useT();
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center dark:border-gray-800 dark:bg-white/3">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center dark:border-gray-800 dark:bg-white/[0.02]">
       <img src="/images/error/404.svg" alt="404" className="w-full max-w-sm dark:hidden" />
       <img src="/images/error/404-dark.svg" alt="404" className="hidden w-full max-w-sm dark:block" />
       <h3 className="mt-8 text-title-sm font-semibold text-gray-800 dark:text-white/90">{t("NotFound.Title")}</h3>

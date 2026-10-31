@@ -27,7 +27,7 @@ const tabsListVariants = cva(
       variant: {
         default:
           "w-fit rounded-lg bg-gray-100 p-1 group-data-[orientation=horizontal]/tabs:h-11 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col dark:bg-gray-900",
-        line: "w-full justify-start gap-2 border-b border-gray-200 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-12 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col group-data-[orientation=vertical]/tabs:gap-1 group-data-[orientation=vertical]/tabs:border-e group-data-[orientation=vertical]/tabs:border-b-0 dark:border-gray-800",
+        line: "scrollbar-none w-full justify-start gap-6 overflow-x-auto border-b border-gray-200 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-12 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col group-data-[orientation=vertical]/tabs:gap-1 group-data-[orientation=vertical]/tabs:border-e group-data-[orientation=vertical]/tabs:border-b-0 dark:border-gray-800",
       },
     },
     defaultVariants: {
@@ -67,9 +67,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=default]/tabs-list:data-active:bg-white group-data-[variant=default]/tabs-list:data-active:text-gray-900 group-data-[variant=default]/tabs-list:data-active:shadow-theme-xs dark:group-data-[variant=default]/tabs-list:data-active:bg-white/3 dark:group-data-[variant=default]/tabs-list:data-active:text-white",
         "group-data-[orientation=vertical]/tabs:group-data-[variant=default]/tabs-list:w-full group-data-[orientation=vertical]/tabs:group-data-[variant=default]/tabs-list:justify-start",
         // Variant: Line
-        "group-data-[variant=line]/tabs-list:-mb-px group-data-[variant=line]/tabs-list:h-12 group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:px-3",
-        "group-data-[variant=line]/tabs-list:text-gray-500 group-data-[variant=line]/tabs-list:hover:text-gray-700 dark:group-data-[variant=line]/tabs-list:text-gray-400 dark:group-data-[variant=line]/tabs-list:hover:text-gray-200",
-        "group-data-[variant=line]/tabs-list:data-active:border-brand-500 group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:text-brand-500 group-data-[variant=line]/tabs-list:data-active:shadow-none dark:group-data-[variant=line]/tabs-list:data-active:border-brand-400 dark:group-data-[variant=line]/tabs-list:data-active:text-brand-400",
+        "group-data-[variant=line]/tabs-list:-mb-px group-data-[variant=line]/tabs-list:h-12 group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:px-0",
+        "group-data-[variant=line]/tabs-list:text-gray-500 group-data-[variant=line]/tabs-list:hover:text-gray-900 dark:group-data-[variant=line]/tabs-list:text-gray-400 dark:group-data-[variant=line]/tabs-list:hover:text-gray-200",
+        "group-data-[variant=line]/tabs-list:data-active:border-brand-500 group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:font-semibold group-data-[variant=line]/tabs-list:data-active:text-gray-900 group-data-[variant=line]/tabs-list:data-active:shadow-none dark:group-data-[variant=line]/tabs-list:data-active:text-white",
         "group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:-me-px group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:h-auto group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:w-full group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:justify-start group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:border-e-2 group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:border-b-0 group-data-[orientation=vertical]/tabs:group-data-[variant=line]/tabs-list:py-2.5",
         className,
       )}

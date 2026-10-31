@@ -77,7 +77,7 @@ export default function SecurityPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
           <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">{t("Security.ChangePassword")}</h4>
           <form onSubmit={handleSubmit(changePassword)} className="space-y-5" noValidate>
             <Field data-invalid={Boolean(errors.currentPassword)}>
@@ -111,7 +111,7 @@ export default function SecurityPage() {
         <TwoFactorCard />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.02]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("Security.Sessions")}</h3>
           <Button variant="outline" size="sm" className="text-red-500" onClick={logoutEverywhere}>

@@ -1,12 +1,13 @@
 using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Midnight.ApiServer.Core.Http;
 
 namespace Midnight.ApiServer.Features.Branding.Services;
 
 /// <summary>
-/// Bereinigt und validiert Custom CSS, um zu garantieren, dass der Footer niemals
-/// ausgeblendet, überdeckt oder unleserlich gemacht werden kann.
+/// Sanitizes and validates custom CSS to guarantee that the footer can never be
+/// hidden, covered or made unreadable.
 /// </summary>
 public static class CssSanitizer
 {
@@ -34,18 +35,31 @@ public static class CssSanitizer
         RegexOptions.IgnoreCase | RegexOptions.Compiled
     );
 
+    /// <summary>CSS escapes like "@\69mport" or "f\6f oter" would otherwise bypass the checks below</summary>
+    private static readonly Regex CssEscapeRegex = new(
+        @"\\([0-9a-fA-F]{1,6})\s?|\\(.)",
+        RegexOptions.Singleline | RegexOptions.Compiled
+    );
+
     public static string Sanitize(string? css)
     {
         if (string.IsNullOrWhiteSpace(css))
             return string.Empty;
 
         if (css.Length > 32768)
-            throw HttpApiException.BadRequest("Custom CSS darf maximal 32 KB groß sein.");
+            throw HttpApiException.BadRequest("Custom CSS must not exceed 32 KB.");
 
-        if (DangerousExpressionRegex.IsMatch(css))
-            throw HttpApiException.BadRequest("Custom CSS enthält unzulässige Anweisungen (@import, javascript: oder expressions).");
+        // All checks run on the unescaped css, the original is stored
+        var decoded = DecodeEscapes(css);
 
-        var withoutComments = Regex.Replace(css, @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
+        if (DangerousExpressionRegex.IsMatch(css) || DangerousExpressionRegex.IsMatch(decoded))
+            throw HttpApiException.BadRequest("Custom CSS contains forbidden statements (@import, javascript: or expressions).");
+
+        // The css ends up in a <style> element, it must not be able to close it
+        if (decoded.Contains('<'))
+            throw HttpApiException.BadRequest("Custom CSS must not contain HTML tags.");
+
+        var withoutComments = Regex.Replace(decoded, @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
 
         foreach (var selector in ForbiddenSelectors)
         {
@@ -53,7 +67,7 @@ public static class CssSanitizer
             if (Regex.IsMatch(withoutComments, pattern, RegexOptions.IgnoreCase))
             {
                 throw HttpApiException.BadRequest(
-                    $"Manipulation des Pflicht-Brandings nicht erlaubt: Selektor '{selector}' ist gesperrt.");
+                    $"Modifying the mandatory branding is not allowed: selector '{selector}' is blocked.");
             }
         }
 
@@ -70,11 +84,23 @@ public static class CssSanitizer
                     && DangerousPropertyRegex.IsMatch(bodyPart))
                 {
                     throw HttpApiException.BadRequest(
-                        "Globale CSS-Regeln dürfen keine Ausblendungs- oder Überlagerungseigenschaften enthalten.");
+                        "Global CSS rules must not contain properties that hide or overlay elements.");
                 }
             }
         }
 
         return css.Trim();
     }
+
+    private static string DecodeEscapes(string css) => CssEscapeRegex.Replace(css, match =>
+    {
+        if (!match.Groups[1].Success)
+            return match.Groups[2].Value;
+
+        var codePoint = int.Parse(match.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+
+        return codePoint is > 0 and <= 0x10FFFF and not (>= 0xD800 and <= 0xDFFF)
+            ? char.ConvertFromUtf32(codePoint)
+            : "\uFFFD";
+    });
 }

@@ -33,7 +33,7 @@ public class AdminRolesController : ControllerBase
     [RequirePermission(Permissions.AdminRolesWrite)]
     public async Task<RoleResponse> Create([FromBody] RoleRequest request, CancellationToken cancellationToken)
     {
-        var role = await _roleService.CreateAsync(request, cancellationToken);
+        var role = await _roleService.CreateAsync(request, User.GetPermissions().ToList(), cancellationToken);
         _logger.LogInformation("User {ActorId} created role {RoleId}", User.GetUserId(), role.Id);
         return role;
     }
@@ -42,7 +42,7 @@ public class AdminRolesController : ControllerBase
     [RequirePermission(Permissions.AdminRolesWrite)]
     public async Task<RoleResponse> Update(int id, [FromBody] RoleRequest request, CancellationToken cancellationToken)
     {
-        var role = await _roleService.UpdateAsync(id, request, cancellationToken);
+        var role = await _roleService.UpdateAsync(id, request, User.GetPermissions().ToList(), cancellationToken);
         _logger.LogInformation("User {ActorId} updated role {RoleId}", User.GetUserId(), role.Id);
         return role;
     }
@@ -51,7 +51,7 @@ public class AdminRolesController : ControllerBase
     [RequirePermission(Permissions.AdminRolesWrite)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        await _roleService.DeleteAsync(id, cancellationToken);
+        await _roleService.DeleteAsync(id, User.GetPermissions().ToList(), cancellationToken);
         _logger.LogInformation("User {ActorId} deleted role {RoleId}", User.GetUserId(), id);
         return NoContent();
     }

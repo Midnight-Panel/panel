@@ -24,7 +24,7 @@ import {
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { Permissions } from "@/lib/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { CollectionsModal } from "./collections-modal";
@@ -67,7 +67,7 @@ export default function ShardsPage() {
   // Form for new Shard
   const createForm = useForm<ShardRequest>({
     defaultValues: {
-      collectionId: collections[0]?.id || 1,
+      collectionId: 0,
       name: "",
       author: "Midnightpanel",
       version: "1.0.0",
@@ -79,6 +79,12 @@ export default function ShardsPage() {
       features: { eula: true, fileDenylist: [] },
     },
   });
+
+  // The collections arrive after the form was created, preselect the first one like the select shows it
+  useEffect(() => {
+    if (collections[0] && !collections.some((c) => c.id === Number(createForm.getValues("collectionId"))))
+      createForm.setValue("collectionId", collections[0].id);
+  }, [collections, createForm]);
 
   const handleCreate = async (values: ShardRequest) => {
     setBusy(true);
@@ -120,7 +126,7 @@ export default function ShardsPage() {
 
   return (
     <RequirePermission permission={Permissions.AdminShardsRead}>
-      <PageHeader title={t("Shards.Title")} description={t("Shards.Description")} />
+      <PageHeader icon={<BoxIcon />} title={t("Shards.Title")} description={t("Shards.Description")} />
 
       {/* Toolbar / Actions */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -211,7 +217,7 @@ export default function ShardsPage() {
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">Loading shards...</div>
       ) : !pagedShards || pagedShards.items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-gray-800 dark:bg-white/3">
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-gray-800 dark:bg-white/[0.02]">
           <BoxIcon className="mx-auto size-12 text-gray-400 mb-3 opacity-60" />
           <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">No shards found</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -224,7 +230,7 @@ export default function ShardsPage() {
             {pagedShards.items.map((shard) => (
               <div
                 key={shard.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:border-gray-800 dark:bg-white/3 dark:hover:border-brand-500/40"
+                className="group relative flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:border-gray-800 dark:bg-white/[0.02] dark:hover:border-brand-500/40"
               >
                 {/* Header */}
                 <div>

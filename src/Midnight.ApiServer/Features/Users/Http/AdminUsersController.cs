@@ -15,11 +15,15 @@ namespace Midnight.ApiServer.Features.Users.Http;
 public class AdminUsersController : ControllerBase
 {
     private readonly UserService _userService;
+    private readonly RoleService _roleService;
+    private readonly UserAuthCache _authCache;
     private readonly ILogger<AdminUsersController> _logger;
 
-    public AdminUsersController(UserService userService, ILogger<AdminUsersController> logger)
+    public AdminUsersController(UserService userService, RoleService roleService, UserAuthCache authCache, ILogger<AdminUsersController> logger)
     {
         _userService = userService;
+        _roleService = roleService;
+        _authCache = authCache;
         _logger = logger;
     }
 
@@ -38,7 +42,7 @@ public class AdminUsersController : ControllerBase
     public async Task<AdminUserResponse> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
     {
         if (request.RoleIds.Count > 0)
-            EnsureCanManageRoles();
+            await EnsureCanAssignRolesAsync(request.RoleIds, cancellationToken);
 
         var user = await _userService.CreateAsync(request.Username, request.Email, request.Password, request.RoleIds, cancellationToken);
 
@@ -51,10 +55,12 @@ public class AdminUsersController : ControllerBase
     [RequirePermission(Permissions.AdminUsersWrite)]
     public async Task<AdminUserResponse> Update(int id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
+        await EnsureCanManageUserAsync(id, cancellationToken);
+
         var existing = await _userService.GetAsync(id, cancellationToken);
 
         if (!existing.Roles.Select(x => x.Id).Order().SequenceEqual(request.RoleIds.Distinct().Order()))
-            EnsureCanManageRoles();
+            await EnsureCanAssignRolesAsync(request.RoleIds, cancellationToken);
 
         var user = await _userService.UpdateAsync(id, request, User.GetUserId(), cancellationToken);
 
@@ -67,6 +73,7 @@ public class AdminUsersController : ControllerBase
     [RequirePermission(Permissions.AdminUsersWrite)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
+        await EnsureCanManageUserAsync(id, cancellationToken);
         await _userService.DeleteAsync(id, User.GetUserId(), cancellationToken);
 
         _logger.LogInformation("User {ActorId} deleted user {UserId}", User.GetUserId(), id);
@@ -78,6 +85,7 @@ public class AdminUsersController : ControllerBase
     [RequirePermission(Permissions.AdminUsersWrite)]
     public async Task<IActionResult> ResetTwoFactor(int id, CancellationToken cancellationToken)
     {
+        await EnsureCanManageUserAsync(id, cancellationToken);
         await _userService.ResetTwoFactorAsync(id, cancellationToken);
 
         _logger.LogInformation("User {ActorId} reset 2FA of user {UserId}", User.GetUserId(), id);
@@ -130,10 +138,33 @@ public class AdminUsersController : ControllerBase
         return new ImpersonationResponse { AccessToken = token, ExpiresAt = expiresAt };
     }
 
-    private void EnsureCanManageRoles()
+    private async Task EnsureCanAssignRolesAsync(IEnumerable<int> roleIds, CancellationToken cancellationToken)
     {
         // Assigning roles is a privilege escalation vector, it needs role write access too
         if (!User.HasPermission(Permissions.AdminRolesWrite))
             throw HttpApiException.Forbidden("Missing permission", $"Changing roles requires '{Permissions.AdminRolesWrite}'");
+
+        // ... and only roles whose permissions the actor has himself (e.g. no Administrators role for a moderator)
+        var ids = roleIds.ToHashSet();
+        var actorPermissions = User.GetPermissions().ToList();
+        var roles = await _roleService.ListAsync(cancellationToken);
+
+        if (roles.Where(x => ids.Contains(x.Id)).SelectMany(x => x.Permissions).Any(x => !Permissions.Has(actorPermissions, x)))
+            throw HttpApiException.Forbidden("Missing permission", "You can't assign a role with permissions you don't have yourself");
+    }
+
+    /// <summary>
+    /// Changing, deleting or resetting 2FA of a user with more permissions than the actor would allow taking
+    /// over that account (e.g. setting the password of an administrator)
+    /// </summary>
+    private async Task EnsureCanManageUserAsync(int id, CancellationToken cancellationToken)
+    {
+        var target = await _authCache.GetAsync(id, cancellationToken)
+                     ?? throw HttpApiException.NotFound("User not found");
+
+        var actorPermissions = User.GetPermissions().ToList();
+
+        if (target.Permissions.Any(x => !Permissions.Has(actorPermissions, x)))
+            throw HttpApiException.Forbidden("You can't manage a user with more permissions than yourself");
     }
 }

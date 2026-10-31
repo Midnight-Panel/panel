@@ -68,8 +68,12 @@ public partial class SystemSettingsService : ISystemSettingsService
         if (string.IsNullOrWhiteSpace(request.AppName))
             throw HttpApiException.BadRequest("Panel name cannot be empty.");
 
-        if (string.IsNullOrWhiteSpace(request.PublicUrl) || !Uri.TryCreate(request.PublicUrl, UriKind.Absolute, out _))
+        if (string.IsNullOrWhiteSpace(request.PublicUrl) || !FooterLinkItem.IsHttpUrl(request.PublicUrl))
             throw HttpApiException.BadRequest("Public URL must be a valid absolute URL (e.g. http://localhost:5220).");
+
+        var unsafeLink = request.FooterLinks?.FirstOrDefault(x => x != null && !string.IsNullOrWhiteSpace(x.Url) && !FooterLinkItem.IsSafeUrl(x.Url));
+        if (unsafeLink != null)
+            throw HttpApiException.BadRequest("Invalid footer link", $"'{unsafeLink.Url}' is not a http(s) url or a path of the panel.");
 
         var configPath = Path.Combine(_storagePaths.Root, ConfigurationBootstrapper.ConfigFileName);
 
@@ -126,7 +130,7 @@ public partial class SystemSettingsService : ISystemSettingsService
         {
             foreach (var link in request.FooterLinks)
             {
-                if (!string.IsNullOrWhiteSpace(link.Label) && !string.IsNullOrWhiteSpace(link.Url))
+                if (link != null && !string.IsNullOrWhiteSpace(link.Label) && !string.IsNullOrWhiteSpace(link.Url))
                 {
                     cleanLinks.Add(new FooterLinkItem
                     {

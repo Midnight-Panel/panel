@@ -35,16 +35,20 @@ public class RoleService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<RoleResponse> CreateAsync(RoleRequest request, CancellationToken cancellationToken)
+    /// <param name="actorPermissions">Permissions of the acting user, roles can't grant more than that</param>
+    public async Task<RoleResponse> CreateAsync(RoleRequest request, IEnumerable<string> actorPermissions, CancellationToken cancellationToken)
     {
         var name = request.Name.Trim();
         await EnsureUniqueAsync(name, null, cancellationToken);
+
+        var permissions = ValidatePermissions(request.Permissions);
+        EnsureActorHasPermissions(actorPermissions, permissions);
 
         var role = new Role
         {
             Name = name,
             Description = request.Description?.Trim(),
-            Permissions = ValidatePermissions(request.Permissions)
+            Permissions = permissions
         };
 
         _context.Roles.Add(role);
@@ -53,7 +57,7 @@ public class RoleService
         return ToResponse(role, 0);
     }
 
-    public async Task<RoleResponse> UpdateAsync(int id, RoleRequest request, CancellationToken cancellationToken)
+    public async Task<RoleResponse> UpdateAsync(int id, RoleRequest request, IEnumerable<string> actorPermissions, CancellationToken cancellationToken)
     {
         var role = await _context.Roles.Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                    ?? throw HttpApiException.NotFound("Role not found");
@@ -64,9 +68,16 @@ public class RoleService
         if (role.Name == UserService.AdministratorRoleName && name != role.Name)
             throw HttpApiException.BadRequest("The administrator role can't be renamed");
 
+        var permissions = ValidatePermissions(request.Permissions);
+        var actor = actorPermissions.ToList();
+
+        // Neither roles above the actor (e.g. Administrators) can be changed, nor can permissions the actor lacks be added
+        EnsureActorHasPermissions(actor, role.Permissions);
+        EnsureActorHasPermissions(actor, permissions);
+
         role.Name = name;
         role.Description = request.Description?.Trim();
-        role.Permissions = ValidatePermissions(request.Permissions);
+        role.Permissions = permissions;
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -76,13 +87,15 @@ public class RoleService
         return ToResponse(role, role.Users.Count);
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(int id, IEnumerable<string> actorPermissions, CancellationToken cancellationToken)
     {
         var role = await _context.Roles.Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                    ?? throw HttpApiException.NotFound("Role not found");
 
         if (role.Name == UserService.AdministratorRoleName)
             throw HttpApiException.BadRequest("The administrator role can't be deleted");
+
+        EnsureActorHasPermissions(actorPermissions, role.Permissions);
 
         var userIds = role.Users.Select(x => x.Id).ToList();
 
@@ -91,6 +104,16 @@ public class RoleService
 
         foreach (var userId in userIds)
             _authCache.Invalidate(userId);
+    }
+
+    /// <summary>Prevents privilege escalation: a role may only contain permissions the acting user has (wildcards included)</summary>
+    private static void EnsureActorHasPermissions(IEnumerable<string> actorPermissions, IEnumerable<string> permissions)
+    {
+        var actor = actorPermissions as IReadOnlyCollection<string> ?? actorPermissions.ToList();
+        var missing = permissions.FirstOrDefault(x => !Permissions.Has(actor, x));
+
+        if (missing != null)
+            throw HttpApiException.Forbidden("Missing permission", $"You can't manage roles with the permission '{missing}' because you don't have it yourself");
     }
 
     private static List<string> ValidatePermissions(IEnumerable<string> permissions)

@@ -15,7 +15,7 @@ public class InstallCommand : ICommand
     private readonly CliContext _context;
 
     public string Name => "install";
-    public string Description => "Installiere Midnight Panel und/oder Daemon inklusive Pre-Flight-Checks";
+    public string Description => "Install Midnight Panel and/or Daemon, including pre-flight checks";
 
     public InstallCommand(
         IPreFlightService preFlightService,
@@ -39,42 +39,42 @@ public class InstallCommand : ICommand
         var isDaemon = target is "daemon" or "both";
         var isPanel = target is "panel" or "both";
 
-        _console.WriteHeader($"Midnight Installer (Komponenten: {target})");
+        _console.WriteHeader($"Midnight Installer (components: {target})");
 
-        // 1. Idempotenz-Prüfung: Bestehende Installation erkennen
+        // 1. Idempotency check: detect an existing installation
         if (_stateService.Exists())
         {
             var existingState = await _stateService.LoadAsync();
             if (existingState.PanelInstalled || existingState.DaemonInstalled)
             {
-                _console.WriteWarning("Es wurde eine bestehende Midnight-Installation erkannt!");
-                _console.WriteLine($"Aktueller Stand: Panel {existingState.PanelVersion}, Daemon {existingState.DaemonVersion}");
+                _console.WriteWarning("An existing Midnight installation was detected!");
+                _console.WriteLine($"Current state: Panel {existingState.PanelVersion}, Daemon {existingState.DaemonVersion}");
 
                 var choice = _console.SelectOption(
-                    "Wie möchtest du verfahren?",
+                    "How do you want to proceed?",
                     [
-                        "Reparieren (Container neu aufsetzen & Verzeichnisse prüfen)",
-                        "Neu konfigurieren (Domain, Ports oder Passwörter anpassen)",
-                        "Abbrechen"
+                        "Repair (recreate containers & check directories)",
+                        "Reconfigure (change domain, ports or passwords)",
+                        "Cancel"
                     ],
                     defaultIndex: 0);
 
                 if (choice == 2)
                 {
-                    _console.WriteInfo("Installation abgebrochen.");
+                    _console.WriteInfo("Installation cancelled.");
                     return ExitCodes.Success;
                 }
 
                 if (choice == 1)
                 {
-                    _console.WriteInfo("Wechsle in den Konfigurationsmodus...");
-                    // Fahre mit interaktiver Neukonfiguration fort
+                    _console.WriteInfo("Switching to configuration mode...");
+                    // Continue with interactive reconfiguration
                 }
             }
         }
 
-        // 2. Pre-Flight-Checks durchführen
-        _console.WriteInfo("Führe Pre-Flight-Systemprüfungen durch...");
+        // 2. Run pre-flight checks
+        _console.WriteInfo("Running pre-flight system checks...");
         var preFlight = await _preFlightService.RunAllChecksAsync(
             panelPort: 80,
             daemonPort: 8088,
@@ -83,11 +83,11 @@ public class InstallCommand : ICommand
 
         _console.WriteChecklist("Pre-Flight Checks", preFlight.Checks);
 
-        // Docker-Installation anbieten falls fehlend
+        // Offer Docker installation if missing
         var dockerCheck = preFlight.Checks.FirstOrDefault(c => c.Name.Contains("Docker"));
         if (dockerCheck != null && dockerCheck.Status == CheckStatus.Failed)
         {
-            var installDocker = _console.Confirm("Docker ist nicht installiert. Soll Docker jetzt automatisch installiert werden?", defaultYes: true);
+            var installDocker = _console.Confirm("Docker is not installed. Install Docker automatically now?", defaultYes: true);
             if (installDocker)
             {
                 var dockerInstalled = await _preFlightService.EnsureDockerInstalledAsync(cancellationToken);
@@ -98,16 +98,16 @@ public class InstallCommand : ICommand
             }
             else
             {
-                _console.WriteError("Installation kann ohne Docker nicht fortgesetzt werden.");
+                _console.WriteError("Installation cannot continue without Docker.");
                 return ExitCodes.PreFlightFailed;
             }
         }
 
-        // Firewall-Öffnung anbieten
+        // Offer to open the firewall
         var fwCheck = preFlight.Checks.FirstOrDefault(c => c.Name.Contains("Firewall"));
         if (fwCheck != null && fwCheck.Status == CheckStatus.Warning)
         {
-            var openFw = _console.Confirm("Sollen die benötigten Web-Ports (80, 443) automatisch in der Firewall geöffnet werden?", defaultYes: true);
+            var openFw = _console.Confirm("Open the required web ports (80, 443) in the firewall automatically?", defaultYes: true);
             if (openFw)
             {
                 await _preFlightService.EnsurePortsOpenedInFirewallAsync([80, 443], cancellationToken);
@@ -116,29 +116,29 @@ public class InstallCommand : ICommand
 
         if (!preFlight.CanProceed)
         {
-            _console.WriteError($"Pre-Flight-Checks fehlgeschlagen ({preFlight.ErrorCount} Fehler). Behebe die Fehler und starte erneut.");
+            _console.WriteError($"Pre-flight checks failed ({preFlight.ErrorCount} errors). Fix the errors and run again.");
             return ExitCodes.PreFlightFailed;
         }
 
         if (preFlight.HasWarnings)
         {
-            var proceedWithWarnings = _console.Confirm("Es gibt Warnungen. Möchtest du trotzdem fortfahren?", defaultYes: true);
+            var proceedWithWarnings = _console.Confirm("There are warnings. Do you want to continue anyway?", defaultYes: true);
             if (!proceedWithWarnings)
             {
                 return ExitCodes.Cancelled;
             }
         }
 
-        // 3. Konfigurationsparameter abfragen
-        var domain = _console.Ask("Domain für das Panel (z. B. panel.deine-domain.de)", "localhost");
+        // 3. Ask for configuration parameters
+        var domain = _console.Ask("Domain for the panel (e.g. panel.your-domain.com)", "localhost");
         var dbPassword = GenerateRandomSecret(32);
 
-        // 4. Zielverzeichnisse anlegen
+        // 4. Create target directories
         var panelDir = "/opt/midnight/panel";
         _fileSystem.CreateDirectory(panelDir);
         _fileSystem.CreateDirectory($"{panelDir}/storage");
 
-        // 5. .env anlegen mit strikten Rechten (600, nur root)
+        // 5. Create .env with strict permissions (600, root only)
         var envPath = $"{panelDir}/.env";
         var envContent = $"""
         PANEL_DOMAIN={domain}
@@ -148,9 +148,9 @@ public class InstallCommand : ICommand
         """;
         await _fileSystem.WriteAllTextAsync(envPath, envContent, isSecret: true);
         await _fileSystem.SetPermissionsAsync(envPath, "600");
-        _console.WriteSuccess(".env-Konfiguration mit sicheren Rechten (600) angelegt.");
+        _console.WriteSuccess(".env configuration created with secure permissions (600).");
 
-        // 6. Docker-Compose Datei kopieren/bereitstellen
+        // 6. Copy/provide the Docker Compose file
         var composeSource = "/opt/midnight/src/panel/docker-compose.yml";
         var composeTarget = $"{panelDir}/docker-compose.yml";
         if (_fileSystem.FileExists(composeSource))
@@ -159,10 +159,10 @@ public class InstallCommand : ICommand
             await _fileSystem.WriteAllTextAsync(composeTarget, compose);
         }
 
-        // 7. Stack starten
+        // 7. Start the stack
         if (isPanel)
         {
-            _console.WriteInfo("Starte Midnight Panel Docker-Compose-Stack...");
+            _console.WriteInfo("Starting Midnight Panel Docker Compose stack...");
             var upRes = await _processRunner.RunAsync(
                 "docker",
                 $"compose -f {composeTarget} up -d",
@@ -172,16 +172,16 @@ public class InstallCommand : ICommand
 
             if (!upRes.Success && !_context.DryRun)
             {
-                _console.WriteError($"Fehler beim Starten des Docker-Compose-Stacks: {upRes.Output}");
+                _console.WriteError($"Failed to start the Docker Compose stack: {upRes.Output}");
                 _console.ShowLogTail(_context.LogFilePath);
                 return ExitCodes.GeneralError;
             }
         }
 
-        // 8. Daemon-Dienst einrichten falls angefordert
+        // 8. Set up the daemon service if requested
         if (isDaemon)
         {
-            _console.WriteInfo("Richte Midnight Daemon als systemd-Dienst ein...");
+            _console.WriteInfo("Setting up Midnight Daemon as a systemd service...");
             var daemonServicePath = "/etc/systemd/system/midnight-daemon.service";
             var serviceContent = """
             [Unit]
@@ -203,10 +203,10 @@ public class InstallCommand : ICommand
             await _fileSystem.WriteAllTextAsync(daemonServicePath, serviceContent);
             await _processRunner.RunAsync("systemctl", "daemon-reload", isMutating: true, cancellationToken: cancellationToken);
             await _processRunner.RunAsync("systemctl", "enable --now midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("midnight-daemon Dienst erfolgreich registriert und gestartet.");
+            _console.WriteSuccess("midnight-daemon service registered and started successfully.");
         }
 
-        // 9. Installationszustand in /etc/midnight/midnight.json sichern
+        // 9. Save installation state to /etc/midnight/midnight.json
         var newState = new InstallationState
         {
             PanelInstalled = isPanel,
@@ -221,9 +221,9 @@ public class InstallCommand : ICommand
         };
         await _stateService.SaveAsync(newState);
 
-        _console.WriteHeader("Installation erfolgreich");
-        _console.WriteSuccess($"Midnight Panel ist online erreichbar unter: https://{domain}");
-        _console.WriteInfo("Erstelle einen Administrator-Account mit: midnight create-admin");
+        _console.WriteHeader("Installation successful");
+        _console.WriteSuccess($"Midnight Panel is online at: https://{domain}");
+        _console.WriteInfo("Create an administrator account with: midnight create-admin");
         return ExitCodes.Success;
     }
 

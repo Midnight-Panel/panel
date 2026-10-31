@@ -22,7 +22,7 @@ function CodeBlock({ title, value }: { title: string; value: string }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.02]">
       <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 dark:border-gray-800">
         <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">{title}</h3>
         <Button variant="outline" size="xs" onClick={copy}>
@@ -65,7 +65,7 @@ export default function NodeSetupPage() {
         <AlertDescription>{t("Nodes.SetupSecret")}</AlertDescription>
       </Alert>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("Nodes.SetupTitle")}</h3>
         <ol className="mt-4 list-inside list-decimal space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li>{t("Nodes.SetupStep1")}</li>
@@ -77,7 +77,7 @@ export default function NodeSetupPage() {
       <CodeBlock title={t("Nodes.SetupCommand")} value={setup.data.command} />
       <CodeBlock title="/etc/midnight/config.json" value={setup.data.configuration} />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-red-200 bg-white p-5 dark:border-red-500/30 dark:bg-white/3">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-red-200 bg-white p-5 dark:border-red-500/30 dark:bg-white/[0.02]">
         <div>
           <h4 className="font-semibold text-gray-800 dark:text-white/90">{t("Nodes.ResetToken")}</h4>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("Nodes.ResetTokenHint")}</p>

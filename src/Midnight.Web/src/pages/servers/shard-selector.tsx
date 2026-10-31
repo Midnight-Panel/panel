@@ -145,7 +145,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
                   className={`flex flex-col text-left p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
                     isSelected
                       ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/10 shadow-sm ring-1 ring-brand-500"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50 dark:border-gray-800 dark:bg-white/3 dark:hover:border-gray-700 dark:hover:bg-white/5"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50 dark:border-gray-800 dark:bg-white/[0.02] dark:hover:border-gray-700 dark:hover:bg-white/5"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-2">
@@ -240,7 +240,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
                 return (
                   <div
                     key={variable.id}
-                    className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/3 dark:hover:border-gray-700"
+                    className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/[0.02] dark:hover:border-gray-700"
                   >
                     <div className="flex items-center justify-between">
                       <Label className="text-xs font-medium text-gray-800 dark:text-white/90 flex items-center gap-1">

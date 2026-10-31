@@ -65,37 +65,37 @@ public class CompletionService : ICompletionService
             local -a commands targets
 
             commands=(
-                'install:Installiere Midnight Panel und/oder Daemon'
-                'status:Zeige Status des Panel-Stacks und Daemons (--json)'
-                'start:Starte Panel oder Daemon'
-                'stop:Stoppe Panel oder Daemon'
-                'restart:Starte Panel oder Daemon neu'
-                'logs:Zeige Live-Logs an'
-                'update:Aktualisiere Panel oder Daemon mit Health-Check & Rollback'
-                'rollback:Setze Panel oder Daemon manuell auf vorherige Version zurueck'
-                'configure:Interaktiver Konfigurations-Assistent'
-                'config:Lese oder setze Konfigurationswerte'
-                'create-admin:Erstelle einen neuen Administrator-Account'
-                'backup:Erstelle verschluesselbares Backup mit SHA-256'
-                'restore:Stelle System aus Backup-Archiv wieder her'
-                'doctor:Umfassende Systemdiagnose und Rechtepruefung'
-                'ssl:Verwalte SSL-Zertifikate'
-                'completion:Generiere Shell-Completion (bash, zsh)'
-                'uninstall:Deinstalliere Midnight-Komponenten'
-                'self-update:Aktualisiere das midnight CLI-Binary'
-                'version:Zeige Version des CLI-Tools'
+                'install:Install Midnight Panel and/or Daemon'
+                'status:Show status of the panel stack and daemon (--json)'
+                'start:Start panel or daemon'
+                'stop:Stop panel or daemon'
+                'restart:Restart panel or daemon'
+                'logs:Show live logs'
+                'update:Update panel or daemon with health check & rollback'
+                'rollback:Manually roll back panel or daemon to the previous version'
+                'configure:Interactive configuration wizard'
+                'config:Get or set configuration values'
+                'create-admin:Create a new administrator account'
+                'backup:Create an encryptable backup with SHA-256'
+                'restore:Restore the system from a backup archive'
+                'doctor:Full system diagnostics and permission check'
+                'ssl:Manage SSL certificates'
+                'completion:Generate shell completion (bash, zsh)'
+                'uninstall:Uninstall Midnight components'
+                'self-update:Update the midnight CLI binary'
+                'version:Show the CLI tool version'
             )
 
             targets=(
-                'panel:Web-Panel'
+                'panel:Web panel'
                 'daemon:Midnight Daemon'
-                'both:Beide Komponenten'
+                'both:Both components'
             )
 
             _arguments -C \
-                '--dry-run[Simuliere Aktionen ohne Aenderungen]' \
-                '(-y --yes)'{-y,--yes}'[Bestaetige alle Abfragen automatisch]' \
-                '--json[Gebe maschinenlesbares JSON aus]' \
+                '--dry-run[Simulate actions without making changes]' \
+                '(-y --yes)'{-y,--yes}'[Automatically confirm all prompts]' \
+                '--json[Output machine-readable JSON]' \
                 '1: :->cmd' \
                 '2: :->subcmd' \
                 '*:: :->args'

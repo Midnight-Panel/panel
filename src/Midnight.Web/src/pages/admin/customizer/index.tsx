@@ -3,6 +3,7 @@ import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { isSafeLink } from "@/lib/returnUrl";
 import { useBranding } from "@/contexts/BrandingContext";
 import { brandingApi } from "@/api/branding";
 import type { FooterLinkItem } from "@/api/types";
@@ -37,27 +38,27 @@ import {
 
 const footerLinkSchema: z.ZodType<FooterLinkItem> = z.object({
   id: z.string(),
-  label: z.string().min(1, "Bezeichnung darf nicht leer sein"),
-  url: z.string().min(1, "URL darf nicht leer sein"),
+  label: z.string().min(1, "Label must not be empty"),
+  url: z.string().min(1, "URL must not be empty").refine(isSafeLink, "Only /, http:// or https:// allowed"),
   newTab: z.boolean(),
 });
 
 const brandingSchema = z.object({
   panelName: z
     .string()
-    .min(2, "Der Panel-Name muss mindestens 2 Zeichen lang sein")
-    .max(64, "Der Panel-Name darf maximal 64 Zeichen lang sein"),
-  slogan: z.string().max(128, "Maximal 128 Zeichen").optional().nullable(),
+    .min(2, "Panel name must be at least 2 characters")
+    .max(64, "Panel name must be at most 64 characters"),
+  slogan: z.string().max(128, "Max. 128 characters").optional().nullable(),
   panelUrl: z.string().optional().nullable(),
   defaultLanguage: z.string(),
   timeZone: z.string(),
   footerLinks: z.array(footerLinkSchema),
   primaryColor: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "Ungültiger Hex-Code (#RRGGBB)"),
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex code (#RRGGBB)"),
   accentColor: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "Ungültiger Hex-Code (#RRGGBB)"),
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex code (#RRGGBB)"),
   loginBackgroundType: z.enum(["none", "gradient", "image"]),
   loginBackgroundValue: z.string().optional().nullable(),
   customCss: z.string().optional().nullable(),
@@ -76,7 +77,7 @@ export default function AdminCustomizerPage() {
   const [saving, setSaving] = useState(false);
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
 
-  // Neuer Link im Footer-Formular
+  // New link in the footer form
   const [newLinkLabel, setNewLinkLabel] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkNewTab, setNewLinkNewTab] = useState(true);
@@ -95,10 +96,10 @@ export default function AdminCustomizerPage() {
       panelName: branding?.panelName || "Midnight Panel",
       slogan: branding?.slogan || "Game Server Management",
       panelUrl: branding?.panelUrl || "http://localhost:5220",
-      defaultLanguage: branding?.defaultLanguage || "de",
-      timeZone: branding?.timeZone || "Europe/Berlin",
+      defaultLanguage: branding?.defaultLanguage || "en",
+      timeZone: branding?.timeZone || "UTC",
       footerLinks: branding?.footerLinks || [
-        { id: "api-ref", label: "API-Referenz", url: "/api/reference", newTab: true },
+        { id: "api-ref", label: "API Reference", url: "/api/reference", newTab: true },
         { id: "github", label: "GitHub", url: "https://github.com/Midnight-Panel/panel", newTab: true },
       ],
       primaryColor: branding?.primaryColor || "#465FFF",
@@ -106,7 +107,7 @@ export default function AdminCustomizerPage() {
       loginBackgroundType: branding?.loginBackgroundType || "gradient",
       loginBackgroundValue:
         branding?.loginBackgroundValue ||
-        "linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)",
+        "linear-gradient(135deg, #0e0e10 0%, #1c1c22 50%, #0e0e10 100%)",
       customCss: branding?.customCss || "",
     },
   });
@@ -116,11 +117,11 @@ export default function AdminCustomizerPage() {
     name: "footerLinks",
   });
 
-  // Synchronisiere Formularwerte, wenn Branding geladen oder neu geladen wird
+  // Sync form values when branding is loaded or reloaded
   useEffect(() => {
     if (branding) {
       const defaultLinks = [
-        { id: "api-ref", label: "API-Referenz", url: "/api/reference", newTab: true },
+        { id: "api-ref", label: "API Reference", url: "/api/reference", newTab: true },
         { id: "github", label: "GitHub", url: "https://github.com/Midnight-Panel/panel", newTab: true },
       ];
 
@@ -128,19 +129,19 @@ export default function AdminCustomizerPage() {
         panelName: branding.panelName,
         slogan: branding.slogan || "Game Server Management",
         panelUrl: branding.panelUrl || "http://localhost:5220",
-        defaultLanguage: branding.defaultLanguage || "de",
-        timeZone: branding.timeZone || "Europe/Berlin",
+        defaultLanguage: branding.defaultLanguage || "en",
+        timeZone: branding.timeZone || "UTC",
         footerLinks: branding.footerLinks && branding.footerLinks.length > 0 ? branding.footerLinks : defaultLinks,
         primaryColor: branding.primaryColor,
         accentColor: branding.accentColor,
         loginBackgroundType: branding.loginBackgroundType,
         loginBackgroundValue: branding.loginBackgroundValue,
         customCss: branding.customCss || "",
-      });
+      }, { keepDirtyValues: true });
     }
   }, [branding, reset]);
 
-  // Schutz vor Datenverlust beim Verlassen der Seite
+  // Guard against data loss when leaving the page
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -154,7 +155,7 @@ export default function AdminCustomizerPage() {
 
   const liveValues = watch();
 
-  // Prüfen, ob ein bestimmter Tab ungespeicherte Änderungen hat
+  // Check whether a given tab has unsaved changes
   const isTabDirty = (tab: SectionTab): boolean => {
     switch (tab) {
       case "general":
@@ -182,12 +183,17 @@ export default function AdminCustomizerPage() {
     setValue("accentColor", preset.accentColor, { shouldDirty: true, shouldValidate: true });
     setValue("loginBackgroundType", "gradient", { shouldDirty: true, shouldValidate: true });
     setValue("loginBackgroundValue", preset.gradient, { shouldDirty: true, shouldValidate: true });
-    toast.success(`Theme-Preset "${preset.name}" angewendet!`);
+    toast.success(`Theme preset "${preset.name}" applied.`);
   };
 
   const handleAddFooterLink = () => {
     if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
-      toast.error("Bitte Bezeichnung und URL eingeben.");
+      toast.error("Please enter a label and URL.");
+      return;
+    }
+
+    if (!isSafeLink(newLinkUrl.trim())) {
+      toast.error("URL must start with /, http:// or https://.");
       return;
     }
 
@@ -201,7 +207,7 @@ export default function AdminCustomizerPage() {
     setNewLinkLabel("");
     setNewLinkUrl("");
     setNewLinkNewTab(true);
-    toast.success("Link zur Fußzeile hinzugefügt.");
+    toast.success("Link added to footer.");
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -220,13 +226,12 @@ export default function AdminCustomizerPage() {
         loginBackgroundValue: values.loginBackgroundValue ?? null,
         customCss: values.customCss ?? null,
       });
-      toast.success("Branding-Einstellungen erfolgreich gespeichert!");
+      toast.success("Branding settings saved.");
       await reload();
-    } catch (err: any) {
+    } catch (err) {
       toast.error(
-        err?.detail ||
-          err?.message ||
-          "Fehler beim Speichern der Branding-Einstellungen.",
+        (err instanceof Error && err.message) ||
+          "Failed to save branding settings.",
       );
     } finally {
       setSaving(false);
@@ -243,10 +248,10 @@ export default function AdminCustomizerPage() {
     if (scope === "all") {
       try {
         await brandingApi.reset();
-        toast.success("Alle Branding-Einstellungen auf Standard zurückgesetzt!");
+        toast.success("All branding settings reset to defaults.");
         await reload();
-      } catch (err: any) {
-        toast.error(err?.detail || err?.message || "Fehler beim Zurücksetzen.");
+      } catch (err) {
+        toast.error((err instanceof Error && err.message) || "Failed to reset.");
       }
       return;
     }
@@ -257,10 +262,10 @@ export default function AdminCustomizerPage() {
       setValue("loginBackgroundType", "gradient", { shouldDirty: true });
       setValue(
         "loginBackgroundValue",
-        "linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)",
+        "linear-gradient(135deg, #0e0e10 0%, #1c1c22 50%, #0e0e10 100%)",
         { shouldDirty: true },
       );
-      toast.info("Farben und Verlauf zurückgesetzt. Speichere, um zu bestätigen.");
+      toast.info("Colors and gradient reset. Save to confirm.");
       return;
     }
 
@@ -269,24 +274,24 @@ export default function AdminCustomizerPage() {
         await brandingApi.deleteLogo("light");
         await brandingApi.deleteLogo("dark");
         await brandingApi.deleteFavicon();
-        toast.success("Logos und Favicon auf Standard zurückgesetzt!");
+        toast.success("Logos and favicon reset to defaults.");
         await reload();
-      } catch (err: any) {
-        toast.error(err?.detail || err?.message || "Fehler beim Entfernen der Grafiken.");
+      } catch (err) {
+        toast.error((err instanceof Error && err.message) || "Failed to remove images.");
       }
       return;
     }
 
     if (scope === "css") {
       setValue("customCss", "", { shouldDirty: true });
-      toast.info("Custom CSS geleert. Speichere, um die Änderung zu aktivieren.");
+      toast.info("Custom CSS cleared. Save to apply.");
       return;
     }
   };
 
   if (loading && !branding) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-800">
           <div className="space-y-2">
             <Skeleton className="h-8 w-64 rounded-lg" />
@@ -308,8 +313,8 @@ export default function AdminCustomizerPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1540px] mx-auto space-y-6">
-      {/* Seitenkopf */}
+    <div className="space-y-6">
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-gray-200 dark:border-gray-800">
         <div>
           <div className="flex items-center gap-2.5">
@@ -321,15 +326,15 @@ export default function AdminCustomizerPage() {
             </h1>
             <Badge variant="light" color="primary" size="sm" className="hidden sm:inline-flex">
               <SparkIcon className="size-3 mr-1 text-brand-400" />
-              Live-Vorschau aktiv
+              Live preview
             </Badge>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Passe das visuelle Erscheinungsbild, Logos, Farben und Texte deines Panels an.
+            Customize your panel's look, logos, colors and text.
           </p>
         </div>
 
-        {/* Überlaufmenü "Optionen" */}
+        {/* "Options" overflow menu */}
         <div className="relative flex items-center gap-2">
           <Button
             type="button"
@@ -339,7 +344,7 @@ export default function AdminCustomizerPage() {
             className="text-xs text-gray-700 dark:text-gray-300 font-medium"
           >
             <HorizontalDotsIcon className="size-4 mr-1.5 text-gray-500" />
-            Optionen
+            Options
             <ChevronDownIcon className="size-3.5 ml-1 text-gray-400" />
           </Button>
 
@@ -353,21 +358,21 @@ export default function AdminCustomizerPage() {
                 onClick={() => handleOpenReset("colors")}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 transition"
               >
-                Farben & Presets zurücksetzen
+                Reset colors & presets
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenReset("logos")}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 transition"
               >
-                Logos & Favicon zurücksetzen
+                Reset logos & favicon
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenReset("css")}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 transition"
               >
-                Custom CSS leeren
+                Clear custom CSS
               </button>
               <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
               <button
@@ -375,14 +380,14 @@ export default function AdminCustomizerPage() {
                 onClick={() => handleOpenReset("all")}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 font-medium transition"
               >
-                Alles auf Werkseinstellungen...
+                Reset all to factory defaults...
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Kollabierbare Vorschau unter 1100px */}
+      {/* Collapsible preview below 1100px */}
       <div className="min-[1101px]:hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02] p-3.5">
         <button
           type="button"
@@ -391,7 +396,7 @@ export default function AdminCustomizerPage() {
         >
           <span className="flex items-center gap-2">
             <EyeIcon className="size-4 text-brand-500" />
-            <span>Live-Vorschau {previewCollapsed ? "einblenden" : "ausblenden"}</span>
+            <span>{previewCollapsed ? "Show" : "Hide"} live preview</span>
           </span>
           {previewCollapsed ? <ChevronDownIcon className="size-4" /> : <ChevronUpIcon className="size-4" />}
         </button>
@@ -413,23 +418,23 @@ export default function AdminCustomizerPage() {
         )}
       </div>
 
-      {/* Zweispaltiges Layout: Links Einstellungen (max ~720px), Rechts Sticky Live-Vorschau */}
+      {/* Two-column layout: settings left (max ~720px), sticky live preview right */}
       <div className="flex flex-col min-[1101px]:flex-row gap-8 items-start">
-        {/* Linke Spalte (max ca. 720px) */}
+        {/* Left column (max ~720px) */}
         <div className="w-full min-[1101px]:max-w-[720px] flex-1 space-y-6">
-          {/* Underline-Navigation mit animiertem Indikator & Dirty-Dot */}
+          {/* Underline navigation with animated indicator & dirty dot */}
           <div className="flex items-center gap-6 border-b border-gray-200 dark:border-gray-800 text-sm overflow-x-auto scrollbar-none">
             <button
               type="button"
               onClick={() => setActiveTab("general")}
-              className={`relative py-3.5 font-medium transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+              className={`relative py-3.5 font-medium whitespace-nowrap transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
                 activeTab === "general"
                   ? "text-gray-900 dark:text-white font-semibold"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <LayoutIcon className="size-4" />
-              <span>Allgemein</span>
+              <span>General</span>
               {isTabDirty("general") && (
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse ml-0.5" />
               )}
@@ -441,14 +446,14 @@ export default function AdminCustomizerPage() {
             <button
               type="button"
               onClick={() => setActiveTab("colors")}
-              className={`relative py-3.5 font-medium transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+              className={`relative py-3.5 font-medium whitespace-nowrap transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
                 activeTab === "colors"
                   ? "text-gray-900 dark:text-white font-semibold"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <SparkIcon className="size-4" />
-              <span>Farben & Presets</span>
+              <span>Colors & presets</span>
               {isTabDirty("colors") && (
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse ml-0.5" />
               )}
@@ -460,7 +465,7 @@ export default function AdminCustomizerPage() {
             <button
               type="button"
               onClick={() => setActiveTab("logos")}
-              className={`relative py-3.5 font-medium transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+              className={`relative py-3.5 font-medium whitespace-nowrap transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
                 activeTab === "logos"
                   ? "text-gray-900 dark:text-white font-semibold"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
@@ -476,14 +481,14 @@ export default function AdminCustomizerPage() {
             <button
               type="button"
               onClick={() => setActiveTab("login")}
-              className={`relative py-3.5 font-medium transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+              className={`relative py-3.5 font-medium whitespace-nowrap transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
                 activeTab === "login"
                   ? "text-gray-900 dark:text-white font-semibold"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <LockIcon className="size-4" />
-              <span>Login-Seite</span>
+              <span>Login page</span>
               {isTabDirty("login") && (
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse ml-0.5" />
               )}
@@ -495,7 +500,7 @@ export default function AdminCustomizerPage() {
             <button
               type="button"
               onClick={() => setActiveTab("css")}
-              className={`relative py-3.5 font-medium transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+              className={`relative py-3.5 font-medium whitespace-nowrap transition-colors cursor-pointer select-none flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
                 activeTab === "css"
                   ? "text-gray-900 dark:text-white font-semibold"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
@@ -513,17 +518,17 @@ export default function AdminCustomizerPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* TAB: ALLGEMEIN */}
+            {/* TAB: GENERAL */}
             {activeTab === "general" && (
               <div className="space-y-6">
-                {/* Sektion 1: Panel-Identität */}
+                {/* Section 1: Panel identity */}
                 <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-5">
                   <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                     <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                      Panel-Identität
+                      Panel identity
                     </h3>
                     <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      Name, Slogan und öffentliche Webadresse deines Panels
+                      Name, slogan and public web address of your panel
                     </p>
                   </div>
 
@@ -533,7 +538,7 @@ export default function AdminCustomizerPage() {
                         htmlFor="panelName"
                         className="block text-sm font-semibold text-gray-900 dark:text-gray-100"
                       >
-                        Panel-Name
+                        Panel name
                       </label>
                       <input
                         id="panelName"
@@ -546,7 +551,7 @@ export default function AdminCustomizerPage() {
                         <p className="text-xs text-red-500">{errors.panelName.message}</p>
                       ) : (
                         <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                          Wird im Browser-Tab, in der Navigation und in E-Mails verwendet.
+                          Used in the browser tab, navigation and emails.
                         </p>
                       )}
                     </div>
@@ -556,7 +561,7 @@ export default function AdminCustomizerPage() {
                         htmlFor="slogan"
                         className="block text-sm font-semibold text-gray-900 dark:text-gray-100"
                       >
-                        Kurzbeschreibung / Slogan
+                        Tagline / slogan
                       </label>
                       <input
                         id="slogan"
@@ -566,7 +571,7 @@ export default function AdminCustomizerPage() {
                         className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-4 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:focus:bg-transparent"
                       />
                       <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                        Erscheint als Untertitel auf der Login-Seite und in System-E-Mails.
+                        Shown as a subtitle on the login page and in system emails.
                       </p>
                     </div>
 
@@ -575,7 +580,7 @@ export default function AdminCustomizerPage() {
                         htmlFor="panelUrl"
                         className="block text-sm font-semibold text-gray-900 dark:text-gray-100"
                       >
-                        Panel-URL
+                        Panel URL
                       </label>
                       <input
                         id="panelUrl"
@@ -585,20 +590,20 @@ export default function AdminCustomizerPage() {
                         className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-4 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:focus:bg-transparent"
                       />
                       <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                        Öffentliche URL des Panels für Daemon-Verbindungen und Einladungslinks.
+                        Public panel URL for daemon connections and invite links.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Sektion 2: Sprache & Region */}
+                {/* Section 2: Language & region */}
                 <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-5">
                   <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                     <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                      Sprache & Region
+                      Language & region
                     </h3>
                     <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      Standardsprache für neue Besucher und regionale Zeitzone
+                      Default language for new visitors and regional time zone
                     </p>
                   </div>
 
@@ -608,18 +613,17 @@ export default function AdminCustomizerPage() {
                         htmlFor="defaultLanguage"
                         className="block text-sm font-semibold text-gray-900 dark:text-gray-100"
                       >
-                        Standardsprache
+                        Default language
                       </label>
                       <select
                         id="defaultLanguage"
                         {...register("defaultLanguage")}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-[#111827] dark:text-white"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-[#161619] dark:text-white"
                       >
-                        <option value="de">Deutsch (de)</option>
                         <option value="en">English (en)</option>
                       </select>
                       <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                        Voreingestellte Sprache für neue Konten und Login.
+                        Preset language for new accounts and login.
                       </p>
                     </div>
 
@@ -628,12 +632,12 @@ export default function AdminCustomizerPage() {
                         htmlFor="timeZone"
                         className="block text-sm font-semibold text-gray-900 dark:text-gray-100"
                       >
-                        Zeitzone
+                        Time zone
                       </label>
                       <select
                         id="timeZone"
                         {...register("timeZone")}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-[#111827] dark:text-white"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-[#161619] dark:text-white"
                       >
                         <option value="Europe/Berlin">Europe/Berlin (UTC+1 / UTC+2)</option>
                         <option value="Europe/Vienna">Europe/Vienna (UTC+1 / UTC+2)</option>
@@ -641,27 +645,27 @@ export default function AdminCustomizerPage() {
                         <option value="Europe/London">Europe/London (UTC+0 / UTC+1)</option>
                         <option value="America/New_York">America/New_York (UTC-5 / UTC-4)</option>
                         <option value="America/Los_Angeles">America/Los_Angeles (UTC-8 / UTC-7)</option>
-                        <option value="UTC">UTC (Koordiniert)</option>
+                        <option value="UTC">UTC (Coordinated)</option>
                       </select>
                       <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                        Genutzt für Backup-Zeitpläne und Log-Zeitstempel.
+                        Used for backup schedules and log timestamps.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Sektion 3: Footer & Externe Links */}
+                {/* Section 3: Footer & external links */}
                 <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-5">
                   <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                     <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                      Footer & Externe Links
+                      Footer & external links
                     </h3>
                     <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      Links im Dashboard-Footer (z.&nbsp;B. Discord, Dokumentation oder Status-Seite). System-Links erscheinen garantiert nur einmal.
+                      Links in the dashboard footer (e.g. Discord, docs or status page). System links are guaranteed to appear only once.
                     </p>
                   </div>
 
-                  {/* Liste vorhandener Links */}
+                  {/* Existing links */}
                   <div className="space-y-2.5">
                     {footerLinkFields.map((field, idx) => (
                       <div
@@ -674,7 +678,7 @@ export default function AdminCustomizerPage() {
                             <input
                               type="text"
                               {...register(`footerLinks.${idx}.label`)}
-                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-gray-900 dark:text-white"
                             />
                           </div>
                           <div>
@@ -682,7 +686,7 @@ export default function AdminCustomizerPage() {
                             <input
                               type="text"
                               {...register(`footerLinks.${idx}.url`)}
-                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-gray-900 dark:text-white"
                             />
                           </div>
                         </div>
@@ -694,7 +698,7 @@ export default function AdminCustomizerPage() {
                               {...register(`footerLinks.${idx}.newTab`)}
                               className="rounded text-brand-500 focus:ring-brand-500"
                             />
-                            <span>Neuer Tab</span>
+                            <span>New tab</span>
                           </label>
 
                           <button
@@ -702,7 +706,7 @@ export default function AdminCustomizerPage() {
                             onClick={() => idx > 0 && move(idx, idx - 1)}
                             disabled={idx === 0}
                             className="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 hover:text-white disabled:opacity-30"
-                            title="Nach oben verschieben"
+                            title="Move up"
                           >
                             <ArrowUpIcon className="size-3.5" />
                           </button>
@@ -712,7 +716,7 @@ export default function AdminCustomizerPage() {
                             onClick={() => idx < footerLinkFields.length - 1 && move(idx, idx + 1)}
                             disabled={idx === footerLinkFields.length - 1}
                             className="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 hover:text-white disabled:opacity-30"
-                            title="Nach unten verschieben"
+                            title="Move down"
                           >
                             <ArrowDownIcon className="size-3.5" />
                           </button>
@@ -721,7 +725,7 @@ export default function AdminCustomizerPage() {
                             type="button"
                             onClick={() => remove(idx)}
                             className="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-red-500 hover:bg-red-500/10"
-                            title="Link entfernen"
+                            title="Remove link"
                           >
                             <TrashBinIcon className="size-3.5" />
                           </button>
@@ -730,25 +734,25 @@ export default function AdminCustomizerPage() {
                     ))}
                   </div>
 
-                  {/* Neuen Link hinzufügen */}
+                  {/* Add new link */}
                   <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-white/[0.01] space-y-3">
                     <span className="text-xs font-semibold text-gray-900 dark:text-white block">
-                      + Weiteren Link hinzufügen
+                      + Add another link
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <input
                         type="text"
                         value={newLinkLabel}
                         onChange={(e) => setNewLinkLabel(e.target.value)}
-                        placeholder="Link-Name (z. B. Discord)"
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                        placeholder="Link name (e.g. Discord)"
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-gray-900 dark:text-white"
                       />
                       <input
                         type="text"
                         value={newLinkUrl}
                         onChange={(e) => setNewLinkUrl(e.target.value)}
                         placeholder="https://..."
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-white/10 dark:bg-gray-900 dark:text-white"
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -759,7 +763,7 @@ export default function AdminCustomizerPage() {
                           onChange={(e) => setNewLinkNewTab(e.target.checked)}
                           className="rounded text-brand-500 focus:ring-brand-500"
                         />
-                        <span>In neuem Tab öffnen</span>
+                        <span>Open in new tab</span>
                       </label>
                       <Button
                         type="button"
@@ -769,7 +773,7 @@ export default function AdminCustomizerPage() {
                         className="text-xs font-medium"
                       >
                         <PlusIcon className="size-3.5 mr-1" />
-                        Hinzufügen
+                        Add
                       </Button>
                     </div>
                   </div>
@@ -777,16 +781,16 @@ export default function AdminCustomizerPage() {
               </div>
             )}
 
-            {/* TAB: FARBEN & PRESETS */}
+            {/* TAB: COLORS & PRESETS */}
             {activeTab === "colors" && (
               <div className="space-y-6">
                 <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-4">
                   <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                     <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                      Themen-Presets
+                      Theme presets
                     </h3>
                     <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      Vordefinierte, kontrastgeprüfte Farbkombinationen mit einem Klick aktivieren
+                      Apply predefined, contrast-checked color combinations in one click
                     </p>
                   </div>
 
@@ -837,10 +841,10 @@ export default function AdminCustomizerPage() {
                 <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-5">
                   <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                     <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                      Individuelle Farbwerte
+                      Custom colors
                     </h3>
                     <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      Primär- und Akzentfarbe für Schaltflächen, Badges und Interaktionselemente
+                      Primary and accent color for buttons, badges and interactive elements
                     </p>
                   </div>
 
@@ -850,8 +854,8 @@ export default function AdminCustomizerPage() {
                       control={control}
                       render={({ field }) => (
                         <ColorPicker
-                          label="Primärfarbe"
-                          description="Hauptschaltflächen, aktive Menüpunkte und Links"
+                          label="Primary color"
+                          description="Main buttons, active menu items and links"
                           value={field.value}
                           onChange={(val) => field.onChange(val)}
                         />
@@ -863,8 +867,8 @@ export default function AdminCustomizerPage() {
                       control={control}
                       render={({ field }) => (
                         <ColorPicker
-                          label="Akzentfarbe"
-                          description="Status-Badges, Highlights und sekundäre Aktionen"
+                          label="Accent color"
+                          description="Status badges, highlights and secondary actions"
                           value={field.value}
                           onChange={(val) => field.onChange(val)}
                         />
@@ -883,23 +887,23 @@ export default function AdminCustomizerPage() {
                     Logos & Favicon
                   </h3>
                   <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    Lade hochauflösende Logodateien für helle und dunkle Umgebungen hoch
+                    Upload high-resolution logos for light and dark themes
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <LogoUploadCard
                     type="light"
-                    title="Helles Logo"
-                    description="Wird auf hellen Hintergründen und in E-Mails gerendert"
+                    title="Light logo"
+                    description="Rendered on light backgrounds and in emails"
                     currentUrl={branding?.logoLightUrl}
                     onSuccess={reload}
                   />
 
                   <LogoUploadCard
                     type="dark"
-                    title="Dunkles Logo"
-                    description="Wird im dunklen Dashboard-Thema und der Sidebar genutzt"
+                    title="Dark logo"
+                    description="Used in the dark dashboard theme and sidebar"
                     currentUrl={branding?.logoDarkUrl}
                     onSuccess={reload}
                   />
@@ -908,7 +912,7 @@ export default function AdminCustomizerPage() {
                     <LogoUploadCard
                       type="favicon"
                       title="Favicon"
-                      description="Symbol für Browser-Tabs und Lesezeichen (optimal 32x32 oder 64x64)"
+                      description="Icon for browser tabs and bookmarks (ideally 32x32 or 64x64)"
                       currentUrl={branding?.faviconUrl}
                       onSuccess={reload}
                     />
@@ -917,21 +921,21 @@ export default function AdminCustomizerPage() {
               </div>
             )}
 
-            {/* TAB: LOGIN-SEITE */}
+            {/* TAB: LOGIN PAGE */}
             {activeTab === "login" && (
               <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-6">
                 <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                   <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                    Login-Seiten Hintergrund
+                    Login page background
                   </h3>
                   <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    Wähle zwischen einem fließenden Farbverlauf, einem Hintergrundbild oder neutralem Design
+                    Choose a smooth gradient, a background image or a neutral design
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Hintergrund-Modus
+                    Background mode
                   </label>
                   <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5">
                     <button
@@ -943,7 +947,7 @@ export default function AdminCustomizerPage() {
                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
-                      Verlauf
+                      Gradient
                     </button>
                     <button
                       type="button"
@@ -954,7 +958,7 @@ export default function AdminCustomizerPage() {
                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
-                      Keiner
+                      None
                     </button>
                     <button
                       type="button"
@@ -965,7 +969,7 @@ export default function AdminCustomizerPage() {
                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
-                      Bild
+                      Image
                     </button>
                   </div>
                 </div>
@@ -978,7 +982,7 @@ export default function AdminCustomizerPage() {
                       <GradientEditor
                         value={
                           field.value ||
-                          "linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)"
+                          "linear-gradient(135deg, #0e0e10 0%, #1c1c22 50%, #0e0e10 100%)"
                         }
                         onChange={(val) => field.onChange(val)}
                       />
@@ -989,7 +993,7 @@ export default function AdminCustomizerPage() {
                 {liveValues.loginBackgroundType === "image" && (
                   <div className="space-y-3">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Bild-URL
+                      Image URL
                     </label>
                     <Controller
                       name="loginBackgroundValue"
@@ -1005,14 +1009,14 @@ export default function AdminCustomizerPage() {
                       )}
                     />
                     <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                      Gib eine HTTPS-Bildadresse ein. Das Bild wird mit einem dezenten dunklen Overlay versehen, um Lesbarkeit zu garantieren.
+                      Enter an HTTPS image URL. A subtle dark overlay is applied to keep text readable.
                     </p>
                   </div>
                 )}
 
                 {liveValues.loginBackgroundType === "none" && (
                   <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 text-center text-xs text-gray-500">
-                    Die Login-Seite verwendet das standardmäßige minimalistische Midnight-Theme ohne Verläufe.
+                    The login page uses the default minimal Midnight theme without gradients.
                   </div>
                 )}
               </div>
@@ -1023,10 +1027,10 @@ export default function AdminCustomizerPage() {
               <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-5 sm:p-6 space-y-5">
                 <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3">
                   <h3 className="font-outfit font-semibold text-base text-gray-900 dark:text-white">
-                    Erweitertes Custom CSS
+                    Advanced custom CSS
                   </h3>
                   <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    Füge individuelle CSS-Regeln zur Anpassung von Schriftarten, Rändern oder Karten ein
+                    Add your own CSS rules to customize fonts, borders or cards
                   </p>
                 </div>
 
@@ -1046,7 +1050,7 @@ export default function AdminCustomizerPage() {
           </form>
         </div>
 
-        {/* Rechte Spalte: Sticky Live-Vorschau (ab 1101px) */}
+        {/* Right column: sticky live preview (from 1101px) */}
         <div className="hidden min-[1101px]:block w-[420px] xl:w-[460px] shrink-0 sticky top-24 self-start space-y-4">
           <LivePreview
             panelName={liveValues.panelName || "Midnight Panel"}
@@ -1062,14 +1066,14 @@ export default function AdminCustomizerPage() {
         </div>
       </div>
 
-      {/* STICKY BOTTOM ACTION BAR (Erscheint nur bei ungespeicherten Änderungen) */}
+      {/* STICKY BOTTOM ACTION BAR (only shown with unsaved changes) */}
       {isDirty && (
         <div className="fixed bottom-6 inset-x-0 z-40 max-w-xl mx-auto px-4 animate-in fade-in-0 slide-in-from-bottom-5 duration-200">
-          <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-brand-500/30 bg-gray-900/95 dark:bg-[#0B0F19]/95 text-white shadow-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-brand-500/30 bg-gray-900/95 dark:bg-[#0e0e10]/95 text-white shadow-2xl backdrop-blur-md">
             <div className="flex items-center gap-2.5 pl-2">
               <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
               <span className="text-xs sm:text-sm font-medium">
-                Ungespeicherte Änderungen vorhanden
+                You have unsaved changes
               </span>
             </div>
 
@@ -1084,8 +1088,8 @@ export default function AdminCustomizerPage() {
                       panelName: branding.panelName,
                       slogan: branding.slogan || "Game Server Management",
                       panelUrl: branding.panelUrl || "http://localhost:5220",
-                      defaultLanguage: branding.defaultLanguage || "de",
-                      timeZone: branding.timeZone || "Europe/Berlin",
+                      defaultLanguage: branding.defaultLanguage || "en",
+                      timeZone: branding.timeZone || "UTC",
                       footerLinks: branding.footerLinks || [],
                       primaryColor: branding.primaryColor,
                       accentColor: branding.accentColor,
@@ -1094,12 +1098,12 @@ export default function AdminCustomizerPage() {
                       customCss: branding.customCss || "",
                     });
                   }
-                  toast.info("Änderungen verworfen.");
+                  toast.info("Changes discarded.");
                 }}
                 disabled={saving}
                 className="h-8 text-xs text-gray-300 hover:text-white hover:bg-white/10"
               >
-                Verwerfen
+                Discard
               </Button>
 
               <Button
@@ -1110,14 +1114,14 @@ export default function AdminCustomizerPage() {
                 className="h-8 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white shadow-xs"
               >
                 <FloppyDiscIcon className="size-3.5 mr-1" />
-                {saving ? "Wird gespeichert..." : "Änderungen speichern"}
+                {saving ? "Saving..." : "Save changes"}
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Granularer Reset-Modal */}
+      {/* Granular reset modal */}
       <ResetModal
         open={resetModalOpen}
         onOpenChange={setResetModalOpen}

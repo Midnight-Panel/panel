@@ -45,64 +45,67 @@ public class RestoreService : IRestoreService
     {
         if (!_fileSystem.FileExists(archivePath))
         {
-            _console.WriteError($"Backup-Archiv wurde nicht gefunden: {archivePath}");
+            _console.WriteError($"Backup archive not found: {archivePath}");
             return false;
         }
 
         _console.WriteHeader("Midnight Restore");
 
-        // 1. Prüfsumme prüfen (falls .sha256 vorhanden)
+        // 1. Verify checksum (if .sha256 exists)
         var sha256File = $"{archivePath}.sha256";
         if (_fileSystem.FileExists(sha256File))
         {
-            _console.WriteInfo("Validiere SHA-256 Prüfsumme...");
+            _console.WriteInfo("Validating SHA-256 checksum...");
             var expectedLine = (await _fileSystem.ReadAllTextAsync(sha256File)).Trim();
             var expectedHash = expectedLine.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
             var actualHash = await _fileSystem.ComputeSha256Async(archivePath);
 
             if (!string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase))
             {
-                _console.WriteError($"Prüfsummen-Fehler! Erwartet: {expectedHash}, Berechnet: {actualHash}");
+                _console.WriteError($"Checksum mismatch! Expected: {expectedHash}, computed: {actualHash}");
                 return false;
             }
-            _console.WriteSuccess("SHA-256 Prüfsumme stimmt überein.");
+            _console.WriteSuccess("SHA-256 checksum matches.");
         }
 
         var tempWorkDir = Path.Combine(Path.GetTempPath(), $"midnight-restore-{Guid.NewGuid():N}");
         _fileSystem.CreateDirectory(tempWorkDir);
 
+        // Holds the decrypted archive, .env and database dump while restoring
+        await _fileSystem.SetPermissionsAsync(tempWorkDir, "700");
+
         try
         {
             var workingTarGz = archivePath;
 
-            // 2. Entschlüsseln, falls .enc
+            // 2. Decrypt if .enc
             if (archivePath.EndsWith(".enc", StringComparison.OrdinalIgnoreCase))
             {
-                _console.WriteInfo("Verschlüsseltes Backup erkannt. Entschlüssele...");
+                _console.WriteInfo("Encrypted backup detected. Decrypting...");
                 var secretKey = passphrase ?? Environment.GetEnvironmentVariable("MIDNIGHT_BACKUP_PASSPHRASE");
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    secretKey = _console.Ask("Passphrase für die Entschlüsselung eingeben", isPassword: true);
+                    secretKey = _console.Ask("Enter passphrase for decryption", isPassword: true);
                 }
 
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    _console.WriteError("Keine Passphrase angegeben. Restore abgebrochen.");
+                    _console.WriteError("No passphrase provided. Restore aborted.");
                     return false;
                 }
 
                 workingTarGz = Path.Combine(tempWorkDir, "decrypted.tar.gz");
                 await DecryptFileAsync(archivePath, workingTarGz, secretKey);
-                _console.WriteSuccess("Archiv erfolgreich entschlüsselt.");
+                _console.WriteSuccess("Archive decrypted successfully.");
             }
 
-            // 3. Archiv in temporäres Verzeichnis entpacken
-            _console.WriteInfo("Entpacke Backup-Dateien...");
+            // 3. Extract archive into a temporary directory
+            _console.WriteInfo("Extracting backup files...");
             var extractDir = Path.Combine(tempWorkDir, "extracted");
             _fileSystem.CreateDirectory(extractDir);
             await _fileSystem.ExtractTarGzAsync(workingTarGz, extractDir);
 
-            // 4. Manifest prüfen & Zusammenfassung anzeigen
+            // 4. Check manifest & show summary
             var manifestPath = Path.Combine(extractDir, "manifest.json");
             BackupManifest? manifest = null;
             if (_fileSystem.FileExists(manifestPath))
@@ -112,60 +115,60 @@ public class RestoreService : IRestoreService
             }
 
             _console.WriteLine();
-            _console.WriteLine("═══ WIEDERHERSTELLUNGS-ZUSAMMENFASSUNG ═══");
-            _console.WriteLine($"Archiv:          {Path.GetFileName(archivePath)}");
-            _console.WriteLine($"Erstellt am:     {manifest?.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss UTC") ?? "unbekannt"}");
-            _console.WriteLine($"Panel-Version:   {manifest?.PanelVersion ?? "unbekannt"}");
-            _console.WriteLine($"Datenbank:       {manifest?.DatabaseProvider ?? "PostgreSQL"}");
-            _console.WriteLine("Zielpfade:       /opt/midnight/panel (.env, storage, db.sql -> Postgres)");
+            _console.WriteLine("═══ RESTORE SUMMARY ═══");
+            _console.WriteLine($"Archive:         {Path.GetFileName(archivePath)}");
+            _console.WriteLine($"Created at:      {manifest?.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss UTC") ?? "unknown"}");
+            _console.WriteLine($"Panel version:   {manifest?.PanelVersion ?? "unknown"}");
+            _console.WriteLine($"Database:        {manifest?.DatabaseProvider ?? "PostgreSQL"}");
+            _console.WriteLine("Target paths:    /opt/midnight/panel (.env, storage, db.sql -> Postgres)");
             _console.WriteLine("══════════════════════════════════════════");
             _console.WriteLine();
 
-            // 5. Bestätigung anfordern (außer -y)
+            // 5. Ask for confirmation (unless -y)
             var confirmed = _console.Confirm(
-                "Möchtest du das Panel und die Datenbank wirklich aus diesem Backup wiederherstellen?",
+                "Do you really want to restore the panel and database from this backup?",
                 defaultYes: false);
 
             if (!confirmed)
             {
-                _console.WriteWarning("Wiederherstellung durch Benutzer abgebrochen.");
+                _console.WriteWarning("Restore aborted by user.");
                 return false;
             }
 
-            // 6. Automatische Sicherheits-Sicherung vor dem Überschreiben
-            _console.WriteInfo("Erstelle automatisches Sicherheits-Backup des aktuellen Zustands...");
+            // 6. Automatic safety backup before overwriting
+            _console.WriteInfo("Creating automatic safety backup of the current state...");
             await _backupService.CreateBackupAsync(prefix: "midnight-backup-pre-restore", cancellationToken: cancellationToken);
-            _console.WriteSuccess("Sicherheits-Backup gespeichert.");
+            _console.WriteSuccess("Safety backup saved.");
 
-            // 7. Stack stoppen
-            _console.WriteInfo("Stoppe aktuellen Docker-Compose-Stack...");
+            // 7. Stop the stack
+            _console.WriteInfo("Stopping current Docker Compose stack...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml down", isMutating: true, cancellationToken: cancellationToken);
 
-            // 8. Datenbank-Container isoliert starten für Restore
-            _console.WriteInfo("Starte Datenbank für Datenwiederherstellung...");
+            // 8. Start the database container on its own for the restore
+            _console.WriteInfo("Starting database for data restore...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml up -d db", isMutating: true, cancellationToken: cancellationToken);
 
-            // Warten bis PostgreSQL bereit ist
+            // Wait until PostgreSQL is ready
             await Task.Delay(3000, cancellationToken);
 
-            // 9. SQL-Dump einspielen
+            // 9. Import SQL dump
             var dbDump = Path.Combine(extractDir, "db.sql");
             if (_fileSystem.FileExists(dbDump))
             {
-                _console.WriteInfo("Spiele PostgreSQL Datenbank-Dump ein...");
+                _console.WriteInfo("Importing PostgreSQL database dump...");
                 var restoreScript = $"docker compose -f /opt/midnight/panel/docker-compose.yml exec -T db psql -U midnight -d midnight < \"{dbDump}\"";
                 var dbRes = await _processRunner.RunBashAsync(restoreScript, isMutating: true, cancellationToken: cancellationToken);
                 if (!dbRes.Success && !_context.DryRun)
                 {
-                    _console.WriteWarning($"Warnung beim DB-Import: {dbRes.Output}");
+                    _console.WriteWarning($"Warning during DB import: {dbRes.Output}");
                 }
                 else
                 {
-                    _console.WriteSuccess("Datenbank erfolgreich wiederhergestellt.");
+                    _console.WriteSuccess("Database restored successfully.");
                 }
             }
 
-            // 10. .env und Konfigurationen wiederherstellen
+            // 10. Restore .env and configuration
             var extractedEnv = Path.Combine(extractDir, ".env");
             if (_fileSystem.FileExists(extractedEnv))
             {
@@ -173,7 +176,7 @@ public class RestoreService : IRestoreService
                 var envContent = await _fileSystem.ReadAllTextAsync(extractedEnv);
                 await _fileSystem.WriteAllTextAsync(targetEnv, envContent, isSecret: true);
                 await _fileSystem.SetPermissionsAsync(targetEnv, "600");
-                _console.WriteSuccess(".env-Datei wiederhergestellt (Rechte 600 gesetzt).");
+                _console.WriteSuccess(".env file restored (permissions set to 600).");
             }
 
             var extractedState = Path.Combine(extractDir, "midnight.json");
@@ -184,31 +187,31 @@ public class RestoreService : IRestoreService
                 await _fileSystem.SetPermissionsAsync(_stateService.StateFilePath, "600");
             }
 
-            // 11. Storage-Verzeichnis synchronisieren
+            // 11. Sync storage directory
             var extractedStorage = Path.Combine(extractDir, "storage");
             if (_fileSystem.DirectoryExists(extractedStorage))
             {
                 var targetStorage = "/opt/midnight/panel/storage";
                 _fileSystem.CreateDirectory(targetStorage);
                 await _processRunner.RunAsync("cp", $"-rT \"{extractedStorage}\" \"{targetStorage}\"", isMutating: true, cancellationToken: cancellationToken);
-                _console.WriteSuccess("Storage-Dateien wiederhergestellt.");
+                _console.WriteSuccess("Storage files restored.");
             }
 
-            // 12. Gesamten Stack neu starten
-            _console.WriteInfo("Starte vollständigen Midnight-Stack neu...");
+            // 12. Restart the whole stack
+            _console.WriteInfo("Restarting the full Midnight stack...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml up -d", isMutating: true, cancellationToken: cancellationToken);
 
-            // 13. Health-Check durchführen
-            _console.WriteInfo("Führe Health-Check des wiederhergestellten Panels aus...");
+            // 13. Run health check
+            _console.WriteInfo("Running health check on the restored panel...");
             var healthy = await WaitForHealthCheckAsync(cancellationToken);
 
             if (healthy)
             {
-                _console.WriteSuccess("Wiederherstellung erfolgreich abgeschlossen! Panel ist online und gesund.");
+                _console.WriteSuccess("Restore completed successfully! Panel is online and healthy.");
                 return true;
             }
 
-            _console.WriteError("Health-Check nach Wiederherstellung fehlgeschlagen!");
+            _console.WriteError("Health check failed after restore!");
             return false;
         }
         finally
@@ -223,7 +226,7 @@ public class RestoreService : IRestoreService
         {
             await Task.Delay(2000, cancellationToken);
             var res = await _processRunner.RunAsync("curl", "-fsS http://localhost:8080/api/health", cancellationToken: cancellationToken);
-            if (res.Success && res.StandardOutput.Contains("healthy", StringComparison.OrdinalIgnoreCase))
+            if (res.Success)
             {
                 return true;
             }
@@ -241,8 +244,7 @@ public class RestoreService : IRestoreService
         var iv = new byte[16];
         await inputStream.ReadExactlyAsync(iv);
 
-        using var kdf = new Rfc2898DeriveBytes(passphrase, salt, 100_000, HashAlgorithmName.SHA256);
-        var key = kdf.GetBytes(32);
+        var key = Rfc2898DeriveBytes.Pbkdf2(passphrase, salt, 100_000, HashAlgorithmName.SHA256, 32);
 
         using var aes = Aes.Create();
         aes.Key = key;

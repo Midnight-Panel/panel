@@ -35,9 +35,9 @@ export function CodeEditor({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-[#0B0F19] shadow-theme-xs dark:border-gray-800">
+    <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-[#0e0e10] shadow-theme-xs dark:border-gray-800">
       {/* Editor Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 bg-[#111827] px-4 py-2 text-xs">
+      <div className="flex items-center justify-between border-b border-gray-800 bg-[#161619] px-4 py-2 text-xs">
         <div className="flex items-center gap-2">
           <span className="flex gap-1.5">
             <span className="size-2.5 rounded-full bg-red-500/80" />
@@ -61,7 +61,7 @@ export function CodeEditor({
       {/* Editor Body with Line Numbers */}
       <div className="flex text-sm font-mono" style={{ minHeight }}>
         {/* Line Numbers */}
-        <div className="select-none bg-[#090D16] py-3 pr-3 pl-4 text-right text-xs text-gray-500 border-r border-gray-800 font-mono">
+        <div className="select-none bg-[#08080a] py-3 pr-3 pl-4 text-right text-xs text-gray-500 border-r border-gray-800 font-mono">
           {lineNumbers.map((num) => (
             <div key={num} className="leading-6">
               {num}
@@ -77,7 +77,7 @@ export function CodeEditor({
             readOnly={readOnly}
             placeholder={placeholder}
             spellCheck={false}
-            className="size-full resize-none border-0 bg-transparent p-3 font-mono text-sm leading-6 text-slate-200 outline-none placeholder:text-slate-600 focus:ring-0"
+            className="size-full resize-none border-0 bg-transparent p-3 font-mono text-sm leading-6 text-gray-200 outline-none placeholder:text-gray-600 focus:ring-0"
             style={{ minHeight }}
           />
         </div>

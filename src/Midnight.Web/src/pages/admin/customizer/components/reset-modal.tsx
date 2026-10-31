@@ -46,9 +46,9 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
           <div className="size-11 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-2">
             <AlertIcon className="size-6" />
           </div>
-          <DialogTitle className="text-lg font-outfit">Einstellungen zurücksetzen</DialogTitle>
+          <DialogTitle className="text-lg font-outfit">Reset settings</DialogTitle>
           <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
-            Wähle den Umfang der Zurücksetzung. Diese Aktion stellt die Standardwerte von Midnight Panel wieder her.
+            Choose what to reset. This restores the Midnight Panel defaults.
           </DialogDescription>
         </DialogHeader>
 
@@ -70,10 +70,10 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             />
             <div className="text-xs">
               <span className="font-semibold text-gray-900 dark:text-white block">
-                Alles zurücksetzen (Komplett)
+                Reset everything
               </span>
               <span className="text-gray-500 dark:text-gray-400 mt-0.5 block">
-                Stellt Standardfarben, Verlauf, Logos, Favicon und Custom CSS auf Werkszustand zurück.
+                Restores colors, gradient, logos, favicon and custom CSS to factory defaults.
               </span>
             </div>
           </label>
@@ -94,10 +94,10 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             />
             <div className="text-xs">
               <span className="font-semibold text-gray-900 dark:text-white block">
-                Nur Farben & Hintergrund
+                Colors & background only
               </span>
               <span className="text-gray-500 dark:text-gray-400 mt-0.5 block">
-                Setzt Primärfarbe (#465FFF), Akzentfarbe (#7C3AED) und den Login-Verlauf zurück. Logos bleiben erhalten.
+                Resets primary color (#465FFF), accent color (#7C3AED) and the login gradient. Logos are kept.
               </span>
             </div>
           </label>
@@ -118,10 +118,10 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             />
             <div className="text-xs">
               <span className="font-semibold text-gray-900 dark:text-white block">
-                Nur Logos & Favicon
+                Logos & favicon only
               </span>
               <span className="text-gray-500 dark:text-gray-400 mt-0.5 block">
-                Entfernt hochgeladene Logodateien und das Favicon und aktiviert die Midnight-Standardgrafiken.
+                Removes uploaded logos and the favicon and restores the default Midnight graphics.
               </span>
             </div>
           </label>
@@ -142,10 +142,10 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             />
             <div className="text-xs">
               <span className="font-semibold text-gray-900 dark:text-white block">
-                Nur Custom CSS löschen
+                Clear custom CSS only
               </span>
               <span className="text-gray-500 dark:text-gray-400 mt-0.5 block">
-                Leert das CSS-Eingabefeld vollständig.
+                Empties the CSS editor completely.
               </span>
             </div>
           </label>
@@ -159,7 +159,7 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Abbrechen
+            Cancel
           </Button>
           <Button
             type="button"
@@ -169,7 +169,7 @@ export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all"
             disabled={loading}
           >
             <RegenerateIcon className="size-3.5 mr-1" />
-            {loading ? "Wird zurückgesetzt..." : "Ausgewählte zurücksetzen"}
+            {loading ? "Resetting..." : "Reset selected"}
           </Button>
         </DialogFooter>
       </DialogContent>

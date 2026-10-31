@@ -9,7 +9,7 @@ public class CreateAdminCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "create-admin";
-    public string Description => "Erstelle einen neuen Administrator-Account im Panel";
+    public string Description => "Create a new administrator account in the panel";
 
     public CreateAdminCommand(IProcessRunner processRunner, IConsoleOutput console)
     {
@@ -30,33 +30,42 @@ public class CreateAdminCommand : ICommand
 
         if (string.IsNullOrEmpty(email))
         {
-            email = _console.Ask("E-Mail-Adresse für den Administrator", "admin@example.com");
+            email = _console.Ask("Email address for the administrator", "admin@example.com");
         }
 
-        var password = _console.Ask("Passwort für den Administrator", isPassword: true);
-        if (string.IsNullOrEmpty(password))
+        // The email is passed as process argument, quotes or whitespace would break out of it
+        if (string.IsNullOrWhiteSpace(email) || email.Any(c => char.IsWhiteSpace(c) || c is '"' or '\'' or '\\' or '`' or '$') || !email.Contains('@'))
         {
-            _console.WriteError("Passwort darf nicht leer sein.");
+            _console.WriteError("Invalid email address.");
             return ExitCodes.InvalidArguments;
         }
 
-        _console.WriteInfo($"Erstelle Administrator-Account für {email}...");
+        var password = _console.Ask("Password for the administrator", isPassword: true);
+        if (string.IsNullOrEmpty(password))
+        {
+            _console.WriteError("Password must not be empty.");
+            return ExitCodes.InvalidArguments;
+        }
+
+        _console.WriteInfo($"Creating administrator account for {email}...");
         var env = new Dictionary<string, string> { ["MIDNIGHT_ADMIN_PASSWORD"] = password };
 
         var res = await _processRunner.RunAsync(
             "docker",
-            $"compose -f /opt/midnight/panel/docker-compose.yml exec -T -e MIDNIGHT_ADMIN_PASSWORD=\"{password}\" panel dotnet Midnight.ApiServer.dll create-admin --email \"{email}\"",
+            // "-e NAME" without value passes the variable from the environment below, so the password
+            // never appears in the process list or the log file
+            $"compose -f /opt/midnight/panel/docker-compose.yml exec -T -e MIDNIGHT_ADMIN_PASSWORD panel dotnet Midnight.ApiServer.dll create-admin --email \"{email}\"",
             environment: env,
             isMutating: true,
             cancellationToken: cancellationToken);
 
         if (res.Success)
         {
-            _console.WriteSuccess($"Administrator-Account {email} erfolgreich erstellt!");
+            _console.WriteSuccess($"Administrator account {email} created successfully!");
             return ExitCodes.Success;
         }
 
-        _console.WriteError($"Fehler bei der Kontoerstellung: {res.Output}");
+        _console.WriteError($"Account creation failed: {res.Output}");
         return ExitCodes.GeneralError;
     }
 }
@@ -68,7 +77,7 @@ public class ConfigureCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "configure";
-    public string Description => "Interaktiver Assistent zum Anpassen von Domain, Ports und Datenbank";
+    public string Description => "Interactive wizard for changing domain, ports and database";
 
     public ConfigureCommand(IStateService stateService, IFileSystem fileSystem, IConsoleOutput console)
     {
@@ -80,7 +89,7 @@ public class ConfigureCommand : ICommand
     public async Task<int> ExecuteAsync(string[] args, CancellationToken cancellationToken = default)
     {
         var state = await _stateService.LoadAsync();
-        _console.WriteHeader("Midnight Konfiguration");
+        _console.WriteHeader("Midnight Configuration");
 
         var newDomain = _console.Ask("Panel Domain", state.PanelDomain);
         var newPortStr = _console.Ask("Panel Port", state.PanelPort.ToString());
@@ -90,7 +99,7 @@ public class ConfigureCommand : ICommand
         state.PanelPort = newPort > 0 ? newPort : 80;
         await _stateService.SaveAsync(state);
 
-        // .env aktualisieren
+        // Update .env
         var envPath = "/opt/midnight/panel/.env";
         if (_fileSystem.FileExists(envPath))
         {
@@ -100,8 +109,8 @@ public class ConfigureCommand : ICommand
             await _fileSystem.SetPermissionsAsync(envPath, "600");
         }
 
-        _console.WriteSuccess("Konfiguration erfolgreich aktualisiert.");
-        _console.WriteInfo("Starte das Panel neu, um Änderungen anzuwenden: midnight restart panel");
+        _console.WriteSuccess("Configuration updated successfully.");
+        _console.WriteInfo("Restart the panel to apply changes: midnight restart panel");
         return ExitCodes.Success;
     }
 }

@@ -45,9 +45,10 @@ export default function NodeSettingsPage() {
 
     try {
       await api.delete(`/api/admin/nodes/${node.id}`);
-      await queryClient.invalidateQueries({ queryKey: ["admin", "nodes"] });
-      notifySuccess(t("Nodes.Deleted"));
+      // Leave first (stale lists reload on mount), refetching the open detail would only produce a 404
       navigate("/admin/nodes");
+      notifySuccess(t("Nodes.Deleted"));
+      await queryClient.invalidateQueries({ queryKey: ["admin", "nodes"], refetchType: "none" });
     } catch (error) {
       notifyError(error);
     }
@@ -55,7 +56,7 @@ export default function NodeSettingsPage() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">{t("Nodes.Settings")}</h4>
         <form onSubmit={form.handleSubmit(save)} className="space-y-5" noValidate>
           <NodeFormFields form={form} />
@@ -69,7 +70,7 @@ export default function NodeSettingsPage() {
         </form>
       </div>
 
-      <div className="rounded-2xl border border-red-200 bg-white p-5 lg:p-6 dark:border-red-500/30 dark:bg-white/3">
+      <div className="rounded-2xl border border-red-200 bg-white p-5 lg:p-6 dark:border-red-500/30 dark:bg-white/[0.02]">
         <h4 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-500">{t("Users.DangerZone")}</h4>
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">{t("Nodes.DeleteHint")}</p>
         <Button variant="destructive" className="w-full" onClick={remove}>

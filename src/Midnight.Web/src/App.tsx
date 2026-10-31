@@ -1,6 +1,7 @@
 import { useAuth } from "@/auth/AuthContext";
 import AppLayout from "@/components/layout/app-layout";
-import { RequireAuth } from "@/components/shared/guards";
+import { RequireAuth, RequirePermission } from "@/components/shared/guards";
+import { Permissions } from "@/lib/permissions";
 import { Spinner } from "@/components/ui/spinner";
 import AccountLayout from "@/pages/account/layout";
 import ApiKeysPage from "@/pages/account/api-keys";
@@ -80,7 +81,14 @@ export default function App() {
         <Route path="admin/shards" element={<ShardsPage />} />
         <Route path="admin/shards/:id" element={<ShardDetailPage />} />
         <Route path="admin/settings" element={<AdminSettingsPage />} />
-        <Route path="admin/customizer" element={<AdminCustomizerPage />} />
+        <Route
+          path="admin/customizer"
+          element={
+            <RequirePermission permission={Permissions.AdminSystemWrite}>
+              <AdminCustomizerPage />
+            </RequirePermission>
+          }
+        />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>

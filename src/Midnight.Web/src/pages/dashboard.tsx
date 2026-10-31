@@ -20,7 +20,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <h2 className="text-title-sm font-semibold text-gray-800 dark:text-white/90">
           {emoji} {t(key)}
           <span className="text-brand-500 dark:text-brand-400">{user?.username}</span>

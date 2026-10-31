@@ -60,8 +60,10 @@ class TokenManager {
     if (this.impersonationToken) {
       if (this.impersonationExpiresAt > Date.now()) return this.impersonationToken;
 
+      // Never send this request with the admin's own token, it was meant for the impersonated user
       this.impersonationToken = null;
       this.onImpersonationExpired?.();
+      throw new ApiError(401, "Impersonation expired");
     }
 
     if (!forceRefresh && this.accessToken && this.expiresAt - REFRESH_MARGIN_MS > Date.now())
@@ -73,7 +75,15 @@ class TokenManager {
     return (await this.refreshing) ? this.accessToken : null;
   }
 
-  private async refresh(): Promise<boolean> {
+  /** The refresh token rotates on every use, so tabs must not refresh at the same time */
+  private refresh(): Promise<boolean> {
+    if (typeof navigator !== "undefined" && navigator.locks)
+      return navigator.locks.request("midnight-token-refresh", () => this.refreshNow());
+
+    return this.refreshNow();
+  }
+
+  private async refreshNow(): Promise<boolean> {
     const response = await fetch("/api/auth/refresh", { method: "POST", credentials: "same-origin" });
 
     if (!response.ok) {

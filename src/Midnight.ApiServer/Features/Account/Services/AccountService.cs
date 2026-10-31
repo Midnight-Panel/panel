@@ -65,12 +65,19 @@ public class AccountService
         };
     }
 
-    public async Task UpdateProfileAsync(int userId, UpdateProfileRequest request, CancellationToken cancellationToken)
+    /// <param name="allowEmailChange">
+    /// False for api keys and impersonation: the email address receives password reset links, changing it
+    /// is a security relevant action like changing the password
+    /// </param>
+    public async Task UpdateProfileAsync(int userId, UpdateProfileRequest request, bool allowEmailChange, CancellationToken cancellationToken)
     {
         var user = await GetUserAsync(userId, cancellationToken);
 
         var username = request.Username.Trim();
         var email = UserService.NormalizeEmail(request.Email);
+
+        if (email != user.Email && !allowEmailChange)
+            throw HttpApiException.Forbidden("The email address can only be changed from a regular login session");
 
         await _userService.EnsureUniqueAsync(username, email, user.Id, cancellationToken);
 

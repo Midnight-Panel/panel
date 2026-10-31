@@ -15,9 +15,9 @@ export default function AccountLayout() {
 
   return (
     <>
-      <PageHeader title={t("Nav.Account")} />
+      <PageHeader icon={<UserCircleIcon />} title={t("Nav.Account")} />
 
-      <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <div className="flex flex-col items-center gap-5 sm:flex-row">
           <UserAvatar userId={user.id} hasAvatar={user.hasAvatar} name={user.username} className="size-20! text-xl" />
           <div className="text-center sm:text-start">

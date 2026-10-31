@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Midnight.Shared.Http.Shards;
 
 /// <summary>Full export package of a shard for portability and versioning</summary>
@@ -5,6 +7,8 @@ public class ShardExportPackage
 {
     public const string CurrentFormatVersion = "midnight_shard_v1";
 
+    /// <summary>Fixed json name, the import detects the format by this property</summary>
+    [JsonPropertyName("formatVersion")]
     public string FormatVersion { get; set; } = CurrentFormatVersion;
     public DateTimeOffset ExportedAt { get; set; } = DateTimeOffset.UtcNow;
     public ShardExportCollectionInfo Collection { get; set; } = new();

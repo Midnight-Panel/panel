@@ -71,7 +71,8 @@
     "Subtitle": "Your servers and resources at a glance"
   },
   "Footer": {
-    "Api": "API"
+    "Api": "API",
+    "Maintenance": "Maintenance mode is active. Some features may be restricted."
   },
   "Forbidden": {
     "Description": "You don't have permission to view this page.",

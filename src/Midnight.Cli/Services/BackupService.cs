@@ -62,21 +62,24 @@ public class BackupService : IBackupService
         var tempWorkDir = Path.Combine(Path.GetTempPath(), $"midnight-backup-{Guid.NewGuid():N}");
         _fileSystem.CreateDirectory(tempWorkDir);
 
+        // The database dump is written here before it is packed, other local users must not read it
+        await _fileSystem.SetPermissionsAsync(tempWorkDir, "700");
+
         try
         {
-            _console.WriteInfo($"Erstelle Backup im Verzeichnis '{dir}'...");
+            _console.WriteInfo($"Creating backup in directory '{dir}'...");
 
-            // 1. PostgreSQL Datenbank-Dump erstellen
+            // 1. Create PostgreSQL database dump
             var dbDumpFile = Path.Combine(tempWorkDir, "db.sql");
             var dumpScript = "docker compose -f /opt/midnight/panel/docker-compose.yml exec -T db pg_dump -U midnight midnight";
             var dumpRes = await _processRunner.RunBashAsync($"{dumpScript} > \"{dbDumpFile}\"", isMutating: true, cancellationToken: cancellationToken);
 
             if (!dumpRes.Success && !_context.DryRun)
             {
-                _console.WriteWarning("Konnte Live-Datenbankdump nicht direkt ausführen. Prüfe ob DB-Container läuft.");
+                _console.WriteWarning("Could not run live database dump. Check whether the DB container is running.");
             }
 
-            // 2. Manifest anlegen
+            // 2. Create manifest
             var manifest = new BackupManifest
             {
                 Version = "1.0",
@@ -92,7 +95,7 @@ public class BackupService : IBackupService
             var manifestPath = Path.Combine(tempWorkDir, "manifest.json");
             await _fileSystem.WriteAllTextAsync(manifestPath, JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
 
-            // 3. Zu archivierende Dateien zusammenstellen
+            // 3. Collect files to archive
             var filesToInclude = new Dictionary<string, string>
             {
                 ["manifest.json"] = manifestPath
@@ -120,27 +123,27 @@ public class BackupService : IBackupService
                 filesToInclude["storage"] = storagePath;
             }
 
-            // 4. Tar.Gz Archiv packen
+            // 4. Pack tar.gz archive
             var tarGzPath = Path.Combine(dir, $"{baseName}.tar.gz");
             await _fileSystem.CreateTarGzAsync(tarGzPath, filesToInclude);
 
-            // 5. Dateirechte 600 setzen (nur root darf lesen/schreiben)
+            // 5. Set file permissions to 600 (only root may read/write)
             await _fileSystem.SetPermissionsAsync(tarGzPath, "600");
 
             var finalArchive = tarGzPath;
 
-            // 6. Optionale Verschlüsselung (--encrypt)
+            // 6. Optional encryption (--encrypt)
             if (encrypt)
             {
                 var secretKey = passphrase ?? Environment.GetEnvironmentVariable("MIDNIGHT_BACKUP_PASSPHRASE");
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    secretKey = _console.Ask("Passphrase für Backup-Verschlüsselung eingeben", isPassword: true);
+                    secretKey = _console.Ask("Enter passphrase for backup encryption", isPassword: true);
                 }
 
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    throw new InvalidOperationException("Verschlüsselung angefordert, aber keine Passphrase angegeben.");
+                    throw new InvalidOperationException("Encryption requested, but no passphrase provided.");
                 }
 
                 var encPath = Path.Combine(dir, $"{baseName}.tar.gz.enc");
@@ -148,10 +151,10 @@ public class BackupService : IBackupService
                 _fileSystem.DeleteFile(tarGzPath);
                 await _fileSystem.SetPermissionsAsync(encPath, "600");
                 finalArchive = encPath;
-                _console.WriteSuccess("Backup mit AES-256 verschlüsselt.");
+                _console.WriteSuccess("Backup encrypted with AES-256.");
             }
 
-            // 7. SHA-256 Prüfsumme generieren
+            // 7. Generate SHA-256 checksum
             if (!_context.DryRun && _fileSystem.FileExists(finalArchive))
             {
                 var checksum = await _fileSystem.ComputeSha256Async(finalArchive);
@@ -159,20 +162,20 @@ public class BackupService : IBackupService
                 var checksumContent = $"{checksum}  {Path.GetFileName(finalArchive)}{Environment.NewLine}";
                 await _fileSystem.WriteAllTextAsync(checksumFile, checksumContent);
                 await _fileSystem.SetPermissionsAsync(checksumFile, "600");
-                _console.WriteInfo($"SHA-256 Prüfsumme: {checksum}");
+                _console.WriteInfo($"SHA-256 checksum: {checksum}");
             }
 
-            // 8. Aufbewahrungsrichtlinie anwenden (--keep N)
+            // 8. Apply retention policy (--keep N)
             if (keepCount.HasValue && keepCount.Value > 0)
             {
                 await CleanOldBackupsAsync(dir, keepCount.Value);
             }
 
-            // 9. Zuletzt erstelltes Backup im Zustand merken
+            // 9. Record the latest backup in state
             state.LastBackupPath = finalArchive;
             await _stateService.SaveAsync(state);
 
-            _console.WriteSuccess($"Backup erfolgreich erstellt: {finalArchive}");
+            _console.WriteSuccess($"Backup created successfully: {finalArchive}");
             return finalArchive;
         }
         finally
@@ -188,13 +191,13 @@ public class BackupService : IBackupService
 
         var allBackups = _fileSystem.GetFiles(backupDir, "midnight-backup-*")
             .Where(f => f.EndsWith(".tar.gz") || f.EndsWith(".tar.gz.enc"))
-            .OrderByDescending(f => f) // Timestamp-basiertes Sortieren
+            .OrderByDescending(f => f) // Timestamp-based sorting
             .ToList();
 
         if (allBackups.Count > keepCount)
         {
             var toDelete = allBackups.Skip(keepCount).ToList();
-            _console.WriteInfo($"Aufbewahrungsrichtlinie (--keep {keepCount}): Lösche {toDelete.Count} ältere(s) Backup(s)...");
+            _console.WriteInfo($"Retention policy (--keep {keepCount}): deleting {toDelete.Count} older backup(s)...");
 
             foreach (var oldBackup in toDelete)
             {
@@ -204,7 +207,7 @@ public class BackupService : IBackupService
                 {
                     _fileSystem.DeleteFile(shaFile);
                 }
-                _console.WriteInfo($"  Gelöscht: {Path.GetFileName(oldBackup)}");
+                _console.WriteInfo($"  Deleted: {Path.GetFileName(oldBackup)}");
             }
         }
 
@@ -214,8 +217,7 @@ public class BackupService : IBackupService
     public static async Task EncryptFileAsync(string inputFilePath, string outputFilePath, string passphrase)
     {
         var salt = RandomNumberGenerator.GetBytes(16);
-        using var kdf = new Rfc2898DeriveBytes(passphrase, salt, 100_000, HashAlgorithmName.SHA256);
-        var key = kdf.GetBytes(32); // AES-256
+        var key = Rfc2898DeriveBytes.Pbkdf2(passphrase, salt, 100_000, HashAlgorithmName.SHA256, 32); // AES-256
         var iv = RandomNumberGenerator.GetBytes(16);
 
         using var aes = Aes.Create();
@@ -223,7 +225,7 @@ public class BackupService : IBackupService
         aes.IV = iv;
 
         await using var outputStream = File.Create(outputFilePath);
-        // Salt und IV voranstellen
+        // Prepend salt and IV
         await outputStream.WriteAsync(salt);
         await outputStream.WriteAsync(iv);
 

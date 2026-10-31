@@ -29,7 +29,7 @@ export interface PermissionGroup {
 }
 
 export const PermissionGroups: PermissionGroup[] = [
-  { name: "account", permissions: [Permissions.AccountRead, Permissions.AccountWrite] },
+  { name: "account", permissions: [Permissions.AccountRead, Permissions.AccountWrite, Permissions.AccountSecurity] },
   { name: "admin.overview", permissions: [Permissions.AdminOverview] },
   { name: "admin.users", permissions: [Permissions.AdminUsersRead, Permissions.AdminUsersWrite, Permissions.AdminUsersImpersonate] },
   { name: "admin.roles", permissions: [Permissions.AdminRolesRead, Permissions.AdminRolesWrite] },

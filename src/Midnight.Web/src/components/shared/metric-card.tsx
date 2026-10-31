@@ -10,7 +10,7 @@ export function MetricCard({ icon, title, value, footer, className }: {
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/3", className)}>
+    <div className={cn("rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/[0.02]", className)}>
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-white/90 [&>svg]:size-6">
         {icon}
       </div>

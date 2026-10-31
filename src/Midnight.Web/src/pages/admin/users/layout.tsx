@@ -11,7 +11,7 @@ export default function UsersLayout() {
 
   return (
     <RequirePermission permission={Permissions.AdminUsersRead}>
-      <PageHeader title={t("Nav.Admin.Users")} description={t("Users.Description")} />
+      <PageHeader icon={<GroupIcon />} title={t("Nav.Admin.Users")} description={t("Users.Description")} />
       <TabNav
         items={[
           { label: t("Account.Overview"), to: "/admin/users", icon: <GroupIcon /> },

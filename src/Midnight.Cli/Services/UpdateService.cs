@@ -57,23 +57,23 @@ public class UpdateService : IUpdateService
 
         _console.WriteHeader($"Midnight Panel Update ({currentVersion} -> {version})");
 
-        // 1. Automatisches Backup vor dem Update anlegen
-        _console.WriteInfo("Erstelle automatisches Sicherheits-Backup vor dem Update...");
+        // 1. Create an automatic backup before the update
+        _console.WriteInfo("Creating automatic safety backup before the update...");
         string preUpdateBackupPath;
         try
         {
             preUpdateBackupPath = await _backupService.CreateBackupAsync(
                 prefix: "midnight-backup-pre-update",
                 cancellationToken: cancellationToken);
-            _console.WriteSuccess($"Sicherheits-Backup gespeichert: {preUpdateBackupPath}");
+            _console.WriteSuccess($"Safety backup saved: {preUpdateBackupPath}");
         }
         catch (Exception ex)
         {
-            _console.WriteError($"Fehler beim Erstellen des Pre-Update-Backups: {ex.Message}");
+            _console.WriteError($"Failed to create pre-update backup: {ex.Message}");
             return false;
         }
 
-        // Vorherige Version im Zustand sichern
+        // Save previous version in state
         state.PreviousPanelVersion = currentVersion;
         state.LastBackupPath = preUpdateBackupPath;
         state.UseImages = shouldUseImages;
@@ -81,18 +81,18 @@ public class UpdateService : IUpdateService
 
         var updateSuccess = false;
 
-        // 2. Methode: Entweder Docker Registry Images oder Source Build
+        // 2. Method: either Docker registry images or source build
         if (shouldUseImages)
         {
-            _console.WriteInfo($"[Images-Modus] Ziehe vorgebautes Docker-Image aus der Registry für {version}...");
+            _console.WriteInfo($"[Images mode] Pulling prebuilt Docker image from the registry for {version}...");
             var imageTag = version == "latest" ? "latest" : version.TrimStart('v');
             var imageName = $"ghcr.io/midnight-panel/panel:{imageTag}";
 
             var pullRes = await _processRunner.RunAsync("docker", $"pull {imageName}", cancellationToken: cancellationToken);
             if (pullRes.Success)
             {
-                _console.WriteSuccess($"Image {imageName} erfolgreich heruntergeladen.");
-                // docker-compose.yml anpassen und Stack aktualisieren
+                _console.WriteSuccess($"Image {imageName} downloaded successfully.");
+                // Adjust docker-compose.yml and update the stack
                 var composePath = "/opt/midnight/panel/docker-compose.yml";
                 if (_fileSystem.FileExists(composePath))
                 {
@@ -109,7 +109,7 @@ public class UpdateService : IUpdateService
             }
             else
             {
-                _console.WriteWarning($"Docker-Image {imageName} konnte nicht geladen werden. Wechsle automatisch zu Source-Build...");
+                _console.WriteWarning($"Could not pull Docker image {imageName}. Switching to source build automatically...");
                 updateSuccess = await BuildFromSourceAsync(version, cancellationToken);
             }
         }
@@ -120,26 +120,26 @@ public class UpdateService : IUpdateService
 
         if (!updateSuccess)
         {
-            _console.WriteError("Update-Prozess konnte nicht abgeschlossen werden. Führe automatischen Rollback durch...");
+            _console.WriteError("Update process could not be completed. Performing automatic rollback...");
             await TriggerAutoRollbackAsync(preUpdateBackupPath, currentVersion, cancellationToken);
             return false;
         }
 
-        // 3. Post-Update Health-Check
-        _console.WriteInfo("Führe Health-Check des aktualisierten Panels durch...");
+        // 3. Post-update health check
+        _console.WriteInfo("Running health check on the updated panel...");
         var isHealthy = await WaitForHealthCheckAsync(cancellationToken);
 
         if (isHealthy)
         {
             state.PanelVersion = version;
             await _stateService.SaveAsync(state);
-            _console.WriteSuccess($"Update auf Midnight Panel {version} erfolgreich abgeschlossen!");
+            _console.WriteSuccess($"Update to Midnight Panel {version} completed successfully!");
             return true;
         }
 
-        // 4. Automatischer Rollback bei fehlgeschlagenem Health-Check
-        _console.WriteError("Health-Check nach dem Update fehlgeschlagen! Das neue Panel reagiert nicht ordnungsgemäß.");
-        _console.WriteWarning("Initiiere AUTOMATISCHEN ROLLBACK auf die vorherige Version...");
+        // 4. Automatic rollback on failed health check
+        _console.WriteError("Health check failed after the update! The new panel is not responding correctly.");
+        _console.WriteWarning("Initiating AUTOMATIC ROLLBACK to the previous version...");
 
         await TriggerAutoRollbackAsync(preUpdateBackupPath, currentVersion, cancellationToken);
         return false;
@@ -156,11 +156,11 @@ public class UpdateService : IUpdateService
         var srcDir = "/opt/midnight/src/demon";
         if (!_fileSystem.DirectoryExists(srcDir))
         {
-            _console.WriteError($"Daemon-Quellverzeichnis '{srcDir}' nicht gefunden.");
+            _console.WriteError($"Daemon source directory '{srcDir}' not found.");
             return false;
         }
 
-        _console.WriteInfo("Aktualisiere Daemon-Repository...");
+        _console.WriteInfo("Updating daemon repository...");
         await _processRunner.RunAsync("git", "fetch --tags", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         if (version != "latest")
         {
@@ -171,22 +171,22 @@ public class UpdateService : IUpdateService
             await _processRunner.RunAsync("git", "pull origin main", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         }
 
-        _console.WriteInfo("Kompiliere Daemon-Binary neu...");
+        _console.WriteInfo("Recompiling daemon binary...");
         var buildRes = await _processRunner.RunAsync("dotnet", "publish -c Release -o /opt/midnight/daemon", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         if (!buildRes.Success && !_context.DryRun)
         {
-            _console.WriteError($"Fehler beim Kompilieren des Daemons: {buildRes.Output}");
+            _console.WriteError($"Failed to compile the daemon: {buildRes.Output}");
             return false;
         }
 
-        _console.WriteInfo("Starte midnight-daemon Dienst neu...");
+        _console.WriteInfo("Restarting midnight-daemon service...");
         await _processRunner.RunAsync("systemctl", "restart midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
 
         state.PreviousDaemonVersion = state.DaemonVersion;
         state.DaemonVersion = version;
         await _stateService.SaveAsync(state);
 
-        _console.WriteSuccess($"Midnight Daemon erfolgreich auf {version} aktualisiert!");
+        _console.WriteSuccess($"Midnight Daemon successfully updated to {version}!");
         return true;
     }
 
@@ -195,30 +195,30 @@ public class UpdateService : IUpdateService
         var state = await _stateService.LoadAsync();
         if (string.IsNullOrEmpty(state.PreviousPanelVersion) && string.IsNullOrEmpty(state.LastBackupPath))
         {
-            _console.WriteError("Keine vorherige Version oder kein Backup für einen Rollback im Zustand hinterlegt.");
+            _console.WriteError("No previous version or backup for a rollback is recorded in the state.");
             return false;
         }
 
-        var prevVersion = state.PreviousPanelVersion ?? "vorherige Version";
-        _console.WriteHeader($"Manueller Rollback auf {prevVersion}");
+        var prevVersion = state.PreviousPanelVersion ?? "previous version";
+        _console.WriteHeader($"Manual rollback to {prevVersion}");
 
         if (!string.IsNullOrEmpty(state.LastBackupPath) && _fileSystem.FileExists(state.LastBackupPath))
         {
-            _console.WriteInfo($"Stelle Zustand aus letztem Pre-Update-Backup '{Path.GetFileName(state.LastBackupPath)}' wieder her...");
+            _console.WriteInfo($"Restoring state from last pre-update backup '{Path.GetFileName(state.LastBackupPath)}'...");
             var restored = await _restoreService.RestoreAsync(state.LastBackupPath, cancellationToken: cancellationToken);
             if (restored)
             {
                 state.PanelVersion = prevVersion;
                 state.PreviousPanelVersion = null;
                 await _stateService.SaveAsync(state);
-                _console.WriteSuccess($"Rollback auf Version {prevVersion} erfolgreich abgeschlossen!");
+                _console.WriteSuccess($"Rollback to version {prevVersion} completed successfully!");
                 return true;
             }
             return false;
         }
 
-        // Falls kein Backup-Archiv mehr da, Quellcode-Rollback versuchen
-        _console.WriteInfo($"Setze Quellcode auf {prevVersion} zurück...");
+        // If no backup archive is left, try a source code rollback
+        _console.WriteInfo($"Resetting source code to {prevVersion}...");
         var srcDir = "/opt/midnight/src/panel";
         await _processRunner.RunAsync("git", $"checkout {prevVersion}", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml up -d --build", isMutating: true, cancellationToken: cancellationToken);
@@ -226,7 +226,7 @@ public class UpdateService : IUpdateService
         state.PanelVersion = prevVersion;
         state.PreviousPanelVersion = null;
         await _stateService.SaveAsync(state);
-        _console.WriteSuccess($"Rollback auf {prevVersion} abgeschlossen.");
+        _console.WriteSuccess($"Rollback to {prevVersion} completed.");
         return true;
     }
 
@@ -235,7 +235,7 @@ public class UpdateService : IUpdateService
         var state = await _stateService.LoadAsync();
         if (string.IsNullOrEmpty(state.PreviousDaemonVersion))
         {
-            _console.WriteError("Keine vorherige Daemon-Version für Rollback registriert.");
+            _console.WriteError("No previous daemon version registered for rollback.");
             return false;
         }
 
@@ -245,7 +245,7 @@ public class UpdateService : IUpdateService
     private async Task<bool> BuildFromSourceAsync(string version, CancellationToken cancellationToken)
     {
         var srcDir = "/opt/midnight/src/panel";
-        _console.WriteInfo($"[Source-Build] Aktualisiere Quellcode in {srcDir}...");
+        _console.WriteInfo($"[Source build] Updating source code in {srcDir}...");
 
         if (_fileSystem.DirectoryExists(srcDir))
         {
@@ -260,7 +260,7 @@ public class UpdateService : IUpdateService
             }
         }
 
-        _console.WriteInfo("Baue und starte Docker-Compose-Container neu...");
+        _console.WriteInfo("Rebuilding and restarting Docker Compose containers...");
         var buildRes = await _processRunner.RunAsync(
             "docker",
             "compose -f /opt/midnight/panel/docker-compose.yml up -d --build",
@@ -272,7 +272,7 @@ public class UpdateService : IUpdateService
 
     private async Task TriggerAutoRollbackAsync(string backupPath, string previousVersion, CancellationToken cancellationToken)
     {
-        _console.WriteWarning("=== AUTOMATISCHER ROLLBACK WIRD AUSGEFÜHRT ===");
+        _console.WriteWarning("=== PERFORMING AUTOMATIC ROLLBACK ===");
         if (_fileSystem.FileExists(backupPath))
         {
             await _restoreService.RestoreAsync(backupPath, cancellationToken: cancellationToken);
@@ -282,7 +282,7 @@ public class UpdateService : IUpdateService
         state.PanelVersion = previousVersion;
         await _stateService.SaveAsync(state);
 
-        _console.WriteWarning($"System wurde erfolgreich auf den vorherigen Stand ({previousVersion}) zurückgesetzt.");
+        _console.WriteWarning($"System was successfully reverted to the previous state ({previousVersion}).");
     }
 
     private async Task<bool> WaitForHealthCheckAsync(CancellationToken cancellationToken)
@@ -291,7 +291,7 @@ public class UpdateService : IUpdateService
         {
             await Task.Delay(2000, cancellationToken);
             var res = await _processRunner.RunAsync("curl", "-fsS http://localhost:8080/api/health", cancellationToken: cancellationToken);
-            if (res.Success && res.StandardOutput.Contains("healthy", StringComparison.OrdinalIgnoreCase))
+            if (res.Success)
             {
                 return true;
             }

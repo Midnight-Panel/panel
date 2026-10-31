@@ -68,7 +68,7 @@ function RolesContent() {
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.02]">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-gray-800">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("Nav.Admin.Roles")}</h3>

@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Midnight.ApiServer.Core.Security;
 using Midnight.ApiServer.Features.Shards.Services;
+using Midnight.Shared;
 using Midnight.Shared.Http.Shards;
 
 namespace Midnight.ApiServer.Features.Shards.Http;
 
 [ApiController]
-[Authorize]
+[RequirePermission(Permissions.AccountRead)]
 [Route("api/shards")]
 public class ShardsController : ControllerBase
 {

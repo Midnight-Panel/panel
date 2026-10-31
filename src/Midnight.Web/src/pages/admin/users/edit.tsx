@@ -104,9 +104,10 @@ export default function UserEditPage() {
 
     try {
       await api.delete(`/api/admin/users/${data.id}`);
-      await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      notifySuccess(t("Users.Deleted"));
+      // Leave first (stale lists reload on mount), refetching the open detail would only produce a 404
       navigate("/admin/users");
+      notifySuccess(t("Users.Deleted"));
+      await queryClient.invalidateQueries({ queryKey: ["admin", "users"], refetchType: "none" });
     } catch (error) {
       notifyError(error);
     }
@@ -126,7 +127,7 @@ export default function UserEditPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <UserAvatar userId={data.id} hasAvatar={data.hasAvatar} name={data.username} className="size-16! text-lg" />
           <div className="flex-1">
@@ -156,7 +157,7 @@ export default function UserEditPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:col-span-2 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
           <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">{t("Profile.Details")}</h4>
           <form onSubmit={handleSubmit(save)} className="space-y-5" noValidate>
             <fieldset disabled={!canWrite} className="space-y-5">
@@ -230,7 +231,7 @@ export default function UserEditPage() {
         </div>
 
         {canWrite && (
-          <div className="rounded-2xl border border-red-200 bg-white p-5 lg:p-6 dark:border-red-500/30 dark:bg-white/3">
+          <div className="rounded-2xl border border-red-200 bg-white p-5 lg:p-6 dark:border-red-500/30 dark:bg-white/[0.02]">
             <h4 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-500">{t("Users.DangerZone")}</h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">{t("Users.DangerZoneHint")}</p>
             <div className="space-y-3">

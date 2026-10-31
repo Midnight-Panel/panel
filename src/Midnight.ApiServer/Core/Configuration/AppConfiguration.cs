@@ -10,17 +10,17 @@ public class AppConfiguration
 {
     public string AppName { get; set; } = "Midnight";
 
-    /// <summary>Kurzbeschreibung oder Slogan des Panels</summary>
+    /// <summary>Short description or slogan of the panel</summary>
     public string Slogan { get; set; } = "Game Server Management";
 
     /// <summary>Public url of the panel, used for links in mails and the daemon setup command</summary>
     public string PublicUrl { get; set; } = "http://localhost:5220";
 
-    /// <summary>Standardsprache des Panels (z. B. 'de' oder 'en')</summary>
-    public string DefaultLanguage { get; set; } = "de";
+    /// <summary>Default language of the panel, e.g. 'de' or 'en'</summary>
+    public string DefaultLanguage { get; set; } = "en";
 
-    /// <summary>Standard-Zeitzone des Panels</summary>
-    public string TimeZone { get; set; } = "Europe/Berlin";
+    /// <summary>Default time zone of the panel</summary>
+    public string TimeZone { get; set; } = "UTC";
 
     public DatabaseConfiguration Database { get; set; } = new();
     public AuthenticationConfiguration Authentication { get; set; } = new();

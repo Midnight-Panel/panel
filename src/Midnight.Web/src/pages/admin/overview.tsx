@@ -5,7 +5,7 @@ import { PageLoader, RequirePermission } from "@/components/shared/guards";
 import { MetricCard } from "@/components/shared/metric-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { useT } from "@/i18n";
-import { BoxIcon, GroupIcon, LayerIcon, LockIcon } from "@/icons";
+import { BoxIcon, GroupIcon, LayerIcon, LockIcon, PieChartIcon } from "@/icons";
 import { Permissions } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -35,7 +35,7 @@ function OverviewContent() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/[0.02]">
           <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">{t("AdminOverview.System")}</h3>
           <dl className="divide-y divide-gray-100 dark:divide-white/5">
             {rows.map(([label, value]) => (
@@ -58,7 +58,7 @@ export default function AdminOverviewPage() {
 
   return (
     <RequirePermission permission={Permissions.AdminOverview}>
-      <PageHeader title={t("Nav.Admin.Overview")} description={t("AdminOverview.Description")} />
+      <PageHeader icon={<PieChartIcon />} title={t("Nav.Admin.Overview")} description={t("AdminOverview.Description")} />
       <OverviewContent />
     </RequirePermission>
   );

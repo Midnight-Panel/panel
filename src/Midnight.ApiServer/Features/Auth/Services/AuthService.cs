@@ -110,6 +110,11 @@ public class AuthService
 
         var user = await _userService.CreateAsync(request.Username, request.Email, request.Password, [], cancellationToken);
 
+        // Concurrent registrations on a fresh install could both see "no users yet",
+        // only the user with the lowest id becomes administrator
+        if (isFirstUser && await _context.Users.AnyAsync(x => x.Id < user.Id, cancellationToken))
+            isFirstUser = false;
+
         if (isFirstUser)
         {
             await _userService.AssignAdministratorRoleAsync(user, cancellationToken);
@@ -211,7 +216,13 @@ public class AuthService
         if (resetToken == null || resetToken.UsedAt != null || resetToken.ExpiresAt <= now)
             throw HttpApiException.BadRequest("Invalid or expired reset link");
 
-        resetToken.UsedAt = now;
+        // Invalidates this and every other outstanding reset link of the user
+        var openTokens = await _context.PasswordResetTokens
+            .Where(x => x.UserId == resetToken.UserId && x.UsedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var openToken in openTokens)
+            openToken.UsedAt = now;
 
         await _userService.SetPasswordAsync(resetToken.User, newPassword, cancellationToken);
     }

@@ -30,12 +30,12 @@ public class CommandDispatcher
 
         if (!_commands.TryGetValue(commandName, out var command))
         {
-            _console.WriteError($"Unbekannter Befehl: '{commandName}'");
-            _console.WriteLine("Führe 'midnight --help' aus, um alle verfügbaren Befehle anzuzeigen.");
+            _console.WriteError($"Unknown command: '{commandName}'");
+            _console.WriteLine("Run 'midnight --help' to see all available commands.");
             return ExitCodes.InvalidArguments;
         }
 
-        // Argumente ohne den Befehlsnamen selbst filtern
+        // Filter the arguments, excluding the command name itself
         var cmdArgs = args.Where(a => !string.Equals(a, commandName, StringComparison.OrdinalIgnoreCase)).ToArray();
 
         try
@@ -44,7 +44,7 @@ public class CommandDispatcher
         }
         catch (Exception ex)
         {
-            _console.WriteError($"Kritischer Fehler bei der Ausführung von '{commandName}': {ex.Message}");
+            _console.WriteError($"Critical error while running '{commandName}': {ex.Message}");
             _console.ShowLogTail(_context.LogFilePath, 20);
             return ExitCodes.GeneralError;
         }
@@ -53,40 +53,40 @@ public class CommandDispatcher
     private void PrintHelp()
     {
         Console.WriteLine("""
-        midnight - Installations- und Verwaltungs-CLI für Midnight Panel & Daemon
+        midnight - Installation and management CLI for Midnight Panel & Daemon
 
-        VERWENDUNG:
-          midnight <befehl> [ziel] [optionen]
+        USAGE:
+          midnight <command> [target] [options]
 
-        KERN-BEFEHLE:
-          install [panel|daemon|both]    Installiere Midnight Panel und/oder Daemon
-          status [--json]                Zeige Status der Container und Dienste
-          start [panel|daemon|both]      Starte Komponenten
-          stop [panel|daemon|both]       Stoppe Komponenten
-          restart [panel|daemon|both]    Starte Komponenten neu
-          logs [target] [-f] [--tail N]  Zeige Live-Logs an (panel, db, caddy, daemon, installer)
+        CORE COMMANDS:
+          install [panel|daemon|both]    Install Midnight Panel and/or Daemon
+          status [--json]                Show status of containers and services
+          start [panel|daemon|both]      Start components
+          stop [panel|daemon|both]       Stop components
+          restart [panel|daemon|both]    Restart components
+          logs [target] [-f] [--tail N]  Show live logs (panel, db, caddy, daemon, installer)
 
-        WARTUNG & UPDATES:
-          update [target] [--use-images] Aktualisiere mit automatischem Backup & Auto-Rollback
-          rollback [target]              Manueller Rollback auf die vorherige Version
-          backup [dir] [--encrypt]       Erstelle vollständiges Backup (PostgreSQL, Storage, .env)
-          restore <archiv>               Stelle System aus Backup-Archiv wieder her
-          doctor                         Führe Systemdiagnose und Rechteprüfung durch
-          ssl renew                      Erneuere SSL/TLS-Zertifikate in Caddy
+        MAINTENANCE & UPDATES:
+          update [target] [--use-images] Update with automatic backup & auto-rollback
+          rollback [target]              Manual rollback to the previous version
+          backup [dir] [--encrypt]       Create a full backup (PostgreSQL, storage, .env)
+          restore <archive>              Restore the system from a backup archive
+          doctor                         Run system diagnostics and permission checks
+          ssl renew                      Renew SSL/TLS certificates in Caddy
 
-        KONFIGURATION & VERWALTUNG:
-          configure                      Interaktiver Konfigurations-Assistent
-          create-admin [--email <mail>]  Erstelle einen neuen Administrator-Account
-          completion [bash|zsh]          Generiere Shell-Autovervollständigung
-          self-update                    Aktualisiere das midnight CLI-Binary
-          version                        Zeige Versionsnummer an
-          uninstall                      Deinstalliere Midnight vom System
+        CONFIGURATION & MANAGEMENT:
+          configure                      Interactive configuration wizard
+          create-admin [--email <mail>]  Create a new administrator account
+          completion [bash|zsh]          Generate shell completion
+          self-update                    Update the midnight CLI binary
+          version                        Show version number
+          uninstall                      Uninstall Midnight from the system
 
-        GLOBALE OPTIONEN:
-          --dry-run                      Simuliere Aktionen ohne Änderungen am System
-          -y, --yes                      Bestätige alle Abfragen automatisch
-          --json                         Gebe Status und Daten als JSON aus
-          -h, --help                     Zeige diese Hilfe an
+        GLOBAL OPTIONS:
+          --dry-run                      Simulate actions without changing the system
+          -y, --yes                      Automatically confirm all prompts
+          --json                         Output status and data as JSON
+          -h, --help                     Show this help
         """);
     }
 }

@@ -140,7 +140,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
               collections.map((col) => (
                 <div
                   key={col.id}
-                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/3 dark:hover:border-gray-700"
+                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/[0.02] dark:hover:border-gray-700"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">

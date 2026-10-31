@@ -32,7 +32,7 @@ public class AccountController : ControllerBase
     [RequirePermission(Permissions.AccountWrite)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        await _accountService.UpdateProfileAsync(User.GetUserId(), request, cancellationToken);
+        await _accountService.UpdateProfileAsync(User.GetUserId(), request, User.HasPermission(Permissions.AccountSecurity), cancellationToken);
         return NoContent();
     }
 

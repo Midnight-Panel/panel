@@ -67,6 +67,14 @@ public class BrandingService : IBrandingService
 
         var sanitizedCss = CssSanitizer.Sanitize(request.CustomCss);
 
+        // Validated here, SyncAppConfigAsync swallows errors
+        if (!string.IsNullOrWhiteSpace(request.PanelUrl) && !FooterLinkItem.IsHttpUrl(request.PanelUrl))
+            throw HttpApiException.BadRequest("Panel URL must be a valid absolute http(s) URL.");
+
+        var unsafeLink = request.FooterLinks?.FirstOrDefault(x => x != null && !string.IsNullOrWhiteSpace(x.Url) && !FooterLinkItem.IsSafeUrl(x.Url));
+        if (unsafeLink != null)
+            throw HttpApiException.BadRequest($"Invalid footer link: '{unsafeLink.Url}' is not an http(s) URL or panel path.");
+
         var entity = await GetOrCreateSettingsAsync(cancellationToken);
         entity.PanelName = string.IsNullOrWhiteSpace(request.PanelName) ? "Midnight Panel" : request.PanelName.Trim();
         entity.PrimaryColor = request.PrimaryColor.ToUpperInvariant();
@@ -88,7 +96,7 @@ public class BrandingService : IBrandingService
 
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat die Branding-Einstellungen aktualisiert.", actorUserId);
+        _logger.LogInformation("Audit: User {UserId} updated the branding settings.", actorUserId);
 
         return MapToResponse(entity);
     }
@@ -147,7 +155,7 @@ public class BrandingService : IBrandingService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Konnte config.json nicht synchronisieren: {Message}", ex.Message);
+            _logger.LogWarning(ex, "Could not synchronize config.json: {Message}", ex.Message);
         }
     }
 
@@ -171,7 +179,7 @@ public class BrandingService : IBrandingService
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat das Logo ({Theme}) aktualisiert: {FileName}", actorUserId, theme, fileName);
+        _logger.LogInformation("Audit: User {UserId} updated the logo ({Theme}): {FileName}", actorUserId, theme, fileName);
 
         return MapToResponse(entity);
     }
@@ -194,7 +202,7 @@ public class BrandingService : IBrandingService
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat das Logo ({Theme}) gelöscht.", actorUserId, theme);
+        _logger.LogInformation("Audit: User {UserId} deleted the logo ({Theme}).", actorUserId, theme);
         return MapToResponse(entity);
     }
 
@@ -210,7 +218,7 @@ public class BrandingService : IBrandingService
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat das Favicon aktualisiert: {FileName}", actorUserId, fileName);
+        _logger.LogInformation("Audit: User {UserId} updated the favicon: {FileName}", actorUserId, fileName);
 
         return MapToResponse(entity);
     }
@@ -225,7 +233,7 @@ public class BrandingService : IBrandingService
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat das Favicon gelöscht.", actorUserId);
+        _logger.LogInformation("Audit: User {UserId} deleted the favicon.", actorUserId);
         return MapToResponse(entity);
     }
 
@@ -244,14 +252,14 @@ public class BrandingService : IBrandingService
         entity.PrimaryColor = "#465FFF";
         entity.AccentColor = "#7C3AED";
         entity.LoginBackgroundType = "gradient";
-        entity.LoginBackgroundValue = "linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)";
+        entity.LoginBackgroundValue = "linear-gradient(135deg, #0e0e10 0%, #1c1c22 50%, #0e0e10 100%)";
         entity.CustomCss = null;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat alle Branding-Einstellungen auf Standard zurückgesetzt.", actorUserId);
+        _logger.LogInformation("Audit: User {UserId} reset all branding settings to defaults.", actorUserId);
 
         return MapToResponse(entity);
     }
@@ -285,10 +293,10 @@ public class BrandingService : IBrandingService
         await content.CopyToAsync(memoryStream, cancellationToken);
 
         if (memoryStream.Length > MaxFileSize)
-            throw HttpApiException.BadRequest("Datei überschreitet die maximale Größe von 2 MB.");
+            throw HttpApiException.BadRequest("File exceeds the maximum size of 2 MB.");
 
         if (memoryStream.Length < 4)
-            throw HttpApiException.BadRequest("Datei ist leer oder ungültig.");
+            throw HttpApiException.BadRequest("File is empty or invalid.");
 
         var buffer = memoryStream.ToArray();
         var extension = DetectAndValidateFileType(buffer);
@@ -323,7 +331,7 @@ public class BrandingService : IBrandingService
         if (textHeader.Contains("<svg", StringComparison.OrdinalIgnoreCase))
             return ".svg";
 
-        throw HttpApiException.BadRequest("Nicht unterstütztes Dateiformat. Erlaubt sind PNG, WebP, SVG und ICO.");
+        throw HttpApiException.BadRequest("Unsupported file format. Allowed formats are PNG, WebP, SVG and ICO.");
     }
 
     private void DeleteOldFile(string? fileName)
@@ -356,8 +364,8 @@ public class BrandingService : IBrandingService
 
         string slogan = "Game Server Management";
         string panelUrl = "http://localhost:5220";
-        string defaultLanguage = "de";
-        string timeZone = "Europe/Berlin";
+        string defaultLanguage = "en";
+        string timeZone = "UTC";
         List<FooterLinkItem> footerLinks = [];
 
         try
@@ -388,7 +396,7 @@ public class BrandingService : IBrandingService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fehler beim Laden von Zusatzfeldern aus config.json: {Message}", ex.Message);
+            _logger.LogWarning(ex, "Failed to load additional fields from config.json: {Message}", ex.Message);
         }
 
         return new BrandingResponse(

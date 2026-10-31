@@ -44,8 +44,8 @@ export function LivePreview({
   const displaySlogan = slogan || "Game Server Management";
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E131F] p-4 lg:p-5 backdrop-blur-sm shadow-theme-xs">
-      {/* Header bar mit Modus-Tabs & Theme-Umschalter */}
+    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#141416] p-4 lg:p-5 backdrop-blur-sm shadow-theme-xs">
+      {/* Header bar with mode tabs & theme toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 mr-1.5">
@@ -54,7 +54,7 @@ export function LivePreview({
             <span className="size-2.5 rounded-full bg-emerald-500/80" />
           </div>
           <span className="font-outfit text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Live-Vorschau
+            Live preview
           </span>
         </div>
 
@@ -94,7 +94,7 @@ export function LivePreview({
             }`}
           >
             <MailIcon className="size-3.5" />
-            <span className="hidden sm:inline">E-Mail</span>
+            <span className="hidden sm:inline">Email</span>
           </button>
         </div>
 
@@ -103,28 +103,28 @@ export function LivePreview({
           type="button"
           onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title={isDark ? "Zu hellem Modus wechseln" : "Zu dunklem Modus wechseln"}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
         >
           {isDark ? (
             <>
               <MoonIcon className="size-3.5 text-indigo-400" />
-              <span>Dunkel</span>
+              <span>Dark</span>
             </>
           ) : (
             <>
               <SunIcon className="size-3.5 text-amber-500" />
-              <span>Hell</span>
+              <span>Light</span>
             </>
           )}
         </button>
       </div>
 
-      {/* Bildschirm-Container */}
+      {/* Screen container */}
       <div
         className={`mt-4 rounded-xl border overflow-hidden min-h-[440px] flex flex-col justify-between transition-colors duration-200 ${
           isDark
-            ? "bg-[#090D16] border-gray-800 text-gray-200"
-            : "bg-slate-50 border-gray-200 text-gray-800"
+            ? "bg-[#08080a] border-gray-800 text-gray-200"
+            : "bg-gray-50 border-gray-200 text-gray-800"
         }`}
       >
         {/* VIEW: DASHBOARD */}
@@ -133,7 +133,7 @@ export function LivePreview({
             {/* Topbar */}
             <div
               className={`flex items-center justify-between px-3.5 py-2.5 border-b text-xs ${
-                isDark ? "border-gray-800/80 bg-[#111827]/60" : "border-gray-200 bg-white"
+                isDark ? "border-gray-800/80 bg-[#161619]/60" : "border-gray-200 bg-white"
               }`}
             >
               <div className="flex items-center gap-2.5 overflow-hidden">
@@ -162,7 +162,7 @@ export function LivePreview({
                     isDark ? "border-gray-800 text-gray-400" : "border-gray-200 text-gray-500"
                   }`}
                 >
-                  Suche (⌘K)
+                  Search (⌘K)
                 </div>
                 <div
                   className="size-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
@@ -177,7 +177,7 @@ export function LivePreview({
             <div className="flex flex-1">
               <div
                 className={`w-28 border-r p-2 flex flex-col justify-between text-xs hidden sm:flex ${
-                  isDark ? "border-gray-800/80 bg-[#0B0F19]" : "border-gray-200 bg-white/70"
+                  isDark ? "border-gray-800/80 bg-[#0e0e10]" : "border-gray-200 bg-white/70"
                 }`}
               >
                 <div className="space-y-1">
@@ -215,7 +215,7 @@ export function LivePreview({
               <div className="flex-1 p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h5 className="font-outfit font-semibold text-xs">Server-Übersicht</h5>
+                    <h5 className="font-outfit font-semibold text-xs">Server overview</h5>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">
                       {displaySlogan}
                     </p>
@@ -225,7 +225,7 @@ export function LivePreview({
                     className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white shadow-xs"
                     style={{ backgroundColor: primaryColor }}
                   >
-                    Neuer Server
+                    New server
                   </button>
                 </div>
 
@@ -233,7 +233,7 @@ export function LivePreview({
                 <div className="grid grid-cols-2 gap-2">
                   <div
                     className={`p-2.5 rounded-lg border ${
-                      isDark ? "bg-[#111827] border-gray-800/80" : "bg-white border-gray-200"
+                      isDark ? "bg-[#161619] border-gray-800/80" : "bg-white border-gray-200"
                     }`}
                   >
                     <div className="flex items-center justify-between text-[10px] text-gray-400">
@@ -245,13 +245,13 @@ export function LivePreview({
                       className="text-[9px] font-semibold px-1 py-0.2 rounded text-white inline-block mt-0.5"
                       style={{ backgroundColor: accentColor }}
                     >
-                      100% Bereit
+                      100% ready
                     </span>
                   </div>
 
                   <div
                     className={`p-2.5 rounded-lg border ${
-                      isDark ? "bg-[#111827] border-gray-800/80" : "bg-white border-gray-200"
+                      isDark ? "bg-[#161619] border-gray-800/80" : "bg-white border-gray-200"
                     }`}
                   >
                     <div className="flex items-center justify-between text-[10px] text-gray-400">
@@ -260,7 +260,7 @@ export function LivePreview({
                     </div>
                     <div className="text-base font-outfit font-bold mt-0.5">18</div>
                     <span className="text-[9px] font-medium text-emerald-400 inline-block mt-0.5">
-                      ● 18 aktiv
+                      ● 18 active
                     </span>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export function LivePreview({
                 {/* Sample Server Card */}
                 <div
                   className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                    isDark ? "bg-[#111827] border-gray-800/80" : "bg-white border-gray-200"
+                    isDark ? "bg-[#161619] border-gray-800/80" : "bg-white border-gray-200"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -280,14 +280,14 @@ export function LivePreview({
                     </div>
                     <div>
                       <div className="text-[11px] font-semibold">Minecraft Paper</div>
-                      <div className="text-[9px] text-gray-500">12/30 Spieler • Online</div>
+                      <div className="text-[9px] text-gray-500">12/30 players • Online</div>
                     </div>
                   </div>
                   <span
                     className="text-[10px] font-semibold px-1.5 py-0.5 rounded text-white"
                     style={{ backgroundColor: accentColor }}
                   >
-                    Akzent
+                    Accent
                   </span>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export function LivePreview({
                   : loginBackgroundType === "image" && loginBackgroundValue
                     ? `linear-gradient(rgba(11, 15, 25, 0.75), rgba(11, 15, 25, 0.85)), url('${loginBackgroundValue}') center / cover no-repeat`
                     : isDark
-                      ? "#090D16"
+                      ? "#08080a"
                       : "#F8FAFC",
             }}
           >
@@ -358,7 +358,7 @@ export function LivePreview({
                 className="w-full py-1.5 rounded text-[11px] font-semibold text-white shadow-xs"
                 style={{ backgroundColor: primaryColor }}
               >
-                Anmelden
+                Sign in
               </button>
             </div>
           </div>
@@ -368,12 +368,12 @@ export function LivePreview({
         {viewMode === "email" && (
           <div
             className={`flex-1 p-4 flex flex-col items-center justify-center ${
-              isDark ? "bg-[#090D16]" : "bg-gray-100"
+              isDark ? "bg-[#08080a]" : "bg-gray-100"
             }`}
           >
             <div
               className={`w-full max-w-xs rounded-xl border p-4 shadow-theme-xs space-y-3 ${
-                isDark ? "bg-[#111827] border-gray-800 text-white" : "bg-white border-gray-200 text-gray-900"
+                isDark ? "bg-[#161619] border-gray-800 text-white" : "bg-white border-gray-200 text-gray-900"
               }`}
             >
               <div className="flex items-center justify-between border-b border-gray-800/40 pb-2">
@@ -382,12 +382,12 @@ export function LivePreview({
                   className="text-[9px] font-semibold px-1.5 py-0.2 rounded text-white"
                   style={{ backgroundColor: accentColor }}
                 >
-                  Benachrichtigung
+                  Notification
                 </span>
               </div>
 
               <p className="text-[11px] text-gray-400 leading-relaxed">
-                Hallo Administrator, dein Game-Server wurde erfolgreich eingerichtet und ist online.
+                Hi Administrator, your game server has been set up and is online.
               </p>
 
               <button
@@ -395,16 +395,16 @@ export function LivePreview({
                 className="w-full py-1.5 rounded text-xs font-semibold text-white shadow-xs"
                 style={{ backgroundColor: primaryColor }}
               >
-                Server öffnen
+                Open server
               </button>
             </div>
           </div>
         )}
 
-        {/* PFLICHT-FOOTER: In allen Views und Layouts fest eingebaut */}
+        {/* MANDATORY FOOTER: built into every view and layout */}
         <div
           className={`px-3 py-2.5 border-t text-xs shrink-0 select-none flex flex-wrap items-center justify-between gap-2 ${
-            isDark ? "border-gray-800/80 bg-[#0B0F19]" : "border-gray-200 bg-white"
+            isDark ? "border-gray-800/80 bg-[#0e0e10]" : "border-gray-200 bg-white"
           }`}
         >
           <div className="flex items-center gap-2 text-[10px] text-gray-500 overflow-hidden">
@@ -415,7 +415,7 @@ export function LivePreview({
               </span>
             )}
           </div>
-          <PoweredByFooter />
+          <PoweredByFooter tone={isDark ? "dark" : "light"} />
         </div>
       </div>
     </div>

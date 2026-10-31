@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNav } from "@/components/shared/tab-nav";
 import { Badge } from "@/components/ui/badge";
 import { useT } from "@/i18n";
-import { CodeIcon, DocIcon, GearIcon, LayoutGridIcon, ListIcon } from "@/icons";
+import { CodeIcon, DocIcon, GearIcon, LayerIcon, LayoutGridIcon, ListIcon } from "@/icons";
 import { notifyError } from "@/lib/notify";
 import { Permissions } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +40,7 @@ function NodeContent() {
   return (
     <>
       <PageHeader
+        icon={<LayerIcon />}
         title={node.data.name}
         description={`${node.data.useSsl ? "https" : "http"}://${node.data.fqdn}:${node.data.httpPort}`}
         crumbs={[{ label: t("Nav.Admin.Nodes"), to: "/admin/nodes" }]}

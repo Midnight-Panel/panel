@@ -6,7 +6,7 @@ using Midnight.ApiServer.Core.Http;
 namespace Midnight.ApiServer.Features.Branding.Services;
 
 /// <summary>
-/// Validiert Hex-Farben und berechnet Kontrastverhältnisse gemäß WCAG 2.1 Richtlinien.
+/// Validates hex colors and calculates contrast ratios according to WCAG 2.1.
 /// </summary>
 public static class ColorContrastValidator
 {
@@ -15,11 +15,11 @@ public static class ColorContrastValidator
     public static void ValidateHex(string color, string propertyName)
     {
         if (string.IsNullOrWhiteSpace(color) || !HexColorRegex.IsMatch(color))
-            throw HttpApiException.BadRequest($"Ungültiger Farbwert für {propertyName}. Erwartetes Format: #RRGGBB");
+            throw HttpApiException.BadRequest($"Invalid color value for {propertyName}. Expected format: #RRGGBB");
     }
 
     /// <summary>
-    /// Berechnet die relative Helligkeit (Relative Luminance) einer Farbe nach WCAG 2.1.
+    /// Calculates the relative luminance of a color according to WCAG 2.1.
     /// </summary>
     public static double CalculateLuminance(string hexColor)
     {
@@ -35,7 +35,7 @@ public static class ColorContrastValidator
     }
 
     /// <summary>
-    /// Berechnet das Kontrastverhältnis zweier Farben nach WCAG 2.1 (1:1 bis 21:1).
+    /// Calculates the contrast ratio of two colors according to WCAG 2.1 (1:1 to 21:1).
     /// </summary>
     public static double CalculateContrastRatio(string color1, string color2)
     {

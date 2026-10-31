@@ -95,7 +95,7 @@ export const shardsApi = {
   deleteVariable: (shardId: number, id: number) =>
     api.delete(`/api/admin/shards/${shardId}/variables/${id}`),
 
-  // Benutzer-Bereich (Server-Erstellung)
+  // User area (server creation)
   listUserShards: (collectionId?: number) => {
     const url = collectionId ? `/api/shards?collectionId=${collectionId}` : "/api/shards";
     return api.get<ShardSummary[]>(url);

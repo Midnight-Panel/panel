@@ -1,5 +1,7 @@
 import { settingsApi } from "@/api/settings";
 import type { AdminSettingsUpdateRequest, FooterLinkItem } from "@/api/types";
+import { isSafeLink } from "@/lib/returnUrl";
+import { useBranding } from "@/contexts/BrandingContext";
 import { useAuth } from "@/auth/AuthContext";
 import { RequirePermission } from "@/components/shared/guards";
 import { PageHeader } from "@/components/shared/page-header";
@@ -35,6 +37,7 @@ import { useForm } from "react-hook-form";
 
 export default function AdminSettingsPage() {
   const { can, reloadSettings } = useAuth();
+  const { reload: reloadBranding } = useBranding();
   const confirm = useConfirm();
   const queryClient = useQueryClient();
 
@@ -85,7 +88,8 @@ export default function AdminSettingsPage() {
     try {
       await settingsApi.updateSettings(values);
       await queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
-      await reloadSettings();
+      // Footer links are shared with the branding, refresh both
+      await Promise.all([reloadSettings(), reloadBranding()]);
       notifySuccess("Settings saved successfully.");
     } catch (err) {
       notifyError(err);
@@ -110,6 +114,11 @@ export default function AdminSettingsPage() {
   const handleSaveLink = () => {
     if (!linkForm.label.trim() || !linkForm.url.trim()) {
       notifyError("Label and URL are required.");
+      return;
+    }
+
+    if (!isSafeLink(linkForm.url.trim())) {
+      notifyError("The URL must start with /, http:// or https://.");
       return;
     }
 
@@ -181,6 +190,7 @@ export default function AdminSettingsPage() {
     <RequirePermission permission={Permissions.AdminSystemRead}>
       {/* Top Header */}
       <PageHeader
+        icon={<GearIcon />}
         title="System Settings"
         description="Configure system parameters, user access rules, footer links, and support diagnostics."
         actions={
@@ -198,8 +208,8 @@ export default function AdminSettingsPage() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+        <div>
+          <TabsList variant="line">
             <TabsTrigger value="general" className="gap-2">
               <GearIcon className="size-4" />
               General & Features
@@ -363,7 +373,7 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 dark:border-gray-800 dark:bg-white/3">
+              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 dark:border-gray-800 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-white/90">
                   <CheckCircleIcon className="size-4 text-emerald-500" />
                   When Enabled
@@ -375,7 +385,7 @@ export default function AdminSettingsPage() {
                 </ul>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 dark:border-gray-800 dark:bg-white/3">
+              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2 dark:border-gray-800 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-white/90">
                   <OctagonAlertIcon className="size-4 text-rose-500" />
                   When Disabled
@@ -421,7 +431,7 @@ export default function AdminSettingsPage() {
                       {currentFooterLinks.map((link) => (
                         <div
                           key={link.id}
-                          className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5 dark:border-gray-800 dark:bg-white/3"
+                          className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5 dark:border-gray-800 dark:bg-white/[0.02]"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-semibold text-gray-800 dark:text-white/90">
@@ -549,7 +559,7 @@ export default function AdminSettingsPage() {
 
         {/* TAB 4: TROUBLESHOOTING ARCHIVE */}
         <TabsContent value="troubleshooting">
-          <Card className="border border-rose-200 bg-white dark:border-rose-900/40 dark:bg-white/3 p-5 lg:p-6 space-y-6 relative overflow-hidden">
+          <Card className="border border-rose-200 bg-white dark:border-rose-900/40 dark:bg-white/[0.02] p-5 lg:p-6 space-y-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-amber-500 to-indigo-500" />
 
             <div className="flex items-start gap-4">
@@ -588,25 +598,25 @@ export default function AdminSettingsPage() {
                 Package Contents Breakdown
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/3">
+                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/[0.02]">
                   <span className="font-mono font-medium text-brand-600 dark:text-brand-400">config.sanitized.json</span>
                   <p className="text-gray-500 dark:text-gray-400 text-[11px]">
                     Current panel configuration with all secrets, database passwords, and private tokens completely masked as <code className="text-amber-600 dark:text-amber-300">[REDACTED]</code>.
                   </p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/3">
+                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/[0.02]">
                   <span className="font-mono font-medium text-brand-600 dark:text-brand-400">system-info.json</span>
                   <p className="text-gray-500 dark:text-gray-400 text-[11px]">
                     OS specs, .NET runtime build, process uptime, memory consumption, database provider, and panel entity counts.
                   </p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/3">
+                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/[0.02]">
                   <span className="font-mono font-medium text-brand-600 dark:text-brand-400">diagnostics.json</span>
                   <p className="text-gray-500 dark:text-gray-400 text-[11px]">
                     Live database latency test, storage directory permission verification, and online node connectivity status.
                   </p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/3">
+                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 space-y-1 dark:border-gray-800 dark:bg-white/[0.02]">
                   <span className="font-mono font-medium text-brand-600 dark:text-brand-400">logs/ & errors_summary.txt</span>
                   <p className="text-gray-500 dark:text-gray-400 text-[11px]">
                     The most recent server log files with sanitized bearer tokens, plus an extracted summary of recent errors and warnings.

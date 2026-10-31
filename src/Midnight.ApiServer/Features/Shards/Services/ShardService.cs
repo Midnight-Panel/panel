@@ -235,7 +235,10 @@ public class ShardService : IShardService
 
         foreach (var variable in shard.Variables.OrderBy(x => x.SortOrder))
         {
-            request.Values.TryGetValue(variable.EnvVariable, out var userVal);
+            // Users can only change editable variables, everything else keeps its default value
+            string? userVal = null;
+            if (variable.UserEditable)
+                request.Values?.TryGetValue(variable.EnvVariable, out userVal);
 
             var valToValidate = string.IsNullOrEmpty(userVal) ? variable.DefaultValue : userVal;
 
@@ -245,11 +248,14 @@ public class ShardService : IShardService
                 response.Errors[variable.EnvVariable] = error;
             }
 
-            response.ResolvedEnvironment[variable.EnvVariable] = valToValidate ?? "";
+            // Values of hidden variables are not returned to users
+            if (variable.UserViewable)
+                response.ResolvedEnvironment[variable.EnvVariable] = valToValidate ?? "";
         }
 
         if (response.IsValid)
         {
+            // Placeholders of hidden variables stay unresolved in the preview
             response.ResolvedStartupCommand = StartupCommandResolver.ResolveStartupCommand(
                 shard.StartupCommand,
                 response.ResolvedEnvironment);

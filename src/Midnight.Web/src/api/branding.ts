@@ -2,7 +2,8 @@ import { api } from "./client";
 import type { BrandingResponse, BrandingUpdateRequest } from "../types/branding";
 
 export const brandingApi = {
-  get: () => api.get<BrandingResponse>("/api/branding"),
+  /** fresh skips the browser cache (the endpoint is cached for anonymous visitors), used after changes */
+  get: (fresh = false) => api.get<BrandingResponse>(fresh ? `/api/branding?v=${Date.now()}` : "/api/branding"),
 
   update: (data: BrandingUpdateRequest) =>
     api.put<BrandingResponse>("/api/admin/branding", data),

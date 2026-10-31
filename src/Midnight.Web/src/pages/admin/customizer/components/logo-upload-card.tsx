@@ -30,7 +30,7 @@ export function LogoUploadCard({
 
   const handleUpload = async (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Die Datei darf maximal 2 MB groß sein.");
+      toast.error("File must be 2 MB or smaller.");
       return;
     }
 
@@ -38,18 +38,18 @@ export function LogoUploadCard({
     try {
       if (type === "favicon") {
         await brandingApi.uploadFavicon(file);
-        toast.success("Favicon erfolgreich hochgeladen!");
+        toast.success("Favicon uploaded.");
       } else {
         await brandingApi.uploadLogo(type, file);
         toast.success(
           type === "light"
-            ? "Logo für hellen Modus erfolgreich hochgeladen!"
-            : "Logo für dunklen Modus erfolgreich hochgeladen!",
+            ? "Light mode logo uploaded."
+            : "Dark mode logo uploaded.",
         );
       }
       await onSuccess();
-    } catch (err: any) {
-      toast.error(err?.detail || err?.message || "Fehler beim Hochladen der Bilddatei.");
+    } catch (err) {
+      toast.error((err instanceof Error && err.message) || "Failed to upload image.");
     } finally {
       setLoading(false);
     }
@@ -60,18 +60,18 @@ export function LogoUploadCard({
     try {
       if (type === "favicon") {
         await brandingApi.deleteFavicon();
-        toast.success("Favicon auf Standard zurückgesetzt.");
+        toast.success("Favicon reset to default.");
       } else {
         await brandingApi.deleteLogo(type);
         toast.success(
           type === "light"
-            ? "Helles Logo auf Standard zurückgesetzt."
-            : "Dunkles Logo auf Standard zurückgesetzt.",
+            ? "Light logo reset to default."
+            : "Dark logo reset to default.",
         );
       }
       await onSuccess();
-    } catch (err: any) {
-      toast.error(err?.detail || err?.message || "Fehler beim Zurücksetzen.");
+    } catch (err) {
+      toast.error((err instanceof Error && err.message) || "Failed to reset.");
     } finally {
       setLoading(false);
     }
@@ -85,15 +85,15 @@ export function LogoUploadCard({
     },
     accept: acceptedTypes,
     maxFiles: 1,
-    noClick: !!currentUrl, // Wenn Bild vorhanden ist, wird gezielt per Button geöffnet
+    noClick: !!currentUrl, // When an image exists, the picker is opened explicitly via button
   });
 
   const previewBgClass =
     type === "light"
-      ? "bg-slate-100 border-slate-200"
+      ? "bg-gray-100 border-gray-200"
       : type === "dark"
-        ? "bg-slate-950 border-slate-800"
-        : "bg-slate-900 border-slate-800";
+        ? "bg-gray-950 border-gray-800"
+        : "bg-gray-900 border-gray-800";
 
   return (
     <div
@@ -116,11 +116,11 @@ export function LogoUploadCard({
             </h4>
             {currentUrl ? (
               <Badge variant="light" color="primary" size="sm">
-                Individuell
+                Custom
               </Badge>
             ) : (
               <Badge variant="light" color="light" size="sm">
-                Standard
+                Default
               </Badge>
             )}
           </div>
@@ -138,7 +138,7 @@ export function LogoUploadCard({
               className="h-8 text-xs font-normal"
             >
               <UploadIcon className="size-3.5 mr-1" />
-              Ersetzen
+              Replace
             </Button>
             <Button
               type="button"
@@ -147,10 +147,10 @@ export function LogoUploadCard({
               onClick={handleDelete}
               disabled={loading}
               className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-              title="Auf Standard zurücksetzen"
+              title="Reset to default"
             >
               <TrashBinIcon className="size-3.5 mr-1" />
-              Entfernen
+              Remove
             </Button>
           </div>
         )}
@@ -170,7 +170,7 @@ export function LogoUploadCard({
           />
           <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[11px] text-gray-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-xs">
             <CheckCircleIcon className="size-3 text-emerald-400" />
-            <span>Aktiv</span>
+            <span>Active</span>
           </div>
         </div>
       ) : (
@@ -182,7 +182,7 @@ export function LogoUploadCard({
             <UploadIcon className="size-5" />
           </div>
           <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            {isDragActive ? "Datei hier loslassen..." : "Klicken oder Datei hierher ziehen"}
+            {isDragActive ? "Drop file here..." : "Click or drag a file here"}
           </span>
           <span className="text-[11px] text-gray-400 mt-1">
             {isFavicon ? "PNG, ICO, SVG, WebP (max. 2 MB)" : "PNG, SVG, WebP (max. 2 MB)"}
@@ -195,10 +195,10 @@ export function LogoUploadCard({
         <span className="flex items-center gap-1">
           <SparkIcon className="size-3 text-brand-400" />
           {type === "light"
-            ? "Optimal für helle Oberflächen & E-Mails"
+            ? "Best for light surfaces & emails"
             : type === "dark"
-              ? "Optimal für dunkles Dashboard-Thema"
-              : "Wird im Browser-Tab dargestellt"}
+              ? "Best for the dark dashboard theme"
+              : "Shown in the browser tab"}
         </span>
         <span>Max. 2 MB</span>
       </div>

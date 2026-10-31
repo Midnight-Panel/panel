@@ -44,23 +44,23 @@ public class PreFlightService : IPreFlightService
     {
         var checks = new List<CheckItem>();
 
-        // 1. Betriebssystem & Version
+        // 1. Operating system & version
         checks.Add(await CheckOperatingSystemAsync());
 
-        // 2. CPU-Architektur
+        // 2. CPU architecture
         checks.Add(CheckArchitecture());
 
-        // 3. Arbeitsspeicher (RAM)
+        // 3. Memory (RAM)
         checks.Add(await CheckRamAsync());
 
-        // 4. Freier Speicherplatz
+        // 4. Free disk space
         checks.Add(CheckDiskSpace());
 
         // 5. Docker & Docker Compose
         checks.Add(await CheckDockerAsync(cancellationToken));
         checks.Add(await CheckDockerComposeAsync(cancellationToken));
 
-        // 6. Belegte Ports
+        // 6. Ports in use
         var portsToCheck = new List<int> { 80, 443 };
         if (panelPort != 80 && panelPort != 443) portsToCheck.Add(panelPort);
         if (isDaemonIncluded) portsToCheck.Add(daemonPort);
@@ -68,7 +68,7 @@ public class PreFlightService : IPreFlightService
         var portConflicts = await CheckPortConflictsAsync(portsToCheck, cancellationToken);
         if (portConflicts.Count == 0)
         {
-            checks.Add(new CheckItem("Ports", CheckStatus.Ok, $"Alle benötigten Ports ({string.Join(", ", portsToCheck)}) sind frei"));
+            checks.Add(new CheckItem("Ports", CheckStatus.Ok, $"All required ports ({string.Join(", ", portsToCheck)}) are free"));
         }
         else
         {
@@ -77,8 +77,8 @@ public class PreFlightService : IPreFlightService
                 checks.Add(new CheckItem(
                     $"Port {conflict.Port}",
                     CheckStatus.Failed,
-                    $"Belegt durch Prozess '{conflict.ProcessName}' (PID {conflict.Pid?.ToString() ?? "unbekannt"})",
-                    $"Stoppe den Dienst '{conflict.ProcessName}' oder konfiguriere einen anderen Port via --port"));
+                    $"In use by process '{conflict.ProcessName}' (PID {conflict.Pid?.ToString() ?? "unknown"})",
+                    $"Stop the '{conflict.ProcessName}' service or configure a different port via --port"));
             }
         }
 
@@ -93,10 +93,10 @@ public class PreFlightService : IPreFlightService
         if (!_fileSystem.FileExists("/etc/os-release"))
         {
             return new CheckItem(
-                "Betriebssystem",
+                "Operating system",
                 CheckStatus.Warning,
-                "Nicht-Linux oder unbekanntes System (/etc/os-release fehlt)",
-                "Empfohlen: Ubuntu 22.04/24.04, Debian 12 oder RHEL/Rocky/Alma 9");
+                "Non-Linux or unknown system (/etc/os-release missing)",
+                "Recommended: Ubuntu 22.04/24.04, Debian 12 or RHEL/Rocky/Alma 9");
         }
 
         var lines = await _fileSystem.ReadAllTextAsync("/etc/os-release");
@@ -110,14 +110,14 @@ public class PreFlightService : IPreFlightService
 
         if (isSupported)
         {
-            return new CheckItem("Betriebssystem", CheckStatus.Ok, $"{prettyName} (Offiziell unterstützt)");
+            return new CheckItem("Operating system", CheckStatus.Ok, $"{prettyName} (officially supported)");
         }
 
         return new CheckItem(
-            "Betriebssystem",
+            "Operating system",
             CheckStatus.Warning,
-            $"{prettyName} (Nicht offiziell getestet)",
-            "Installation kann fortgesetzt werden, bei Problemen bitte Distribution prüfen");
+            $"{prettyName} (not officially tested)",
+            "Installation can continue; if problems occur, check your distribution");
     }
 
     public CheckItem CheckArchitecture()
@@ -125,9 +125,9 @@ public class PreFlightService : IPreFlightService
         var arch = RuntimeInformation.ProcessArchitecture;
         return arch switch
         {
-            Architecture.X64 => new CheckItem("CPU-Architektur", CheckStatus.Ok, "x86_64 (64-Bit Intel/AMD)"),
-            Architecture.Arm64 => new CheckItem("CPU-Architektur", CheckStatus.Ok, "aarch64 / arm64 (64-Bit ARM)"),
-            _ => new CheckItem("CPU-Architektur", CheckStatus.Failed, $"{arch} wird nicht unterstützt", "Erfordert ein 64-Bit System (x86_64 oder arm64)")
+            Architecture.X64 => new CheckItem("CPU architecture", CheckStatus.Ok, "x86_64 (64-bit Intel/AMD)"),
+            Architecture.Arm64 => new CheckItem("CPU architecture", CheckStatus.Ok, "aarch64 / arm64 (64-bit ARM)"),
+            _ => new CheckItem("CPU architecture", CheckStatus.Failed, $"{arch} is not supported", "Requires a 64-bit system (x86_64 or arm64)")
         };
     }
 
@@ -147,29 +147,29 @@ public class PreFlightService : IPreFlightService
 
         if (totalRamMb == 0)
         {
-            // Fallback für Tests / non-proc
+            // Fallback for tests / non-proc
             totalRamMb = 4096;
         }
 
         if (totalRamMb >= 2000)
         {
-            return new CheckItem("Arbeitsspeicher (RAM)", CheckStatus.Ok, $"{totalRamMb} MB verfügbar (Mindestanforderung 2048 MB erfüllt)");
+            return new CheckItem("Memory (RAM)", CheckStatus.Ok, $"{totalRamMb} MB available (meets minimum requirement of 2048 MB)");
         }
 
         if (totalRamMb >= 1400)
         {
             return new CheckItem(
-                "Arbeitsspeicher (RAM)",
+                "Memory (RAM)",
                 CheckStatus.Warning,
-                $"{totalRamMb} MB verfügbar (Knapp bemessen, 2048 MB empfohlen)",
-                "Erwäge Swap-Speicher hinzuzufügen: sudo fallocate -l 2G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile");
+                $"{totalRamMb} MB available (tight, 2048 MB recommended)",
+                "Consider adding swap: sudo fallocate -l 2G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile");
         }
 
         return new CheckItem(
-            "Arbeitsspeicher (RAM)",
+            "Memory (RAM)",
             CheckStatus.Failed,
-            $"{totalRamMb} MB verfügbar (Unter Mindestanforderung von 2048 MB)",
-            "Erweitere den Server auf mindestens 2 GB RAM");
+            $"{totalRamMb} MB available (below minimum requirement of 2048 MB)",
+            "Upgrade the server to at least 2 GB RAM");
     }
 
     public CheckItem CheckDiskSpace()
@@ -179,23 +179,23 @@ public class PreFlightService : IPreFlightService
 
         if (freeGb >= 10.0)
         {
-            return new CheckItem("Freier Speicherplatz", CheckStatus.Ok, $"{freeGb:F1} GB frei auf Zielpartition");
+            return new CheckItem("Free disk space", CheckStatus.Ok, $"{freeGb:F1} GB free on target partition");
         }
 
         if (freeGb >= 5.0)
         {
             return new CheckItem(
-                "Freier Speicherplatz",
+                "Free disk space",
                 CheckStatus.Warning,
-                $"{freeGb:F1} GB frei (Empfohlen: mind. 10 GB)",
-                "Bereinige alte Docker-Images mit 'docker system prune -a'");
+                $"{freeGb:F1} GB free (recommended: at least 10 GB)",
+                "Clean up old Docker images with 'docker system prune -a'");
         }
 
         return new CheckItem(
-            "Freier Speicherplatz",
+            "Free disk space",
             CheckStatus.Failed,
-            $"{freeGb:F1} GB frei (Mindestens 5 GB zwingend erforderlich)",
-            "Schaffe mindestens 5-10 GB freien Speicherplatz auf der Festplatte");
+            $"{freeGb:F1} GB free (at least 5 GB strictly required)",
+            "Free up at least 5-10 GB of disk space");
     }
 
     public async Task<CheckItem> CheckDockerAsync(CancellationToken cancellationToken)
@@ -206,8 +206,8 @@ public class PreFlightService : IPreFlightService
             return new CheckItem(
                 "Docker Engine",
                 CheckStatus.Failed,
-                "Docker ist nicht installiert oder nicht im PATH",
-                "Docker automatisch installieren lassen oder manuell via https://docs.docker.com/engine/install/");
+                "Docker is not installed or not in PATH",
+                "Let Docker be installed automatically or install it manually via https://docs.docker.com/engine/install/");
         }
 
         var infoRes = await _processRunner.RunAsync("docker", "info", cancellationToken: cancellationToken);
@@ -216,8 +216,8 @@ public class PreFlightService : IPreFlightService
             return new CheckItem(
                 "Docker Daemon",
                 CheckStatus.Failed,
-                "Docker-Daemon läuft nicht",
-                "Starte den Dienst mit: systemctl start docker");
+                "Docker daemon is not running",
+                "Start the service with: systemctl start docker");
         }
 
         return new CheckItem("Docker Engine", CheckStatus.Ok, res.StandardOutput.Trim());
@@ -234,8 +234,8 @@ public class PreFlightService : IPreFlightService
         return new CheckItem(
             "Docker Compose",
             CheckStatus.Failed,
-            "Docker Compose Plugin (v2) ist nicht installiert",
-            "Installiere docker-compose-plugin (z.B. apt install docker-compose-plugin)");
+            "Docker Compose plugin (v2) is not installed",
+            "Install docker-compose-plugin (e.g. apt install docker-compose-plugin)");
     }
 
     public async Task<List<PortConflict>> CheckPortConflictsAsync(IReadOnlyList<int> ports, CancellationToken cancellationToken)
@@ -247,7 +247,7 @@ public class PreFlightService : IPreFlightService
 
         foreach (var port in ports)
         {
-            // Suche Zeilen mit :<port>
+            // Look for lines containing :<port>
             var pattern = $@":{port}\s+.*users:\(\(""([^""]+)""(?:,pid=(\d+))?";
             var match = Regex.Match(output, pattern);
 
@@ -264,7 +264,7 @@ public class PreFlightService : IPreFlightService
 
     public async Task<CheckItem> CheckFirewallAsync(IReadOnlyList<int> ports, CancellationToken cancellationToken)
     {
-        // Prüfe ufw
+        // Check ufw
         var ufwRes = await _processRunner.RunAsync("ufw", "status", cancellationToken: cancellationToken);
         if (ufwRes.Success && ufwRes.StandardOutput.Contains("Status: active", StringComparison.OrdinalIgnoreCase))
         {
@@ -274,39 +274,39 @@ public class PreFlightService : IPreFlightService
                 return new CheckItem(
                     "Firewall (UFW)",
                     CheckStatus.Warning,
-                    "UFW ist aktiv, aber einige Ports (80/443) scheinen nicht freigegeben",
-                    "Ports öffnen via: ufw allow 80/tcp && ufw allow 443/tcp");
+                    "UFW is active, but some ports (80/443) do not appear to be open",
+                    "Open ports via: ufw allow 80/tcp && ufw allow 443/tcp");
             }
-            return new CheckItem("Firewall (UFW)", CheckStatus.Ok, "Aktiv und Ports sind freigegeben");
+            return new CheckItem("Firewall (UFW)", CheckStatus.Ok, "Active and ports are open");
         }
 
-        // Prüfe firewalld
+        // Check firewalld
         var fwdRes = await _processRunner.RunAsync("firewall-cmd", "--state", cancellationToken: cancellationToken);
         if (fwdRes.Success && fwdRes.StandardOutput.Contains("running", StringComparison.OrdinalIgnoreCase))
         {
             return new CheckItem(
                 "Firewall (firewalld)",
                 CheckStatus.Warning,
-                "firewalld ist aktiv",
-                "Ports öffnen via: firewall-cmd --permanent --add-service=http --add-service=https && firewall-cmd --reload");
+                "firewalld is active",
+                "Open ports via: firewall-cmd --permanent --add-service=http --add-service=https && firewall-cmd --reload");
         }
 
-        return new CheckItem("Firewall", CheckStatus.Ok, "Keine blockierende Firewall erkannt");
+        return new CheckItem("Firewall", CheckStatus.Ok, "No blocking firewall detected");
     }
 
     public async Task<bool> EnsureDockerInstalledAsync(CancellationToken cancellationToken = default)
     {
-        _console.WriteInfo("Installiere Docker über offizielles Convenience-Skript...");
+        _console.WriteInfo("Installing Docker via the official convenience script...");
         var script = "curl -fsSL https://get.docker.com | sh && systemctl enable --now docker";
         var res = await _processRunner.RunBashAsync(script, isMutating: true, cancellationToken: cancellationToken);
 
         if (res.Success)
         {
-            _console.WriteSuccess("Docker Engine erfolgreich installiert!");
+            _console.WriteSuccess("Docker Engine installed successfully!");
             return true;
         }
 
-        _console.WriteError($"Fehler bei der Docker-Installation: {res.Output}");
+        _console.WriteError($"Docker installation failed: {res.Output}");
         return false;
     }
 
@@ -319,7 +319,7 @@ public class PreFlightService : IPreFlightService
             {
                 await _processRunner.RunAsync("ufw", $"allow {port}/tcp", isMutating: true, cancellationToken: cancellationToken);
             }
-            _console.WriteSuccess($"Ports {string.Join(", ", ports)} in UFW freigegeben.");
+            _console.WriteSuccess($"Ports {string.Join(", ", ports)} opened in UFW.");
             return true;
         }
 
@@ -331,7 +331,7 @@ public class PreFlightService : IPreFlightService
                 await _processRunner.RunAsync("firewall-cmd", $"--permanent --add-port={port}/tcp", isMutating: true, cancellationToken: cancellationToken);
             }
             await _processRunner.RunAsync("firewall-cmd", "--reload", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess($"Ports {string.Join(", ", ports)} in firewalld freigegeben.");
+            _console.WriteSuccess($"Ports {string.Join(", ", ports)} opened in firewalld.");
             return true;
         }
 

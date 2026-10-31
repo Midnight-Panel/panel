@@ -16,12 +16,12 @@ interface CssIssue {
 }
 
 const FORBIDDEN_FOOTER_PATTERNS = [
-  { pattern: /#midnight-footer/i, message: "Selektor '#midnight-footer' ist geschützt und wird serverseitig gefiltert." },
-  { pattern: /\[data-midnight-footer\]/i, message: "Attributselektor '[data-midnight-footer]' ist geschützt." },
-  { pattern: /\.midnight-footer/i, message: "Klasse '.midnight-footer' ist geschützt." },
-  { pattern: /footer\s*\{[^}]*display\s*:\s*none/i, message: "Verstecken von 'footer' über 'display: none' ist nicht gestattet." },
-  { pattern: /footer\s*\{[^}]*visibility\s*:\s*hidden/i, message: "Ausblenden von 'footer' über 'visibility: hidden' ist nicht gestattet." },
-  { pattern: /footer\s*\{[^}]*opacity\s*:\s*0/i, message: "Deckkraft von 'footer' auf 0 setzen ist nicht gestattet." },
+  { pattern: /#mp-immutable-footer/i, message: "Selector '#mp-immutable-footer' is protected and filtered server-side." },
+  { pattern: /\[data-mp-enforced\]/i, message: "Attribute selector '[data-mp-enforced]' is protected." },
+  { pattern: /\.mp-immutable-footer/i, message: "Class '.mp-immutable-footer' is protected." },
+  { pattern: /footer\s*\{[^}]*display\s*:\s*none/i, message: "Hiding 'footer' via 'display: none' is not allowed." },
+  { pattern: /footer\s*\{[^}]*visibility\s*:\s*hidden/i, message: "Hiding 'footer' via 'visibility: hidden' is not allowed." },
+  { pattern: /footer\s*\{[^}]*opacity\s*:\s*0/i, message: "Setting 'footer' opacity to 0 is not allowed." },
 ];
 
 export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
@@ -53,7 +53,7 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
     if (/footer\b[^}]*display\s*:\s*none/i.test(value) && !list.some((i) => i.message.includes("display: none"))) {
       list.push({
         line: 1,
-        message: "Globale Ausblendungsregeln für den Footer werden serverseitig verworfen.",
+        message: "Global rules that hide the footer are discarded server-side.",
         severity: "error",
       });
     }
@@ -82,14 +82,14 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-white font-outfit text-sm">
-                Integritätsschutz des Brandings
+                Branding integrity protection
               </span>
               <Badge variant="light" color="primary" size="sm">
-                Aktiv
+                Active
               </Badge>
             </div>
             <p className="text-gray-400 leading-relaxed text-xs">
-              Footer-Selektoren (z.&nbsp;B. <code className="bg-black/30 px-1.5 py-0.5 rounded text-brand-300 font-mono">#midnight-footer</code>) sowie Regeln, die den Hinweis <strong className="text-gray-200">„Powered by Midnight Panel“</strong> ausblenden oder verdecken, werden vor dem Speichern serverseitig strikt bereinigt.
+              Footer selectors (e.g. <code className="bg-black/30 px-1.5 py-0.5 rounded text-brand-300 font-mono">#mp-immutable-footer</code>) and rules that hide or cover the <strong className="text-gray-200">“Powered by Midnight Panel”</strong> notice are strictly stripped server-side before saving.
             </p>
           </div>
         </div>
@@ -100,12 +100,12 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 space-y-2">
           <div className="flex items-center gap-2 text-red-400 font-medium text-xs">
             <AlertIcon className="size-4 shrink-0" />
-            <span>Nicht erlaubte CSS-Regeln erkannt ({issues.length})</span>
+            <span>Disallowed CSS rules detected ({issues.length})</span>
           </div>
           <div className="space-y-1 pl-6">
             {issues.map((issue, idx) => (
               <div key={idx} className="text-xs text-red-300/90 font-mono">
-                <span className="font-semibold text-red-200">Zeile {issue.line}:</span> {issue.message}
+                <span className="font-semibold text-red-200">Line {issue.line}:</span> {issue.message}
               </div>
             ))}
           </div>
@@ -113,9 +113,9 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
       )}
 
       {/* Editor Frame */}
-      <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-[#0B0F19] shadow-theme-sm">
+      <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-[#0e0e10] shadow-theme-sm">
         {/* Editor Header Bar */}
-        <div className="flex items-center justify-between border-b border-gray-800 bg-[#111827] px-4 py-2 text-xs">
+        <div className="flex items-center justify-between border-b border-gray-800 bg-[#161619] px-4 py-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="flex gap-1.5">
               <span className="size-2.5 rounded-full bg-red-500/80" />
@@ -132,7 +132,7 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-gray-500 font-mono">
-              {lines.length} {lines.length === 1 ? "Zeile" : "Zeilen"}
+              {lines.length} {lines.length === 1 ? "line" : "lines"}
             </span>
             <Button
               type="button"
@@ -143,11 +143,11 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
             >
               {copied ? (
                 <>
-                  <CheckIcon className="size-3.5 text-emerald-400 mr-1" /> Kopiert
+                  <CheckIcon className="size-3.5 text-emerald-400 mr-1" /> Copied
                 </>
               ) : (
                 <>
-                  <CopyIcon className="size-3.5 mr-1" /> Kopieren
+                  <CopyIcon className="size-3.5 mr-1" /> Copy
                 </>
               )}
             </Button>
@@ -157,7 +157,7 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
         {/* Editor Body */}
         <div className="flex text-sm font-mono min-h-[300px]">
           {/* Line Numbers */}
-          <div className="select-none bg-[#090D16] py-3 pr-3 pl-4 text-right text-xs text-gray-500 border-r border-gray-800/80 font-mono">
+          <div className="select-none bg-[#08080a] py-3 pr-3 pl-4 text-right text-xs text-gray-500 border-r border-gray-800/80 font-mono">
             {lineNumbers.map((num) => {
               const hasError = issues.some((i) => i.line === num);
               return (
@@ -179,9 +179,9 @@ export function CssEditor({ value, onChange, disabled }: CssEditorProps) {
               value={value}
               onChange={(e) => onChange(e.target.value)}
               disabled={disabled}
-              placeholder={`/* Eigene Styles hier einfügen */\n.custom-badge {\n  border-radius: 9999px;\n}`}
+              placeholder={`/* Add your own styles here */\n.custom-badge {\n  border-radius: 9999px;\n}`}
               spellCheck={false}
-              className="size-full resize-none border-0 bg-transparent p-3 font-mono text-xs leading-6 text-slate-200 outline-none placeholder:text-slate-600 focus:ring-0 min-h-[300px]"
+              className="size-full resize-none border-0 bg-transparent p-3 font-mono text-xs leading-6 text-gray-200 outline-none placeholder:text-gray-600 focus:ring-0 min-h-[300px]"
             />
           </div>
         </div>

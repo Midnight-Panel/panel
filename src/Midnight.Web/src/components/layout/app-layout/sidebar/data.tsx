@@ -44,7 +44,7 @@ export const adminItems: NavItem[] = [
     key: "Nav.Admin.Customizer",
     path: "/admin/customizer",
     matchPrefix: "/admin/customizer",
-    permission: Permissions.AdminSystemRead,
+    permission: Permissions.AdminSystemWrite,
   },
   {
     icon: <GearIcon className="size-6" />,

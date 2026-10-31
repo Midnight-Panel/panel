@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
@@ -7,8 +8,11 @@ using Midnight.Shared.Http.Shards;
 
 namespace Midnight.ApiServer.Features.Shards.Services;
 
-public class ShardImportExportService : IShardImportExportService
+public partial class ShardImportExportService : IShardImportExportService
 {
+    [GeneratedRegex(@"^[A-Z_][A-Z0-9_]*$")]
+    private static partial Regex EnvVariableRegex();
+
     private readonly DataContext _context;
     private readonly IShardService _shardService;
     private readonly IShardCollectionService _collectionService;
@@ -95,16 +99,32 @@ public class ShardImportExportService : IShardImportExportService
         {
             var root = doc.RootElement;
 
-            // Format detection: Native Midnightpanel format
-            if (root.TryGetProperty("formatVersion", out var fvProp) && fvProp.GetString() == ShardExportPackage.CurrentFormatVersion)
-            {
-                return await ImportMidnightFormatAsync(root, request.TargetCollectionId, cancellationToken);
-            }
+            if (root.ValueKind != JsonValueKind.Object)
+                throw HttpApiException.BadRequest("Unknown file format", "The JSON file could not be identified as a Midnight shard or legacy template.");
 
-            // Format detection: Legacy PTDL format
-            if (root.TryGetProperty("meta", out var metaProp) || root.TryGetProperty("_comment", out _) || root.TryGetProperty("exported_at", out _))
+            if (request.TargetCollectionId.HasValue &&
+                !await _context.ShardCollections.AnyAsync(x => x.Id == request.TargetCollectionId.Value, cancellationToken))
+                throw HttpApiException.NotFound("Shard collection not found");
+
+            try
             {
-                return await ImportPtdlLegacyFormatAsync(root, request.TargetCollectionId, cancellationToken);
+                // Format detection: Native Midnightpanel format
+                if ((root.TryGetProperty("formatVersion", out var fvProp) || root.TryGetProperty("FormatVersion", out fvProp)) &&
+                    fvProp.ValueKind == JsonValueKind.String && fvProp.GetString() == ShardExportPackage.CurrentFormatVersion)
+                {
+                    return await ImportMidnightFormatAsync(root, request.TargetCollectionId, cancellationToken);
+                }
+
+                // Format detection: Legacy PTDL format
+                if (root.TryGetProperty("meta", out _) || root.TryGetProperty("_comment", out _) || root.TryGetProperty("exported_at", out _))
+                {
+                    return await ImportPtdlLegacyFormatAsync(root, request.TargetCollectionId, cancellationToken);
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
+            {
+                // Properties with unexpected json types (e.g. a number instead of a string)
+                throw HttpApiException.BadRequest("Invalid shard file", ex.Message);
             }
 
             throw HttpApiException.BadRequest("Unknown file format", "The JSON file could not be identified as a Midnight shard or legacy template.");
@@ -117,7 +137,13 @@ public class ShardImportExportService : IShardImportExportService
         var package = root.Deserialize<ShardExportPackage>(options)
                       ?? throw HttpApiException.BadRequest("Failed to deserialize shard package.");
 
-        var collectionId = targetCollectionId ?? await EnsureCollectionAsync(package.Collection.Name, package.Collection.Description, package.Collection.Author, cancellationToken);
+        if (package.Shard == null || string.IsNullOrWhiteSpace(package.Shard.Name))
+            throw HttpApiException.BadRequest("Invalid shard file", "The package does not contain a shard with a name.");
+
+        var collectionInfo = package.Collection ?? new ShardExportCollectionInfo();
+        var collectionName = string.IsNullOrWhiteSpace(collectionInfo.Name) ? "Imported" : collectionInfo.Name.Trim();
+
+        var collectionId = targetCollectionId ?? await EnsureCollectionAsync(collectionName, collectionInfo.Description, collectionInfo.Author, cancellationToken);
         var collection = await _context.ShardCollections.FirstAsync(x => x.Id == collectionId, cancellationToken);
 
         // Disambiguate name if already present in collection
@@ -148,19 +174,19 @@ public class ShardImportExportService : IShardImportExportService
         shard.SetConfigFiles(package.Shard.ConfigFiles);
         shard.SetFeatures(package.Shard.Features);
 
-        _context.Shards.Add(shard);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        // Add variables
+        // Variables are added through the navigation so shard and variables are saved in one step
         var sort = 0;
-        foreach (var v in package.Shard.Variables)
+        var envNames = new HashSet<string>();
+        foreach (var v in package.Shard.Variables ?? [])
         {
-            _context.ShardVariables.Add(new ShardVariable
+            if (v == null)
+                continue;
+
+            shard.Variables.Add(new ShardVariable
             {
-                ShardId = shard.Id,
-                Name = v.Name,
+                Name = string.IsNullOrWhiteSpace(v.Name) ? "Variable" : v.Name,
                 Description = v.Description,
-                EnvVariable = v.EnvVariable.ToUpperInvariant(),
+                EnvVariable = NormalizeEnvVariable(v.EnvVariable, envNames),
                 DefaultValue = v.DefaultValue,
                 UserViewable = v.UserViewable,
                 UserEditable = v.UserEditable,
@@ -169,6 +195,7 @@ public class ShardImportExportService : IShardImportExportService
             });
         }
 
+        _context.Shards.Add(shard);
         await _context.SaveChangesAsync(cancellationToken);
 
         return new ShardImportResult
@@ -317,13 +344,11 @@ public class ShardImportExportService : IShardImportExportService
         shard.SetConfigFiles(configFiles);
         shard.SetFeatures(new ShardFeaturesDto());
 
-        _context.Shards.Add(shard);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        // Import variables
+        // Import variables, saved together with the shard
         if (root.TryGetProperty("variables", out var vars) && vars.ValueKind == JsonValueKind.Array)
         {
             var sort = 0;
+            var envNames = new HashSet<string>();
             foreach (var v in vars.EnumerateArray())
             {
                 var vName = v.TryGetProperty("name", out var vn) ? vn.GetString() ?? "Variable" : "Variable";
@@ -334,12 +359,11 @@ public class ShardImportExportService : IShardImportExportService
                 var vEdit = !v.TryGetProperty("user_editable", out var vee) || vee.GetBoolean();
                 var vRules = v.TryGetProperty("rules", out var vr) ? vr.GetString() ?? "required|string" : "required|string";
 
-                _context.ShardVariables.Add(new ShardVariable
+                shard.Variables.Add(new ShardVariable
                 {
-                    ShardId = shard.Id,
                     Name = vName,
                     Description = vDesc,
-                    EnvVariable = vEnv.ToUpperInvariant(),
+                    EnvVariable = NormalizeEnvVariable(vEnv, envNames),
                     DefaultValue = vDef,
                     UserViewable = vView,
                     UserEditable = vEdit,
@@ -347,9 +371,10 @@ public class ShardImportExportService : IShardImportExportService
                     SortOrder = ++sort
                 });
             }
-
-            await _context.SaveChangesAsync(cancellationToken);
         }
+
+        _context.Shards.Add(shard);
+        await _context.SaveChangesAsync(cancellationToken);
 
         warnings.Add("Template was successfully converted from legacy format to modern Midnightpanel Shard format.");
 
@@ -363,6 +388,20 @@ public class ShardImportExportService : IShardImportExportService
             DetectedFormat = "Legacy PTDL Format",
             Warnings = warnings
         };
+    }
+
+    /// <summary>Applies the same rules as <see cref="ShardVariableService"/> so imports can't create broken or duplicate variables</summary>
+    private static string NormalizeEnvVariable(string? env, HashSet<string> seen)
+    {
+        var normalized = env?.Trim().ToUpperInvariant() ?? "";
+
+        if (!EnvVariableRegex().IsMatch(normalized) || StartupCommandResolver.SystemVariables.Contains(normalized))
+            throw HttpApiException.BadRequest("Invalid variable", $"'{env}' is not a valid or allowed environment variable name.");
+
+        if (!seen.Add(normalized))
+            throw HttpApiException.BadRequest("Invalid variable", $"The variable '{normalized}' is defined more than once.");
+
+        return normalized;
     }
 
     private async Task<int> EnsureCollectionAsync(string name, string? description, string author, CancellationToken cancellationToken)

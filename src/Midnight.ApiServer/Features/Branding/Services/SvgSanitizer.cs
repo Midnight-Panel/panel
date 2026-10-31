@@ -1,20 +1,31 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using Midnight.ApiServer.Core.Http;
 
 namespace Midnight.ApiServer.Features.Branding.Services;
 
 /// <summary>
-/// Bereinigt hochgeladene SVGs strikt von allen XSS-Vektoren, JavaScript und externen Referenzen.
+/// Strictly strips uploaded SVGs of all XSS vectors, JavaScript and external references.
 /// </summary>
 public static class SvgSanitizer
 {
-    private static readonly string[] DangerousTags =
-    [
-        "script", "iframe", "object", "embed", "applet", "foreignobject", "audio", "video", "use", "image"
-    ];
+    // Compared against the local name (case-insensitive), so prefixes like "svg:script" or "foreignObject" are caught too.
+    // set/animate* can rewrite attributes like href at runtime and are removed as well.
+    private static readonly HashSet<string> DangerousTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "script", "iframe", "object", "embed", "applet", "foreignobject", "audio", "video", "use", "image",
+        "feimage", "handler", "listener", "set", "animate", "animatemotion", "animatetransform", "animatecolor"
+    };
+
+    /// <summary>Matches @import and url() references that don't point to a fragment of the document itself</summary>
+    private static readonly Regex ExternalReferenceRegex = new(
+        @"@import|url\s*\(\s*['""]?\s*(?![\s'""#])",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static byte[] Sanitize(ReadOnlySpan<byte> svgBytes)
     {
@@ -23,7 +34,7 @@ public static class SvgSanitizer
         if (rawXml.Contains("javascript:", StringComparison.OrdinalIgnoreCase) ||
             rawXml.Contains("data:text/html", StringComparison.OrdinalIgnoreCase))
         {
-            throw HttpApiException.BadRequest("SVG enthält unsichere JavaScript-Referenzen.");
+            throw HttpApiException.BadRequest("SVG contains unsafe JavaScript references.");
         }
 
         var xmlDoc = new XmlDocument
@@ -45,20 +56,13 @@ public static class SvgSanitizer
         }
         catch (Exception ex)
         {
-            throw HttpApiException.BadRequest($"Ungültiges SVG-Format: {ex.Message}");
+            throw HttpApiException.BadRequest($"Invalid SVG format: {ex.Message}");
         }
 
-        foreach (var tagName in DangerousTags)
-        {
-            var nodes = xmlDoc.GetElementsByTagName(tagName);
-            for (var i = nodes.Count - 1; i >= 0; i--)
-            {
-                var node = nodes[i];
-                node?.ParentNode?.RemoveChild(node);
-            }
-        }
+        if (xmlDoc.DocumentElement == null || !xmlDoc.DocumentElement.LocalName.Equals("svg", StringComparison.OrdinalIgnoreCase))
+            throw HttpApiException.BadRequest("Invalid SVG format: the root element must be <svg>.");
 
-        SanitizeNode(xmlDoc.DocumentElement);
+        SanitizeNode(xmlDoc);
 
         using var memoryStream = new MemoryStream();
         using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = false }))
@@ -69,29 +73,57 @@ public static class SvgSanitizer
         return memoryStream.ToArray();
     }
 
-    private static void SanitizeNode(XmlNode? node)
+    private static void SanitizeNode(XmlNode node)
     {
-        if (node == null) return;
-
-        if (node.Attributes != null)
+        // Copy, the child list is modified while iterating
+        foreach (var child in node.ChildNodes.Cast<XmlNode>().ToList())
         {
-            for (var i = node.Attributes.Count - 1; i >= 0; i--)
+            switch (child)
             {
-                var attr = node.Attributes[i];
-                var name = attr.Name.ToLowerInvariant();
-                var value = attr.Value.ToLowerInvariant();
+                // e.g. <?xml-stylesheet href="..."?> can load external stylesheets
+                case XmlProcessingInstruction:
+                    node.RemoveChild(child);
+                    break;
 
-                if (name.StartsWith("on") ||
-                    name.Contains("href") && (value.StartsWith("http:") || value.StartsWith("https:") || value.StartsWith("javascript:")))
-                {
-                    node.Attributes.RemoveAt(i);
-                }
+                case XmlElement element when DangerousTags.Contains(element.LocalName):
+                    node.RemoveChild(child);
+                    break;
+
+                case XmlElement element when element.LocalName.Equals("style", StringComparison.OrdinalIgnoreCase) &&
+                                             ExternalReferenceRegex.IsMatch(element.InnerText):
+                    node.RemoveChild(child);
+                    break;
+
+                case XmlElement element:
+                    SanitizeAttributes(element);
+                    SanitizeNode(element);
+                    break;
             }
         }
+    }
 
-        foreach (XmlNode child in node.ChildNodes)
+    private static void SanitizeAttributes(XmlElement element)
+    {
+        for (var i = element.Attributes.Count - 1; i >= 0; i--)
         {
-            SanitizeNode(child);
+            var attr = element.Attributes[i];
+            var name = attr.LocalName.ToLowerInvariant();
+            var value = attr.Value.Trim();
+
+            // Event handlers (onload, onclick, ...)
+            var remove = name.StartsWith("on", StringComparison.Ordinal);
+
+            // href and xlink:href may only reference elements of the document itself. Everything else
+            // (javascript:, data:, http:, obfuscated schemes with whitespace or entities) is dropped.
+            if (name == "href" && !value.StartsWith('#'))
+                remove = true;
+
+            // External resources in presentation attributes or inline styles, e.g. fill="url(https://...)"
+            if (ExternalReferenceRegex.IsMatch(value))
+                remove = true;
+
+            if (remove)
+                element.Attributes.RemoveAt(i);
         }
     }
 }

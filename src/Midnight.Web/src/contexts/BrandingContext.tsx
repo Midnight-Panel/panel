@@ -61,9 +61,9 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (fresh = false) => {
     try {
-      const res = await brandingApi.get();
+      const res = await brandingApi.get(fresh);
       const validated: BrandingResponse = {
         ...res,
         poweredBy: res.poweredBy || defaultPoweredBy,
@@ -71,7 +71,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setBranding(validated);
       applyBranding(validated);
     } catch (err) {
-      console.error("Fehler beim Laden des Brandings:", err);
+      console.error("Failed to load branding:", err);
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [load]);
 
   return (
-    <BrandingContext.Provider value={{ branding, loading, reload: load }}>
+    <BrandingContext.Provider value={{ branding, loading, reload: () => load(true) }}>
       {children}
     </BrandingContext.Provider>
   );

@@ -23,11 +23,11 @@ export default function AuthLayout() {
     branding?.loginBackgroundType === "gradient" && branding.loginBackgroundValue
       ? { background: branding.loginBackgroundValue }
       : branding?.loginBackgroundType === "image" && branding.loginBackgroundValue
-      ? { backgroundImage: `url(${branding.loginBackgroundValue})`, backgroundSize: "cover" }
+      ? { backgroundImage: `url(${JSON.stringify(branding.loginBackgroundValue)})`, backgroundSize: "cover", backgroundPosition: "center" }
       : {};
 
   return (
-    <div className="relative z-1 min-h-screen flex flex-col bg-white dark:bg-gray-900" style={bgStyle}>
+    <div className="relative z-1 min-h-screen flex flex-col bg-white dark:bg-gray-900">
       <div className="relative flex flex-1 w-full flex-col justify-center sm:p-0 lg:flex-row">
         <div className="flex w-full flex-1 flex-col lg:w-1/2 p-6 sm:p-0">
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
@@ -39,12 +39,15 @@ export default function AuthLayout() {
           </div>
         </div>
 
-        <div className="relative hidden h-screen w-full items-center justify-center bg-brand-950 lg:sticky lg:top-0 lg:grid lg:w-1/2 dark:bg-white/5">
+        <div
+          className="relative hidden h-screen w-full items-center justify-center bg-brand-950 lg:sticky lg:top-0 lg:grid lg:w-1/2 dark:bg-white/5"
+          style={bgStyle}
+        >
           <div className="z-1 flex h-full items-center justify-center">
             <GridShape />
             <div className="flex max-w-xs flex-col items-center">
               <img src={logoDark} alt={branding?.panelName || "Midnight"} className="mb-4 h-11 w-auto object-contain" />
-              <p className="text-center text-gray-400 dark:text-white/60">{t("Auth.Tagline")}</p>
+              <p className="text-center text-gray-400 dark:text-white/60">{branding?.slogan || t("Auth.Tagline")}</p>
             </div>
           </div>
         </div>
@@ -54,7 +57,7 @@ export default function AuthLayout() {
         </div>
       </div>
 
-      {/* Unveränderbarer Footer auf Login/Auth-Seiten */}
+      {/* Immutable footer on login/auth pages */}
       <div className="py-4 flex justify-center border-t border-gray-200/80 dark:border-white/5 bg-white/40 dark:bg-black/20 backdrop-blur-xs">
         <PoweredByFooter />
       </div>

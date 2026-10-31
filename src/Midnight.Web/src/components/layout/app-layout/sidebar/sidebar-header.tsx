@@ -33,27 +33,17 @@ export default function AppSidebarHeader({ showContent }: AppSidebarHeaderProps)
               />
             )}
             {!logoLight && !logoDark && (
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <img
-                  src="/images/logo/logo-icon-dark.png"
-                  alt={panelName}
-                  className="size-7 object-contain shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-                <span className="font-outfit font-bold text-base text-gray-900 dark:text-white truncate tracking-tight">
-                  {panelName}
-                </span>
-              </div>
+              <>
+                <img className="h-7 w-auto dark:hidden" src="/images/logo/logo.png" alt={panelName} />
+                <img className="hidden h-7 w-auto dark:block" src="/images/logo/logo-dark.png" alt={panelName} />
+              </>
             )}
           </>
         ) : (
-          <img
-            src="/images/logo/logo-icon-dark.png"
-            alt={panelName}
-            className="size-8 object-contain shrink-0"
-          />
+          <>
+            <img src="/images/logo/logo-icon.png" alt={panelName} className="size-8 object-contain shrink-0 dark:hidden" />
+            <img src="/images/logo/logo-icon-dark.png" alt={panelName} className="hidden size-8 object-contain shrink-0 dark:block" />
+          </>
         )}
       </Link>
     </SidebarHeader>

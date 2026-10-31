@@ -79,7 +79,7 @@ export default function NodesPage() {
 
   return (
     <RequirePermission permission={Permissions.AdminNodesRead}>
-      <PageHeader title={t("Nav.Admin.Nodes")} description={t("Nodes.Description")} />
+      <PageHeader icon={<LayerIcon />} title={t("Nav.Admin.Nodes")} description={t("Nodes.Description")} />
 
       <DataTable
         queryKey={["admin", "nodes", "list"]}

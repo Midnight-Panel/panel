@@ -26,7 +26,7 @@ public static partial class SecretScrubber
     [GeneratedRegex(@"(?i)(--password|--secret|--token|--key|--passphrase)\s+([^\s]+)", RegexOptions.Compiled)]
     private static partial Regex CliFlagPattern();
 
-    [GeneratedRegex(@"(?i)Password=([^;]+)", RegexOptions.Compiled)]
+    [GeneratedRegex(@"(?i)(Password)=([^;]+)", RegexOptions.Compiled)]
     private static partial Regex ConnectionStringPasswordPattern();
 
     /// <summary>
@@ -54,7 +54,7 @@ public static partial class SecretScrubber
         });
 
         // Connection-Strings (z.B. Password=abc;)
-        result = ConnectionStringPasswordPattern().Replace(result, "Password=********");
+        result = ConnectionStringPasswordPattern().Replace(result, "$1=********");
 
         return result;
     }
