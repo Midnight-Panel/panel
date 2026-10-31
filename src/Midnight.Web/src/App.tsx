@@ -14,6 +14,8 @@ import NodeOverviewPage from "@/pages/admin/nodes/overview";
 import NodeSettingsPage from "@/pages/admin/nodes/settings";
 import NodeSetupPage from "@/pages/admin/nodes/setup";
 import AdminOverviewPage from "@/pages/admin/overview";
+import ShardDetailPage from "@/pages/admin/shards/detail";
+import ShardsPage from "@/pages/admin/shards/list";
 import UserEditPage from "@/pages/admin/users/edit";
 import UsersLayout from "@/pages/admin/users/layout";
 import UsersPage from "@/pages/admin/users/list";
@@ -72,6 +74,9 @@ export default function App() {
           <Route path="logs" element={<NodeLogsPage />} />
           <Route path="settings" element={<NodeSettingsPage />} />
         </Route>
+
+        <Route path="admin/shards" element={<ShardsPage />} />
+        <Route path="admin/shards/:id" element={<ShardDetailPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>

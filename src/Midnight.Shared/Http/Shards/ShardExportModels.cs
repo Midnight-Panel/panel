@@ -1,0 +1,79 @@
+namespace Midnight.Shared.Http.Shards;
+
+/// <summary>Vollständiges Export-Paket eines Shards zur Portabilität und Versionierung</summary>
+public class ShardExportPackage
+{
+    public const string CurrentFormatVersion = "midnight_shard_v1";
+
+    public string FormatVersion { get; set; } = CurrentFormatVersion;
+    public DateTimeOffset ExportedAt { get; set; } = DateTimeOffset.UtcNow;
+    public ShardExportCollectionInfo Collection { get; set; } = new();
+    public ShardExportData Shard { get; set; } = new();
+}
+
+public class ShardExportCollectionInfo
+{
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
+    public string Author { get; set; } = "";
+}
+
+public class ShardExportData
+{
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
+    public string Author { get; set; } = "";
+    public string Version { get; set; } = "1.0.0";
+
+    public Dictionary<string, string> DockerImages { get; set; } = [];
+    public string DefaultDockerImage { get; set; } = "";
+
+    public string StartupCommand { get; set; } = "";
+    public string? StopCommand { get; set; }
+    public string StopSignal { get; set; } = "SIGTERM";
+
+    public List<ShardConfigFileDto> ConfigFiles { get; set; } = [];
+    public string StartupDone { get; set; } = "";
+
+    public string? InstallScript { get; set; }
+    public string InstallImage { get; set; } = "ghcr.io/midnightpanel/installers:alpine";
+    public string InstallInterpreter { get; set; } = "/bin/bash";
+
+    public ShardFeaturesDto Features { get; set; } = new();
+
+    public List<ShardVariableExportData> Variables { get; set; } = [];
+}
+
+public class ShardVariableExportData
+{
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
+    public string EnvVariable { get; set; } = "";
+    public string? DefaultValue { get; set; }
+    public bool UserViewable { get; set; } = true;
+    public bool UserEditable { get; set; } = true;
+    public string Rules { get; set; } = "required|string";
+    public int SortOrder { get; set; }
+}
+
+/// <summary>Anfrage zum Importieren eines Shards (aus Midnight-Format oder Pterodactyl-Format)</summary>
+public class ShardImportRequest
+{
+    /// <summary>Optionale Collection-ID, falls in eine bestehende Sammlung importiert werden soll</summary>
+    public int? TargetCollectionId { get; set; }
+
+    /// <summary>JSON-Inhalt der Exportdatei</summary>
+    public string Content { get; set; } = "";
+}
+
+/// <summary>Rückmeldung nach erfolgreichem Import</summary>
+public class ShardImportResult
+{
+    public int ShardId { get; set; }
+    public Guid ShardUuid { get; set; }
+    public string ShardName { get; set; } = "";
+    public int CollectionId { get; set; }
+    public string CollectionName { get; set; } = "";
+    public string DetectedFormat { get; set; } = "";
+    public List<string> Warnings { get; set; } = [];
+}

@@ -1,0 +1,867 @@
+import { shardsApi } from "@/api/shards";
+import type {
+  ShardConfigFile,
+  ShardRequest,
+  ShardVariable,
+  ShardVariableRequest,
+} from "@/api/types";
+import { useAuth } from "@/auth/AuthContext";
+import { RequirePermission } from "@/components/shared/guards";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/i18n";
+import {
+  ArrowLeftIcon,
+  BoxIcon,
+  CodeIcon,
+  DownloadIcon,
+  FloppyDiscIcon,
+  GearIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashBinIcon,
+} from "@/icons";
+import { notifyError, notifySuccess } from "@/lib/notify";
+import { Permissions } from "@/lib/permissions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate, useParams } from "react-router";
+import { CodeEditor } from "./components/code-editor";
+
+export default function ShardDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const shardId = Number(id);
+  const { t } = useT();
+  const { can } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [activeTab, setActiveTab] = useState("general");
+  const [busy, setBusy] = useState(false);
+
+  // Variable Dialog State
+  const [variableDialogOpen, setVariableDialogOpen] = useState(false);
+  const [editingVariableId, setEditingVariableId] = useState<number | null>(null);
+
+  // Config File Dialog State
+  const [configFileDialogOpen, setConfigFileDialogOpen] = useState(false);
+  const [editingConfigFileIndex, setEditingConfigFileIndex] = useState<number | null>(null);
+  const [cfgPath, setCfgPath] = useState("");
+  const [cfgParser, setCfgParser] = useState("properties");
+  const [cfgMappingsJson, setCfgMappingsJson] = useState("{}");
+
+  // Docker Image Dialog State
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [newImageLabel, setNewImageLabel] = useState("");
+  const [newImageUri, setNewImageUri] = useState("");
+
+  // Data Fetching
+  const { data: shard, isLoading } = useQuery({
+    queryKey: ["admin", "shards", shardId],
+    queryFn: () => shardsApi.getShard(shardId),
+    enabled: !isNaN(shardId),
+  });
+
+  const { data: collections = [] } = useQuery({
+    queryKey: ["admin", "shards", "collections", "all"],
+    queryFn: () => shardsApi.listAllCollections(),
+  });
+
+  // Main Form
+  const form = useForm<ShardRequest>({
+    defaultValues: {
+      collectionId: 1,
+      name: "",
+      author: "",
+      version: "1.0.0",
+      description: "",
+      startupCommand: "",
+      stopCommand: "",
+      stopSignal: "SIGTERM",
+      startupDone: "",
+      defaultDockerImage: "",
+      dockerImages: {},
+      installScript: "",
+      installImage: "ghcr.io/midnightpanel/installers:alpine",
+      installInterpreter: "/bin/bash",
+      configFiles: [],
+      features: { eula: false, fileDenylist: [] },
+    },
+  });
+
+  // Variable Form
+  const variableForm = useForm<ShardVariableRequest>({
+    defaultValues: {
+      name: "",
+      description: "",
+      envVariable: "",
+      defaultValue: "",
+      userViewable: true,
+      userEditable: true,
+      rules: "required|string",
+      sortOrder: 1,
+    },
+  });
+
+  useEffect(() => {
+    if (shard) {
+      form.reset({
+        collectionId: shard.collectionId,
+        name: shard.name,
+        author: shard.author,
+        version: shard.version,
+        description: shard.description || "",
+        startupCommand: shard.startupCommand,
+        stopCommand: shard.stopCommand || "",
+        stopSignal: shard.stopSignal || "SIGTERM",
+        startupDone: shard.startupDone || "",
+        defaultDockerImage: shard.defaultDockerImage,
+        dockerImages: shard.dockerImages || {},
+        installScript: shard.installScript || "",
+        installImage: shard.installImage,
+        installInterpreter: shard.installInterpreter,
+        configFiles: shard.configFiles || [],
+        features: shard.features || { eula: false, fileDenylist: [] },
+      });
+    }
+  }, [shard, form]);
+
+  if (isLoading || !shard) {
+    return (
+      <div className="flex h-72 items-center justify-center text-slate-400">
+        Lade Shard-Details...
+      </div>
+    );
+  }
+
+  // Live Placeholders Extraction
+  const watchedStartup = form.watch("startupCommand") || "";
+  const placeholderMatches = Array.from(watchedStartup.matchAll(/\{\{([a-zA-Z0-9_-]+)\}\}/g)).map(
+    (m) => m[1]
+  );
+  const uniquePlaceholders = Array.from(new Set(placeholderMatches));
+  const definedEnvVars = new Set((shard.variables || []).map((v) => v.envVariable.toUpperCase()));
+  const systemEnvVars = new Set(["SERVER_MEMORY", "SERVER_PORT", "SERVER_IP", "STARTUP"]);
+
+  // Save Main Shard Settings
+  const handleSaveMain = async (values: ShardRequest) => {
+    setBusy(true);
+    try {
+      await shardsApi.updateShard(shardId, {
+        ...values,
+        collectionId: Number(values.collectionId),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "shards", shardId] });
+      notifySuccess(t("Shards.Saved"));
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Variable Operations
+  const handleOpenAddVariable = () => {
+    setEditingVariableId(null);
+    variableForm.reset({
+      name: "",
+      description: "",
+      envVariable: "",
+      defaultValue: "",
+      userViewable: true,
+      userEditable: true,
+      rules: "required|string",
+      sortOrder: (shard.variables?.length || 0) + 1,
+    });
+    setVariableDialogOpen(true);
+  };
+
+  const handleOpenEditVariable = (v: ShardVariable) => {
+    setEditingVariableId(v.id);
+    variableForm.reset({
+      name: v.name,
+      description: v.description || "",
+      envVariable: v.envVariable,
+      defaultValue: v.defaultValue || "",
+      userViewable: v.userViewable,
+      userEditable: v.userEditable,
+      rules: v.rules,
+      sortOrder: v.sortOrder,
+    });
+    setVariableDialogOpen(true);
+  };
+
+  const handleSaveVariable = async (values: ShardVariableRequest) => {
+    setBusy(true);
+    try {
+      if (editingVariableId) {
+        await shardsApi.updateVariable(shardId, editingVariableId, values);
+      } else {
+        await shardsApi.createVariable(shardId, values);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["admin", "shards", shardId] });
+      setVariableDialogOpen(false);
+      notifySuccess(t("Common.Saved"));
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDeleteVariable = async (v: ShardVariable) => {
+    if (!confirm(t("Shards.VariablesTab.DeleteConfirm", v.name))) return;
+    try {
+      await shardsApi.deleteVariable(shardId, v.id);
+      await queryClient.invalidateQueries({ queryKey: ["admin", "shards", shardId] });
+      notifySuccess(t("Common.Saved"));
+    } catch (err) {
+      notifyError(err);
+    }
+  };
+
+  // Config File Operations
+  const handleOpenAddConfigFile = () => {
+    setEditingConfigFileIndex(null);
+    setCfgPath("");
+    setCfgParser("properties");
+    setCfgMappingsJson("{}");
+    setConfigFileDialogOpen(true);
+  };
+
+  const handleOpenEditConfigFile = (cfg: ShardConfigFile, index: number) => {
+    setEditingConfigFileIndex(index);
+    setCfgPath(cfg.path);
+    setCfgParser(cfg.parser);
+    setCfgMappingsJson(JSON.stringify(cfg.mappings || {}, null, 2));
+    setConfigFileDialogOpen(true);
+  };
+
+  const handleSaveConfigFile = () => {
+    let mappings: Record<string, string> = {};
+    try {
+      mappings = JSON.parse(cfgMappingsJson);
+    } catch {
+      notifyError("Ungültiges JSON in den Mappings.");
+      return;
+    }
+
+    const currentConfigs = [...form.getValues("configFiles")];
+    const newEntry: ShardConfigFile = {
+      path: cfgPath.trim(),
+      parser: cfgParser,
+      mappings,
+    };
+
+    if (editingConfigFileIndex !== null) {
+      currentConfigs[editingConfigFileIndex] = newEntry;
+    } else {
+      currentConfigs.push(newEntry);
+    }
+
+    form.setValue("configFiles", currentConfigs, { shouldDirty: true });
+    setConfigFileDialogOpen(false);
+  };
+
+  const handleDeleteConfigFile = (index: number) => {
+    const current = [...form.getValues("configFiles")];
+    current.splice(index, 1);
+    form.setValue("configFiles", current, { shouldDirty: true });
+  };
+
+  // Docker Images Operations
+  const handleAddDockerImage = () => {
+    if (!newImageLabel.trim() || !newImageUri.trim()) return;
+
+    const current = { ...(form.getValues("dockerImages") || {}) };
+    current[newImageLabel.trim()] = newImageUri.trim();
+
+    form.setValue("dockerImages", current, { shouldDirty: true });
+
+    if (!form.getValues("defaultDockerImage")) {
+      form.setValue("defaultDockerImage", newImageUri.trim(), { shouldDirty: true });
+    }
+
+    setNewImageLabel("");
+    setNewImageUri("");
+    setImageDialogOpen(false);
+  };
+
+  const handleDeleteDockerImage = (label: string) => {
+    const current = { ...(form.getValues("dockerImages") || {}) };
+    delete current[label];
+    form.setValue("dockerImages", current, { shouldDirty: true });
+
+    if (form.getValues("defaultDockerImage") === label) {
+      form.setValue("defaultDockerImage", Object.values(current)[0] || "", { shouldDirty: true });
+    }
+  };
+
+  return (
+    <RequirePermission permission={Permissions.AdminShardsRead}>
+      {/* Top Header */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => navigate("/admin/shards")}
+            className="text-slate-400 hover:text-white"
+          >
+            <ArrowLeftIcon className="size-5" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold text-white tracking-tight">{shard.name}</h1>
+              <Badge variant="light" color="primary">
+                {shard.collectionName}
+              </Badge>
+              <span className="text-xs text-slate-500">UUID: {shard.uuid}</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">Autor: {shard.author} • v{shard.version}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => shardsApi.exportShard(shard.id, shard.name)}
+            className="border-white/10 bg-slate-900/60 hover:bg-slate-800 text-slate-200"
+          >
+            <DownloadIcon className="size-4 mr-1.5 text-indigo-400" />
+            {t("Shards.Export")}
+          </Button>
+
+          {can(Permissions.AdminShardsWrite) && (
+            <Button
+              onClick={form.handleSubmit(handleSaveMain)}
+              disabled={busy}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30"
+            >
+              <FloppyDiscIcon className="size-4 mr-1.5" />
+              {busy ? "Speichern..." : t("Common.Save")}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-[#0F172A] border border-white/10 p-1 rounded-xl">
+          <TabsTrigger value="general" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <BoxIcon className="size-4" />
+            {t("Shards.Tabs.General")}
+          </TabsTrigger>
+          <TabsTrigger value="config" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <GearIcon className="size-4" />
+            {t("Shards.Tabs.Configuration")}
+          </TabsTrigger>
+          <TabsTrigger value="variables" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <CodeIcon className="size-4" />
+            {t("Shards.Tabs.Variables")} ({shard.variables?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="script" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <CodeIcon className="size-4" />
+            {t("Shards.Tabs.InstallScript")}
+          </TabsTrigger>
+          <TabsTrigger value="images" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <BoxIcon className="size-4" />
+            {t("Shards.Tabs.DockerImages")}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB 1: ALLGEMEIN */}
+        <TabsContent value="general">
+          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-300">{t("Shards.General.Name")}</Label>
+                <Input {...form.register("name", { required: true })} className="mt-1.5 bg-slate-900 border-white/10" />
+              </div>
+              <div>
+                <Label className="text-slate-300">{t("Shards.General.Collection")}</Label>
+                <select
+                  {...form.register("collectionId", { required: true })}
+                  className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-slate-300">{t("Shards.General.Author")}</Label>
+                <Input {...form.register("author")} className="mt-1.5 bg-slate-900 border-white/10" />
+              </div>
+              <div>
+                <Label className="text-slate-300">{t("Shards.General.Version")}</Label>
+                <Input {...form.register("version")} className="mt-1.5 bg-slate-900 border-white/10" />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-slate-300">{t("Common.Description")}</Label>
+              <Textarea
+                {...form.register("description")}
+                className="mt-1.5 bg-slate-900 border-white/10 text-white resize-none h-24"
+              />
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 2: KONFIGURATION */}
+        <TabsContent value="config">
+          <div className="space-y-6">
+            <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
+              <h3 className="text-base font-semibold text-white">Start- und Stoppsteuerung</h3>
+
+              {/* Startup Command */}
+              <div>
+                <Label className="text-slate-300">{t("Shards.Config.StartupCommand")}</Label>
+                <Input
+                  {...form.register("startupCommand", { required: true })}
+                  className="mt-1.5 font-mono text-sm bg-slate-900 border-white/10 text-indigo-300"
+                />
+                <p className="mt-1.5 text-xs text-slate-400">{t("Shards.Config.StartupCommandHint")}</p>
+
+                {/* Live Placeholders Badges */}
+                {uniquePlaceholders.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+                    <span className="text-xs text-slate-500 mr-1">Erkannte Platzhalter:</span>
+                    {uniquePlaceholders.map((ph) => {
+                      const isSystem = systemEnvVars.has(ph.toUpperCase());
+                      const isDefined = definedEnvVars.has(ph.toUpperCase());
+                      return (
+                        <Badge
+                          key={ph}
+                          variant="light"
+                          color={isSystem ? "info" : isDefined ? "success" : "error"}
+                          size="sm"
+                        >
+                          {`{{${ph}}}`}
+                          {isSystem ? " (System)" : isDefined ? " (Definiert)" : " (Unbekannt!)"}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <Label className="text-slate-300">{t("Shards.Config.StopCommand")}</Label>
+                  <Input {...form.register("stopCommand")} placeholder="stop" className="mt-1.5 bg-slate-900 border-white/10" />
+                  <p className="mt-1 text-xs text-slate-400">{t("Shards.Config.StopCommandHint")}</p>
+                </div>
+
+                <div>
+                  <Label className="text-slate-300">{t("Shards.Config.StopSignal")}</Label>
+                  <select
+                    {...form.register("stopSignal")}
+                    className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="SIGTERM">SIGTERM (Standard)</option>
+                    <option value="SIGINT">SIGINT (Strg+C)</option>
+                    <option value="SIGKILL">SIGKILL (Sofort beenden)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-slate-300">{t("Shards.Config.StartupDone")}</Label>
+                <Input
+                  {...form.register("startupDone")}
+                  placeholder=") Done ("
+                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                />
+                <p className="mt-1 text-xs text-slate-400">{t("Shards.Config.StartupDoneHint")}</p>
+              </div>
+            </Card>
+
+            {/* Config Files */}
+            <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-white">{t("Shards.Config.ConfigFiles")}</h3>
+                  <p className="text-xs text-slate-400">Dateien, die vor dem Serverstart automatisch gepatcht werden.</p>
+                </div>
+                <Button size="sm" onClick={handleOpenAddConfigFile} className="bg-indigo-600 hover:bg-indigo-500">
+                  <PlusIcon className="size-4 mr-1.5" />
+                  {t("Shards.Config.AddConfigFile")}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {form.watch("configFiles")?.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-3 text-center border border-dashed border-white/5 rounded-xl">
+                    Keine Konfigurationsdateien definiert.
+                  </p>
+                ) : (
+                  form.watch("configFiles")?.map((cfg, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/60 p-3 text-xs"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-mono font-medium text-indigo-400">{cfg.path}</span>
+                        <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                          <span>Parser: {cfg.parser}</span>
+                          <span>•</span>
+                          <span>{Object.keys(cfg.mappings || {}).length} Ersetzungen</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEditConfigFile(cfg, idx)}>
+                          <PencilIcon className="size-3.5 text-slate-400 hover:text-white" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteConfigFile(idx)}>
+                          <TrashBinIcon className="size-3.5 text-rose-400 hover:text-rose-300" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* TAB 3: VARIABLEN */}
+        <TabsContent value="variables">
+          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-white">{t("Shards.VariablesTab.Title")}</h3>
+                <p className="text-xs text-slate-400">{t("Shards.VariablesTab.Subtitle")}</p>
+              </div>
+              <Button size="sm" onClick={handleOpenAddVariable} className="bg-indigo-600 hover:bg-indigo-500">
+                <PlusIcon className="size-4 mr-1.5" />
+                {t("Shards.VariablesTab.Add")}
+              </Button>
+            </div>
+
+            <div className="space-y-2.5">
+              {!shard.variables || shard.variables.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
+                  Noch keine Variablen für diesen Shard hinterlegt.
+                </div>
+              ) : (
+                shard.variables.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/5 bg-slate-900/60 p-4 transition-colors hover:border-white/10"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white text-sm">{v.name}</span>
+                        <Badge size="sm" className="font-mono bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                          {v.envVariable}
+                        </Badge>
+                        {v.defaultValue && (
+                          <span className="text-xs text-slate-400">
+                            Standard: <span className="font-mono text-slate-300">{v.defaultValue}</span>
+                          </span>
+                        )}
+                      </div>
+                      {v.description && <p className="text-xs text-slate-400">{v.description}</p>}
+                      <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1">
+                        <span>Regeln: <span className="font-mono text-slate-400">{v.rules}</span></span>
+                        <span>•</span>
+                        <span>{v.userViewable ? "✓ Sichtbar" : "✗ Versteckt"}</span>
+                        <span>•</span>
+                        <span>{v.userEditable ? "✓ Editierbar" : "✗ Schreibgeschützt"}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-center">
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEditVariable(v)}>
+                        <PencilIcon className="size-4 text-slate-400 hover:text-white" />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteVariable(v)}>
+                        <TrashBinIcon className="size-4 text-rose-400 hover:text-rose-300" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 4: INSTALLATIONSSKRIPT */}
+        <TabsContent value="script">
+          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-300">{t("Shards.ScriptTab.ContainerImage")}</Label>
+                <Input
+                  {...form.register("installImage")}
+                  placeholder="ghcr.io/midnightpanel/installers:alpine"
+                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-300">{t("Shards.ScriptTab.Interpreter")}</Label>
+                <Input
+                  {...form.register("installInterpreter")}
+                  placeholder="/bin/bash"
+                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-slate-300 mb-2 block">{t("Shards.ScriptTab.ScriptCode")}</Label>
+              <CodeEditor
+                value={form.watch("installScript") || ""}
+                onChange={(code) => form.setValue("installScript", code, { shouldDirty: true })}
+                language="bash"
+                minHeight="340px"
+                placeholder="#!/bin/bash\n# Installationsskript für diesen Servertyp\n..."
+              />
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 5: DOCKER-IMAGES */}
+        <TabsContent value="images">
+          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-white">{t("Shards.ImagesTab.Title")}</h3>
+                <p className="text-xs text-slate-400">Verfügbare Container-Images, die der Benutzer auswählen kann.</p>
+              </div>
+              <Button size="sm" onClick={() => setImageDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-500">
+                <PlusIcon className="size-4 mr-1.5" />
+                {t("Shards.ImagesTab.Add")}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {Object.entries(form.watch("dockerImages") || {}).map(([label, uri]) => {
+                const isDefault = form.watch("defaultDockerImage") === uri;
+                return (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/60 p-3.5 text-xs"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white">{label}</span>
+                        {isDefault && (
+                          <Badge size="sm" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                            {t("Shards.ImagesTab.Default")}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="font-mono text-slate-400 text-[11px]">{uri}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => form.setValue("defaultDockerImage", uri, { shouldDirty: true })}
+                          className="text-xs text-slate-400 hover:text-white"
+                        >
+                          Als Standard
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDeleteDockerImage(label)}
+                        className="text-rose-400 hover:text-rose-300"
+                      >
+                        <TrashBinIcon className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Variable Add / Edit Dialog */}
+      <Dialog open={variableDialogOpen} onOpenChange={setVariableDialogOpen}>
+        <DialogContent className="sm:max-w-xl bg-[#0F172A] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">
+              {editingVariableId ? "Variable bearbeiten" : t("Shards.VariablesTab.Add")}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={variableForm.handleSubmit(handleSaveVariable)} className="space-y-4 py-2">
+            <div>
+              <Label className="text-slate-300">{t("Common.Name")}</Label>
+              <Input
+                {...variableForm.register("name", { required: true })}
+                placeholder="z. B. Server Jar File"
+                className="mt-1.5 bg-slate-900 border-white/10"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.VariablesTab.EnvVar")}</Label>
+              <Input
+                {...variableForm.register("envVariable", { required: true })}
+                placeholder="SERVER_JARFILE"
+                className="mt-1.5 font-mono text-xs uppercase bg-slate-900 border-white/10"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.VariablesTab.DefaultVal")}</Label>
+              <Input
+                {...variableForm.register("defaultValue")}
+                placeholder="server.jar"
+                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.VariablesTab.Rules")}</Label>
+              <Input
+                {...variableForm.register("rules")}
+                placeholder="required|string|max:40"
+                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">Beispiele: required|numeric|between:1024,65535 oder required|string|max:50</p>
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Common.Description")}</Label>
+              <Textarea
+                {...variableForm.register("description")}
+                placeholder="Beschreibung für den Benutzer..."
+                className="mt-1.5 bg-slate-900 border-white/10 resize-none h-18 text-xs"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <Checkbox
+                  checked={variableForm.watch("userViewable")}
+                  onCheckedChange={(c) => variableForm.setValue("userViewable", !!c)}
+                />
+                {t("Shards.VariablesTab.UserViewable")}
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <Checkbox
+                  checked={variableForm.watch("userEditable")}
+                  onCheckedChange={(c) => variableForm.setValue("userEditable", !!c)}
+                />
+                {t("Shards.VariablesTab.UserEditable")}
+              </label>
+            </div>
+
+            <DialogFooter className="pt-3">
+              <Button type="button" variant="outline" onClick={() => setVariableDialogOpen(false)}>
+                {t("Common.Cancel")}
+              </Button>
+              <Button type="submit" disabled={busy} className="bg-indigo-600 hover:bg-indigo-500">
+                {t("Common.Save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Config File Dialog */}
+      <Dialog open={configFileDialogOpen} onOpenChange={setConfigFileDialogOpen}>
+        <DialogContent className="sm:max-w-lg bg-[#0F172A] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Konfigurationsdatei</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-slate-300">{t("Shards.Config.FilePath")}</Label>
+              <Input
+                value={cfgPath}
+                onChange={(e) => setCfgPath(e.target.value)}
+                placeholder="server.properties oder config/server.json"
+                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.Config.Parser")}</Label>
+              <select
+                value={cfgParser}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCfgParser(e.target.value)}
+                className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="properties">properties (Key=Value)</option>
+                <option value="yaml">yaml</option>
+                <option value="json">json</option>
+                <option value="ini">ini</option>
+                <option value="xml">xml</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.Config.Mappings")}</Label>
+              <Textarea
+                value={cfgMappingsJson}
+                onChange={(e) => setCfgMappingsJson(e.target.value)}
+                placeholder='{"server-port": "{{SERVER_PORT}}"}'
+                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10 h-28"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">{t("Shards.Config.MappingsHint")}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigFileDialogOpen(false)}>
+              {t("Common.Cancel")}
+            </Button>
+            <Button onClick={handleSaveConfigFile} className="bg-indigo-600 hover:bg-indigo-500">
+              {t("Common.Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Docker Image Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0F172A] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">{t("Shards.ImagesTab.Add")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-slate-300">{t("Shards.ImagesTab.Label")}</Label>
+              <Input
+                value={newImageLabel}
+                onChange={(e) => setNewImageLabel(e.target.value)}
+                placeholder="z. B. Java 21 oder Node.js 20"
+                className="mt-1.5 bg-slate-900 border-white/10"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-300">{t("Shards.ImagesTab.ImageUri")}</Label>
+              <Input
+                value={newImageUri}
+                onChange={(e) => setNewImageUri(e.target.value)}
+                placeholder="ghcr.io/midnightpanel/yolks:java_21"
+                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
+              {t("Common.Cancel")}
+            </Button>
+            <Button onClick={handleAddDockerImage} className="bg-indigo-600 hover:bg-indigo-500">
+              {t("Common.Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </RequirePermission>
+  );
+}

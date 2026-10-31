@@ -12,6 +12,7 @@ using Midnight.ApiServer.Features.Account.Services;
 using Midnight.ApiServer.Features.Auth.Http;
 using Midnight.ApiServer.Features.Auth.Services;
 using Midnight.ApiServer.Features.Nodes.Services;
+using Midnight.ApiServer.Features.Shards.Services;
 using Midnight.ApiServer.Features.Users.Services;
 using Midnight.Shared.Http;
 using Scalar.AspNetCore;
@@ -134,6 +135,10 @@ builder.Services.AddScoped<AvatarService>();
 builder.Services.AddScoped<NodeService>();
 builder.Services.AddScoped<AllocationService>();
 builder.Services.AddScoped<NodeClient>();
+builder.Services.AddScoped<IShardCollectionService, ShardCollectionService>();
+builder.Services.AddScoped<IShardService, ShardService>();
+builder.Services.AddScoped<IShardVariableService, ShardVariableService>();
+builder.Services.AddScoped<IShardImportExportService, ShardImportExportService>();
 
 builder.Services.AddHttpClient(NodeClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(5));
 

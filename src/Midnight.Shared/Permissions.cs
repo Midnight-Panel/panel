@@ -30,6 +30,9 @@ public static class Permissions
     public const string AdminNodesRead = "admin.nodes.read";
     public const string AdminNodesWrite = "admin.nodes.write";
 
+    public const string AdminShardsRead = "admin.shards.read";
+    public const string AdminShardsWrite = "admin.shards.write";
+
     public const string AdminImagesRead = "admin.images.read";
     public const string AdminImagesWrite = "admin.images.write";
 
@@ -53,6 +56,7 @@ public static class Permissions
         new("admin.roles", [AdminRolesRead, AdminRolesWrite]),
         new("admin.system", [AdminSystemRead, AdminSystemWrite]),
         new("admin.nodes", [AdminNodesRead, AdminNodesWrite]),
+        new("admin.shards", [AdminShardsRead, AdminShardsWrite]),
         new("admin.images", [AdminImagesRead, AdminImagesWrite]),
         new("admin.servers", [AdminServersRead, AdminServersWrite])
     ];

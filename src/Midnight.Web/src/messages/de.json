@@ -119,7 +119,8 @@
       "Overview": "Übersicht",
       "Roles": "Rollen",
       "Users": "Benutzer",
-      "Nodes": "Nodes"
+      "Nodes": "Nodes",
+      "Shards": "Shards"
     },
     "Dashboard": "Dashboard",
     "Section": {
@@ -316,5 +317,88 @@
     "Unreachable": "Der Daemon ist nicht erreichbar",
     "UseSsl": "SSL verwenden",
     "UseSslHint": "Der Daemon nutzt https mit einem Zertifikat für den FQDN (z. B. Let's Encrypt)."
+  },
+  "Shards": {
+    "Title": "Shards",
+    "Description": "Vorlagen und Laufzeitumgebungen für Game- und Anwendungsserver verwalten.",
+    "Create": "Shard erstellen",
+    "Created": "Shard \"{0}\" erfolgreich erstellt.",
+    "Edit": "Shard bearbeiten",
+    "Saved": "Shard gespeichert.",
+    "Delete": "Shard löschen",
+    "DeleteConfirm": "Möchtest du den Shard \"{0}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "Deleted": "Shard gelöscht.",
+    "Export": "Exportieren (JSON)",
+    "Import": "Importieren",
+    "ImportTitle": "Shard importieren",
+    "ImportDescription": "Lade ein Midnightpanel Shard-Paket (.json) oder eine PTDL-Vorlage hoch.",
+    "ImportSuccess": "Shard \"{0}\" erfolgreich importiert ({1}).",
+    "Collections": "Sammlungen",
+    "ManageCollections": "Sammlungen verwalten",
+    "CreateCollection": "Sammlung erstellen",
+    "CollectionName": "Name der Sammlung",
+    "CollectionAuthor": "Autor der Sammlung",
+    "AllCollections": "Alle Sammlungen",
+    "CollectionDeleted": "Sammlung gelöscht.",
+    "Tabs": {
+      "General": "Allgemein",
+      "Configuration": "Konfiguration",
+      "Variables": "Variablen",
+      "InstallScript": "Installationsskript",
+      "DockerImages": "Docker-Images"
+    },
+    "General": {
+      "Name": "Name des Shards",
+      "Collection": "Sammlung",
+      "Author": "Autor",
+      "Version": "Version",
+      "Description": "Beschreibung"
+    },
+    "Config": {
+      "StartupCommand": "Startbefehl",
+      "StartupCommandHint": "Verwende {{VARIABLE}} Platzhalter. Systemplatzhalter wie {{SERVER_MEMORY}} und {{SERVER_PORT}} stehen automatisch bereit.",
+      "StopCommand": "Stopp-Befehl",
+      "StopCommandHint": "Befehl, der an die Serverkonsole gesendet wird (z. B. stop oder quit).",
+      "StopSignal": "Stopp-Signal",
+      "StartupDone": "Startup-Done Erkennung",
+      "StartupDoneHint": "Zeichenkette oder Muster in den Logs, an dem der erfolgreiche Start erkannt wird.",
+      "ConfigFiles": "Konfigurationsdateien",
+      "AddConfigFile": "Datei hinzufügen",
+      "FilePath": "Dateipfad",
+      "Parser": "Parser-Typ",
+      "Mappings": "Ersetzungen (JSON)",
+      "MappingsHint": "Zuordnung von Schlüsseln zu Werten oder Platzhaltern im JSON-Format."
+    },
+    "VariablesTab": {
+      "Title": "Umgebungsvariablen",
+      "Subtitle": "Definiere Konfigurationsvariablen, die Benutzer bei der Servererstellung anpassen können.",
+      "Add": "Variable hinzufügen",
+      "EnvVar": "Env-Variable",
+      "DefaultVal": "Standardwert",
+      "Rules": "Validierungsregeln",
+      "UserViewable": "Sichtbar",
+      "UserEditable": "Editierbar",
+      "DeleteConfirm": "Variable \"{0}\" entfernen?"
+    },
+    "ScriptTab": {
+      "ContainerImage": "Container-Image für Installation",
+      "Interpreter": "Interpreter",
+      "ScriptCode": "Installationsskript (Bash/Ash)"
+    },
+    "ImagesTab": {
+      "Title": "Docker-Images",
+      "Add": "Image hinzufügen",
+      "Label": "Bezeichnung (Label)",
+      "ImageUri": "Docker-Image Tag / URI",
+      "Default": "Standard-Image"
+    },
+    "Selector": {
+      "ChooseCollection": "Sammlung wählen",
+      "ChooseShard": "Shard-Vorlage wählen",
+      "ConfigureVariables": "Server-Variablen konfigurieren",
+      "StartupPreview": "Generierter Startbefehl (Vorschau)",
+      "Required": "Erforderlich",
+      "Validating": "Validierung läuft..."
+    }
   }
 }

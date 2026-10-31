@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Midnight.ApiServer.Features.Nodes.Entities;
+using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.ApiServer.Features.Users.Entities;
 
 namespace Midnight.ApiServer.Core.Database;
@@ -21,6 +22,9 @@ public abstract class DataContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<Node> Nodes => Set<Node>();
     public DbSet<Allocation> Allocations => Set<Allocation>();
+    public DbSet<ShardCollection> ShardCollections => Set<ShardCollection>();
+    public DbSet<Shard> Shards => Set<Shard>();
+    public DbSet<ShardVariable> ShardVariables => Set<ShardVariable>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,6 +98,55 @@ public abstract class DataContext : DbContext
 
             token.HasOne(x => x.User)
                 .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ShardCollection>(collection =>
+        {
+            collection.HasIndex(x => x.Uuid).IsUnique();
+            collection.HasIndex(x => x.Name).IsUnique();
+
+            collection.Property(x => x.Name).HasMaxLength(64);
+            collection.Property(x => x.Description).HasMaxLength(512);
+            collection.Property(x => x.Author).HasMaxLength(128);
+        });
+
+        modelBuilder.Entity<Shard>(shard =>
+        {
+            shard.HasIndex(x => x.Uuid).IsUnique();
+            shard.HasIndex(x => new { x.CollectionId, x.Name }).IsUnique();
+
+            shard.Property(x => x.Name).HasMaxLength(64);
+            shard.Property(x => x.Description).HasMaxLength(1024);
+            shard.Property(x => x.Author).HasMaxLength(128);
+            shard.Property(x => x.Version).HasMaxLength(32);
+            shard.Property(x => x.DefaultDockerImage).HasMaxLength(256);
+            shard.Property(x => x.StartupCommand).HasMaxLength(2048);
+            shard.Property(x => x.StopCommand).HasMaxLength(256);
+            shard.Property(x => x.StopSignal).HasMaxLength(32);
+            shard.Property(x => x.StartupDone).HasMaxLength(256);
+            shard.Property(x => x.InstallImage).HasMaxLength(256);
+            shard.Property(x => x.InstallInterpreter).HasMaxLength(64);
+
+            shard.HasOne(x => x.Collection)
+                .WithMany(x => x.Shards)
+                .HasForeignKey(x => x.CollectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ShardVariable>(variable =>
+        {
+            variable.HasIndex(x => new { x.ShardId, x.EnvVariable }).IsUnique();
+
+            variable.Property(x => x.Name).HasMaxLength(64);
+            variable.Property(x => x.Description).HasMaxLength(256);
+            variable.Property(x => x.EnvVariable).HasMaxLength(64);
+            variable.Property(x => x.DefaultValue).HasMaxLength(256);
+            variable.Property(x => x.Rules).HasMaxLength(256);
+
+            variable.HasOne(x => x.Shard)
+                .WithMany(x => x.Variables)
+                .HasForeignKey(x => x.ShardId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

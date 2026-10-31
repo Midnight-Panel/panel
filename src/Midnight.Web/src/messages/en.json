@@ -119,7 +119,8 @@
       "Overview": "Overview",
       "Roles": "Roles",
       "Users": "Users",
-      "Nodes": "Nodes"
+      "Nodes": "Nodes",
+      "Shards": "Shards"
     },
     "Dashboard": "Dashboard",
     "Section": {
@@ -316,5 +317,88 @@
     "Unreachable": "The daemon is not reachable",
     "UseSsl": "Use SSL",
     "UseSslHint": "The daemon serves https with a certificate for the FQDN (e.g. Let's Encrypt)."
+  },
+  "Shards": {
+    "Title": "Shards",
+    "Description": "Manage templates and runtimes for game and application servers.",
+    "Create": "Create Shard",
+    "Created": "Shard \"{0}\" created successfully.",
+    "Edit": "Edit Shard",
+    "Saved": "Shard saved.",
+    "Delete": "Delete Shard",
+    "DeleteConfirm": "Are you sure you want to delete shard \"{0}\"? This action cannot be undone.",
+    "Deleted": "Shard deleted.",
+    "Export": "Export (JSON)",
+    "Import": "Import",
+    "ImportTitle": "Import Shard",
+    "ImportDescription": "Upload a Midnightpanel Shard package (.json) or legacy PTDL template.",
+    "ImportSuccess": "Shard \"{0}\" imported successfully ({1}).",
+    "Collections": "Collections",
+    "ManageCollections": "Manage Collections",
+    "CreateCollection": "Create Collection",
+    "CollectionName": "Collection Name",
+    "CollectionAuthor": "Collection Author",
+    "AllCollections": "All Collections",
+    "CollectionDeleted": "Collection deleted.",
+    "Tabs": {
+      "General": "General",
+      "Configuration": "Configuration",
+      "Variables": "Variables",
+      "InstallScript": "Install Script",
+      "DockerImages": "Docker Images"
+    },
+    "General": {
+      "Name": "Shard Name",
+      "Collection": "Collection",
+      "Author": "Author",
+      "Version": "Version",
+      "Description": "Description"
+    },
+    "Config": {
+      "StartupCommand": "Startup Command",
+      "StartupCommandHint": "Use {{VARIABLE}} placeholders. System variables such as {{SERVER_MEMORY}} and {{SERVER_PORT}} are available automatically.",
+      "StopCommand": "Stop Command",
+      "StopCommandHint": "Command sent to server console (e.g. stop or quit).",
+      "StopSignal": "Stop Signal",
+      "StartupDone": "Startup-Done Detection",
+      "StartupDoneHint": "Log string or regex pattern marking when the server has successfully booted.",
+      "ConfigFiles": "Configuration Files",
+      "AddConfigFile": "Add File",
+      "FilePath": "File Path",
+      "Parser": "Parser Type",
+      "Mappings": "Replacements (JSON)",
+      "MappingsHint": "Mapping of keys to values or placeholders in JSON format."
+    },
+    "VariablesTab": {
+      "Title": "Environment Variables",
+      "Subtitle": "Define configuration variables users can tune during server creation.",
+      "Add": "Add Variable",
+      "EnvVar": "Env Variable",
+      "DefaultVal": "Default Value",
+      "Rules": "Validation Rules",
+      "UserViewable": "Visible",
+      "UserEditable": "Editable",
+      "DeleteConfirm": "Remove variable \"{0}\"?"
+    },
+    "ScriptTab": {
+      "ContainerImage": "Installation Container Image",
+      "Interpreter": "Interpreter",
+      "ScriptCode": "Installation Script (Bash/Ash)"
+    },
+    "ImagesTab": {
+      "Title": "Docker Images",
+      "Add": "Add Image",
+      "Label": "Label",
+      "ImageUri": "Docker Image Tag / URI",
+      "Default": "Default Image"
+    },
+    "Selector": {
+      "ChooseCollection": "Choose Collection",
+      "ChooseShard": "Choose Shard Template",
+      "ConfigureVariables": "Configure Server Variables",
+      "StartupPreview": "Generated Startup Command (Preview)",
+      "Required": "Required",
+      "Validating": "Validating..."
+    }
   }
 }

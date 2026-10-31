@@ -226,3 +226,180 @@ export interface CreateAllocationsResponse {
 export interface DaemonLogs {
   lines: string[];
 }
+
+// Shards & Shard Collections
+
+export interface ShardCollection {
+  id: number;
+  uuid: string;
+  name: string;
+  description?: string | null;
+  author: string;
+  shardCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShardCollectionRequest {
+  name: string;
+  description?: string | null;
+  author: string;
+}
+
+export interface ShardSummary {
+  id: number;
+  uuid: string;
+  collectionId: number;
+  collectionName: string;
+  name: string;
+  description?: string | null;
+  author: string;
+  version: string;
+  defaultDockerImage: string;
+  variableCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShardConfigFile {
+  path: string;
+  parser: "properties" | "yaml" | "json" | "ini" | "xml" | string;
+  mappings: Record<string, string>;
+}
+
+export interface ShardFeatures {
+  eula: boolean;
+  pidLimit?: number | null;
+  fileDenylist: string[];
+}
+
+export interface ShardVariable {
+  id: number;
+  shardId: number;
+  name: string;
+  description?: string | null;
+  envVariable: string;
+  defaultValue?: string | null;
+  userViewable: boolean;
+  userEditable: boolean;
+  rules: string;
+  sortOrder: number;
+}
+
+export interface ShardVariableRequest {
+  name: string;
+  description?: string | null;
+  envVariable: string;
+  defaultValue?: string | null;
+  userViewable: boolean;
+  userEditable: boolean;
+  rules: string;
+  sortOrder: number;
+}
+
+export interface ShardDetail {
+  id: number;
+  uuid: string;
+  collectionId: number;
+  collectionName: string;
+  name: string;
+  description?: string | null;
+  author: string;
+  version: string;
+  dockerImages: Record<string, string>;
+  defaultDockerImage: string;
+  startupCommand: string;
+  stopCommand?: string | null;
+  stopSignal: string;
+  configFiles: ShardConfigFile[];
+  startupDone: string;
+  installScript?: string | null;
+  installImage: string;
+  installInterpreter: string;
+  features: ShardFeatures;
+  variables: ShardVariable[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShardRequest {
+  collectionId: number;
+  name: string;
+  description?: string | null;
+  author: string;
+  version: string;
+  dockerImages: Record<string, string>;
+  defaultDockerImage: string;
+  startupCommand: string;
+  stopCommand?: string | null;
+  stopSignal: string;
+  configFiles: ShardConfigFile[];
+  startupDone: string;
+  installScript?: string | null;
+  installImage: string;
+  installInterpreter: string;
+  features: ShardFeatures;
+}
+
+export interface ShardExportPackage {
+  formatVersion: string;
+  exportedAt: string;
+  collection: {
+    name: string;
+    description?: string | null;
+    author: string;
+  };
+  shard: {
+    name: string;
+    description?: string | null;
+    author: string;
+    version: string;
+    dockerImages: Record<string, string>;
+    defaultDockerImage: string;
+    startupCommand: string;
+    stopCommand?: string | null;
+    stopSignal: string;
+    configFiles: ShardConfigFile[];
+    startupDone: string;
+    installScript?: string | null;
+    installImage: string;
+    installInterpreter: string;
+    features: ShardFeatures;
+    variables: Array<{
+      name: string;
+      description?: string | null;
+      envVariable: string;
+      defaultValue?: string | null;
+      userViewable: boolean;
+      userEditable: boolean;
+      rules: string;
+      sortOrder: number;
+    }>;
+  };
+}
+
+export interface ShardImportRequest {
+  targetCollectionId?: number | null;
+  content: string;
+}
+
+export interface ShardImportResult {
+  shardId: number;
+  shardUuid: string;
+  shardName: string;
+  collectionId: number;
+  collectionName: string;
+  detectedFormat: string;
+  warnings: string[];
+}
+
+export interface ValidateVariablesRequest {
+  values: Record<string, string | null>;
+}
+
+export interface ValidateVariablesResponse {
+  isValid: boolean;
+  errors: Record<string, string>;
+  resolvedEnvironment: Record<string, string>;
+  resolvedStartupCommand?: string | null;
+}
