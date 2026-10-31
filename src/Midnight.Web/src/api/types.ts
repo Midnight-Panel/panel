@@ -425,6 +425,30 @@ export interface ShardImportResult {
   warnings: string[];
 }
 
+export interface ShardBatchImportItem {
+  fileName?: string | null;
+  content: string;
+}
+
+export interface ShardBatchImportRequest {
+  targetCollectionId?: number | null;
+  items: ShardBatchImportItem[];
+}
+
+export interface ShardBatchImportItemResult {
+  fileName?: string | null;
+  success: boolean;
+  errorMessage?: string | null;
+  shard?: ShardImportResult | null;
+}
+
+export interface ShardBatchImportResult {
+  totalCount: number;
+  succeededCount: number;
+  failedCount: number;
+  results: ShardBatchImportItemResult[];
+}
+
 export interface ValidateVariablesRequest {
   values: Record<string, string | null>;
 }

@@ -1,5 +1,7 @@
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
@@ -435,5 +437,97 @@ public partial class ShardImportExportService : IShardImportExportService
             name = $"{baseName} ({++counter})";
         }
         return name;
+    }
+
+    public async Task<ShardBatchImportResult> ImportBatchAsync(ShardBatchImportRequest request, CancellationToken cancellationToken)
+    {
+        var results = new List<ShardBatchImportItemResult>();
+
+        foreach (var item in request.Items)
+        {
+            if (string.IsNullOrWhiteSpace(item.Content))
+                continue;
+
+            try
+            {
+                var importRes = await ImportAsync(new ShardImportRequest
+                {
+                    TargetCollectionId = request.TargetCollectionId,
+                    Content = item.Content
+                }, cancellationToken);
+
+                results.Add(new ShardBatchImportItemResult
+                {
+                    FileName = item.FileName ?? importRes.ShardName,
+                    Success = true,
+                    Shard = importRes
+                });
+            }
+            catch (Exception ex)
+            {
+                results.Add(new ShardBatchImportItemResult
+                {
+                    FileName = item.FileName ?? "Unbekannt",
+                    Success = false,
+                    ErrorMessage = ex.Message
+                });
+            }
+        }
+
+        return new ShardBatchImportResult
+        {
+            TotalCount = results.Count,
+            SucceededCount = results.Count(x => x.Success),
+            FailedCount = results.Count(x => !x.Success),
+            Results = results
+        };
+    }
+
+    public async Task<ShardBatchImportResult> ImportFilesAsync(IFormFileCollection files, int? targetCollectionId, CancellationToken cancellationToken)
+    {
+        var batchItems = new List<ShardBatchImportItem>();
+
+        foreach (var file in files)
+        {
+            if (file.Length == 0) continue;
+
+            if (file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                await using var stream = file.OpenReadStream();
+                using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+                foreach (var entry in archive.Entries)
+                {
+                    if (entry.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && !entry.FullName.StartsWith("__MACOSX"))
+                    {
+                        using var reader = new StreamReader(entry.Open());
+                        var jsonText = await reader.ReadToEndAsync(cancellationToken);
+                        if (!string.IsNullOrWhiteSpace(jsonText))
+                        {
+                            batchItems.Add(new ShardBatchImportItem
+                            {
+                                FileName = entry.Name,
+                                Content = jsonText
+                            });
+                        }
+                    }
+                }
+            }
+            else if (file.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                using var reader = new StreamReader(file.OpenReadStream());
+                var jsonText = await reader.ReadToEndAsync(cancellationToken);
+                batchItems.Add(new ShardBatchImportItem
+                {
+                    FileName = file.FileName,
+                    Content = jsonText
+                });
+            }
+        }
+
+        return await ImportBatchAsync(new ShardBatchImportRequest
+        {
+            TargetCollectionId = targetCollectionId,
+            Items = batchItems
+        }, cancellationToken);
     }
 }
