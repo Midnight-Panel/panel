@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Midnight.ApiServer.Core.Configuration;
 
 namespace Midnight.ApiServer.Core.Database;
@@ -14,7 +15,11 @@ public static class DatabaseExtensions
             if (string.IsNullOrWhiteSpace(database.ConnectionString))
                 throw new InvalidOperationException("Database.ConnectionString is required for PostgreSQL");
 
-            services.AddDbContext<PostgresDataContext>(options => options.UseNpgsql(database.ConnectionString));
+            services.AddDbContext<PostgresDataContext>(options =>
+            {
+                options.UseNpgsql(database.ConnectionString);
+                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            });
             services.AddScoped<DataContext>(provider => provider.GetRequiredService<PostgresDataContext>());
         }
         else if (database.Provider.Equals(DatabaseProviders.Sqlite, StringComparison.OrdinalIgnoreCase))
@@ -23,7 +28,11 @@ public static class DatabaseExtensions
                 ? $"Data Source={Path.Combine(storagePath, "midnight.db")}"
                 : database.ConnectionString;
 
-            services.AddDbContext<SqliteDataContext>(options => options.UseSqlite(connectionString));
+            services.AddDbContext<SqliteDataContext>(options =>
+            {
+                options.UseSqlite(connectionString);
+                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            });
             services.AddScoped<DataContext>(provider => provider.GetRequiredService<SqliteDataContext>());
         }
         else
