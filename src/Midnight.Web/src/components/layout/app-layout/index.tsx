@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useT } from "@/i18n";
 import { EyeIcon, OctagonAlertIcon } from "@/icons";
+import { PoweredByFooter } from "@/components/shared/powered-by-footer";
 import { Outlet, useNavigate } from "react-router";
 
 export default function AppLayout() {
@@ -71,6 +72,10 @@ export default function AppLayout() {
               ))}
             </span>
           </footer>
+
+          <div className="mt-4">
+            <PoweredByFooter />
+          </div>
         </div>
       </SidebarInset>
       <ScrollToTop />

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Midnight.ApiServer.Features.Branding.Entities;
 using Midnight.ApiServer.Features.Nodes.Entities;
 using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.ApiServer.Features.Users.Entities;
@@ -32,6 +33,7 @@ public abstract class DataContext : DbContext
     public DbSet<ShardCollection> ShardCollections => Set<ShardCollection>();
     public DbSet<Shard> Shards => Set<Shard>();
     public DbSet<ShardVariable> ShardVariables => Set<ShardVariable>();
+    public DbSet<BrandingSettings> BrandingSettings => Set<BrandingSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -155,6 +157,20 @@ public abstract class DataContext : DbContext
                 .WithMany(x => x.Variables)
                 .HasForeignKey(x => x.ShardId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BrandingSettings>(branding =>
+        {
+            branding.HasKey(x => x.Id);
+            branding.Property(x => x.PanelName).IsRequired().HasMaxLength(64);
+            branding.Property(x => x.PrimaryColor).IsRequired().HasMaxLength(7);
+            branding.Property(x => x.AccentColor).IsRequired().HasMaxLength(7);
+            branding.Property(x => x.LoginBackgroundType).IsRequired().HasMaxLength(16);
+            branding.Property(x => x.LoginBackgroundValue).HasMaxLength(1024);
+            branding.Property(x => x.LogoLightFileName).HasMaxLength(256);
+            branding.Property(x => x.LogoDarkFileName).HasMaxLength(256);
+            branding.Property(x => x.FaviconFileName).HasMaxLength(256);
+            branding.Property(x => x.CustomCss).HasMaxLength(32768);
         });
     }
 }

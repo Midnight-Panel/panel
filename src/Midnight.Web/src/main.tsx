@@ -2,6 +2,7 @@ import { AuthProvider } from "@/auth/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/contexts/theme-context";
 import { I18nProvider } from "@/i18n";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { ConfirmProvider } from "@/lib/confirm";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
@@ -27,16 +28,18 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <HelmetProvider>
           <I18nProvider>
-            <QueryClientProvider client={queryClient}>
-              <TooltipProvider>
-                <AuthProvider>
-                  <ConfirmProvider>
-                    <App />
-                  </ConfirmProvider>
-                </AuthProvider>
-              </TooltipProvider>
-            </QueryClientProvider>
-            <ThemedToaster />
+            <BrandingProvider>
+              <QueryClientProvider client={queryClient}>
+                <TooltipProvider>
+                  <AuthProvider>
+                    <ConfirmProvider>
+                      <App />
+                    </ConfirmProvider>
+                  </AuthProvider>
+                </TooltipProvider>
+              </QueryClientProvider>
+              <ThemedToaster />
+            </BrandingProvider>
           </I18nProvider>
         </HelmetProvider>
       </ThemeProvider>

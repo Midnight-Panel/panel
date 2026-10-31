@@ -15,6 +15,7 @@ import NodeSettingsPage from "@/pages/admin/nodes/settings";
 import NodeSetupPage from "@/pages/admin/nodes/setup";
 import AdminOverviewPage from "@/pages/admin/overview";
 import AdminSettingsPage from "@/pages/admin/settings";
+import AdminCustomizerPage from "@/pages/admin/customizer";
 import ShardDetailPage from "@/pages/admin/shards/detail";
 import ShardsPage from "@/pages/admin/shards/list";
 import UserEditPage from "@/pages/admin/users/edit";
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="admin/shards" element={<ShardsPage />} />
         <Route path="admin/shards/:id" element={<ShardDetailPage />} />
         <Route path="admin/settings" element={<AdminSettingsPage />} />
+        <Route path="admin/customizer" element={<AdminCustomizerPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>
