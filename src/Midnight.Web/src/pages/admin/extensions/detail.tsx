@@ -18,7 +18,10 @@ import {
   ChatIcon,
   DatabaseIcon,
   DocIcon,
+  DownloadIcon,
+  FileIcon,
   FloppyDiscIcon,
+  FolderIcon,
   GearIcon,
   GlobeIcon,
   InfoCircleIcon,
@@ -67,13 +70,14 @@ export default function ExtensionDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("config");
+  const [activeTab, setActiveTab] = useState("files");
   const [editorMode, setEditorMode] = useState<"visual" | "json">("visual");
   const [configJson, setConfigJson] = useState("{}");
   const [parsedValues, setParsedValues] = useState<Record<string, unknown>>({});
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const { data: extension, isLoading } = useQuery<ExtensionDetail>({
     queryKey: ["admin", "extensions", extensionId],
@@ -153,6 +157,22 @@ export default function ExtensionDetailPage() {
     }
   };
 
+  const handleDownload = async () => {
+    if (!extension) return;
+    setDownloading(true);
+    try {
+      await extensionsApi.downloadPackage(
+        extension.id,
+        extension.packageFileName || `${extension.identifier}-v${extension.version}.zip`,
+      );
+      notifySuccess("Paket erfolgreich heruntergeladen!");
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!extension) return;
     if (!confirm(t("Extensions.UninstallConfirm", extension.name))) return;
@@ -223,14 +243,34 @@ export default function ExtensionDetailPage() {
                 <span>•</span>
                 <span>By {extension.author}</span>
                 <span>•</span>
-                <code className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-mono dark:bg-white/5">
-                  {extension.identifier}
-                </code>
+                {extension.installSource === "url" ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-indigo-500/10 px-1.5 py-0.5 font-mono text-[11px] text-indigo-400">
+                    <LinkIcon className="size-3" /> Per Link
+                  </span>
+                ) : extension.installSource === "file" ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-brand-500/10 px-1.5 py-0.5 font-mono text-[11px] text-brand-400">
+                    <FileIcon className="size-3" /> Datei ({extension.packageFileName || "Paket"})
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-400 dark:bg-white/5">
+                    <BoltIcon className="size-3" /> System
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              onClick={handleDownload}
+              disabled={downloading}
+              title="Herunterladen"
+            >
+              <DownloadIcon className="mr-1.5 size-4 text-brand-500" />
+              Paketdatei (.zip)
+            </Button>
+
             {can(Permissions.AdminExtensionsWrite) && (
               <>
                 <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3">
@@ -261,6 +301,10 @@ export default function ExtensionDetailPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-gray-100 dark:bg-white/5">
+          <TabsTrigger value="files" className="gap-2">
+            <FolderIcon className="size-4" />
+            Dateien ({extension.installedFiles.length})
+          </TabsTrigger>
           <TabsTrigger value="config" className="gap-2">
             <GearIcon className="size-4" />
             {t("Extensions.Settings")}
@@ -275,16 +319,54 @@ export default function ExtensionDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Configuration */}
+        {/* Tab 1: Installed Files */}
+        <TabsContent value="files" className="space-y-4">
+          <Card className="p-6">
+            <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/5">
+              <div>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
+                  Paketdateien im Dateisystem
+                </h3>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  Übersicht aller entpackten Dateien für diese Erweiterung im Panel-Speicher.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
+                <DownloadIcon className="mr-1.5 size-3.5" />
+                Als Archiv (.zip) herunterladen
+              </Button>
+            </div>
+
+            {extension.installedFiles.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                Keine separaten Dateien entpackt oder integriertes Systemmodul.
+              </div>
+            ) : (
+              <div className="max-h-96 space-y-1.5 overflow-y-auto font-mono text-xs">
+                {extension.installedFiles.map((file, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/50 px-3.5 py-2 transition-colors hover:bg-gray-100/60 dark:border-white/5 dark:bg-white/2 dark:hover:bg-white/4"
+                  >
+                    <FileIcon className="size-4 shrink-0 text-brand-500" />
+                    <span className="text-gray-800 dark:text-gray-200">{file}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        {/* Tab 2: Configuration */}
         <TabsContent value="config" className="space-y-4">
           <Card className="p-6">
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/5">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
-                  Configuration values
+                  Konfigurationsparameter
                 </h3>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  Current settings and environment parameters for {extension.name}.
+                  Aktuelle Einstellungen für {extension.name}.
                 </p>
               </div>
 
@@ -310,7 +392,7 @@ export default function ExtensionDetailPage() {
                         : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                     }`}
                   >
-                    Raw JSON
+                    JSON
                   </button>
                 </div>
               </div>
@@ -320,7 +402,7 @@ export default function ExtensionDetailPage() {
               <div className="space-y-4">
                 {configKeys.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                    No keys configured. Switch to "Raw JSON" to define parameters.
+                    Diese Erweiterung benötigt keine zusätzlichen Konfigurationswerte.
                   </div>
                 ) : (
                   configKeys.map((key) => {
@@ -339,7 +421,7 @@ export default function ExtensionDetailPage() {
                               {key}
                             </Label>
                             <span className="block text-xs text-gray-500 dark:text-gray-400">
-                              Enables or disables this feature
+                              Schalter für {key}
                             </span>
                           </div>
                           <Switch
@@ -387,7 +469,7 @@ export default function ExtensionDetailPage() {
               </div>
             )}
 
-            {can(Permissions.AdminExtensionsWrite) && (
+            {can(Permissions.AdminExtensionsWrite) && configKeys.length > 0 && (
               <div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-white/5">
                 <Button onClick={handleSaveConfig} disabled={saving || !!jsonError}>
                   <FloppyDiscIcon className="mr-1.5 size-4" />
@@ -398,7 +480,7 @@ export default function ExtensionDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab 2: Readme / Documentation */}
+        {/* Tab 3: Readme / Documentation */}
         <TabsContent value="readme">
           <Card className="p-6">
             <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">
@@ -416,7 +498,7 @@ export default function ExtensionDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab 3: Info & Manifest */}
+        {/* Tab 4: Info & Manifest */}
         <TabsContent value="info">
           <Card className="p-6">
             <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">
@@ -430,6 +512,35 @@ export default function ExtensionDetailPage() {
                   {extension.identifier}
                 </p>
               </div>
+
+              <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Installationsquelle</span>
+                <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+                  {extension.installSource === "url"
+                    ? "Per Link (URL)"
+                    : extension.installSource === "file"
+                    ? "Per Datei-Upload (File)"
+                    : "Integriertes System-Modul"}
+                </p>
+              </div>
+
+              {extension.sourceUrl && (
+                <div className="col-span-full rounded-xl border border-gray-100 p-4 dark:border-white/5">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Download-Link (URL)</span>
+                  <p className="mt-1 break-all font-mono text-xs text-brand-500 dark:text-brand-400">
+                    {extension.sourceUrl}
+                  </p>
+                </div>
+              )}
+
+              {extension.packageFileName && (
+                <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Paket-Dateiname</span>
+                  <p className="mt-1 font-mono text-sm font-semibold text-gray-800 dark:text-white/90">
+                    {extension.packageFileName}
+                  </p>
+                </div>
+              )}
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Version</span>

@@ -86,19 +86,47 @@ public class ExtensionCommand : ICommand
 
     private async Task<int> InstallExtensionAsync(string[] args, CancellationToken cancellationToken)
     {
-        var filePath = args.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
-        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        var target = args.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
+        if (string.IsNullOrWhiteSpace(target))
         {
-            _console.WriteError($"Please specify a valid path to a .zip file: midnight extension install <path.zip>");
+            _console.WriteError("Bitte gib einen Dateipfad (.zip) oder einen Download-Link (URL) an: midnight extension install <pfad-oder-url>");
             return ExitCodes.InvalidArguments;
         }
 
-        _console.WriteInfo($"Copying extension package '{filePath}' into the panel container...");
-        var dest = $"/tmp/{Path.GetFileName(filePath)}";
+        var isUrl = target.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    target.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
+        if (isUrl)
+        {
+            _console.WriteInfo($"Lade Erweiterung von URL '{target}' herunter...");
+            var curlRes = await _processRunner.RunAsync(
+                "docker",
+                $"compose -f /opt/midnight/panel/docker-compose.yml exec -T panel curl -fsSL -o /tmp/extension-download.zip \"{target}\"",
+                isMutating: true,
+                cancellationToken: cancellationToken);
+
+            if (!curlRes.Success)
+            {
+                _console.WriteError($"Fehler beim Herunterladen der Erweiterung: {curlRes.Output}");
+                return ExitCodes.GeneralError;
+            }
+
+            _console.WriteSuccess("Paket erfolgreich über Download-Link bereitgestellt. Aktiviere im Panel unter Erweiterungen.");
+            return ExitCodes.Success;
+        }
+
+        if (!File.Exists(target))
+        {
+            _console.WriteError($"Datei '{target}' existiert nicht.");
+            return ExitCodes.InvalidArguments;
+        }
+
+        _console.WriteInfo($"Kopiere Erweiterungspaket '{target}' in den Panel-Container...");
+        var dest = $"/tmp/{Path.GetFileName(target)}";
 
         var cpRes = await _processRunner.RunAsync(
             "docker",
-            $"compose -f /opt/midnight/panel/docker-compose.yml cp \"{filePath}\" panel:{dest}",
+            $"compose -f /opt/midnight/panel/docker-compose.yml cp \"{target}\" panel:{dest}",
             isMutating: true,
             cancellationToken: cancellationToken);
 
@@ -108,8 +136,7 @@ public class ExtensionCommand : ICommand
             return ExitCodes.GeneralError;
         }
 
-        _console.WriteSuccess($"Package '{Path.GetFileName(filePath)}' staged. Import it via the web panel.");
-        return ExitCodes.Success;
+        _console.WriteSuccess($"Paket '{Path.GetFileName(target)}' erfolgreich bereitgestellt.");
     }
 
     private async Task<ProcessResult> RunPostgresQueryAsync(string sqlQuery, CancellationToken cancellationToken)

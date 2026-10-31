@@ -61,6 +61,19 @@ public class ExtensionsController : ControllerBase
         return await _extensionService.UploadPackageAsync(stream, file.FileName, cancellationToken);
     }
 
+    [HttpPost("url")]
+    [RequirePermission(Permissions.AdminExtensionsWrite)]
+    public Task<ExtensionDetailResponse> InstallUrl([FromBody] ExtensionInstallUrlRequest request, CancellationToken cancellationToken)
+        => _extensionService.InstallFromUrlAsync(request.Url, cancellationToken);
+
+    [HttpGet("{id:int}/download")]
+    [RequirePermission(Permissions.AdminExtensionsRead)]
+    public async Task<IActionResult> Download(int id, CancellationToken cancellationToken)
+    {
+        var (stream, fileName, contentType) = await _extensionService.DownloadPackageAsync(id, cancellationToken);
+        return File(stream, contentType, fileName);
+    }
+
     [HttpDelete("{id:int}")]
     [RequirePermission(Permissions.AdminExtensionsWrite)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)

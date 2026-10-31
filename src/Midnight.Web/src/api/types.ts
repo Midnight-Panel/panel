@@ -425,6 +425,30 @@ export interface ShardImportResult {
   warnings: string[];
 }
 
+export interface ShardBatchImportItem {
+  fileName?: string | null;
+  content: string;
+}
+
+export interface ShardBatchImportRequest {
+  targetCollectionId?: number | null;
+  items: ShardBatchImportItem[];
+}
+
+export interface ShardBatchImportItemResult {
+  fileName?: string | null;
+  success: boolean;
+  errorMessage?: string | null;
+  shard?: ShardImportResult | null;
+}
+
+export interface ShardBatchImportResult {
+  totalCount: number;
+  succeededCount: number;
+  failedCount: number;
+  results: ShardBatchImportItemResult[];
+}
+
 export interface ValidateVariablesRequest {
   values: Record<string, string | null>;
 }
@@ -448,6 +472,9 @@ export interface ExtensionSummary {
   category: string;
   websiteUrl?: string | null;
   icon?: string | null;
+  installSource: string;
+  sourceUrl?: string | null;
+  packageFileName?: string | null;
   isEnabled: boolean;
   installedAt: string;
   updatedAt: string;
@@ -457,6 +484,7 @@ export interface ExtensionDetail extends ExtensionSummary {
   configSchemaJson?: string | null;
   configValuesJson?: string | null;
   readmeMarkdown?: string | null;
+  installedFiles: string[];
   requiredPermissions: string[];
 }
 
@@ -469,9 +497,16 @@ export interface ExtensionInstallRequest {
   category?: string;
   websiteUrl?: string | null;
   icon?: string | null;
+  installSource?: string;
+  sourceUrl?: string | null;
+  packageFileName?: string | null;
   configSchemaJson?: string | null;
   configValuesJson?: string | null;
   readmeMarkdown?: string | null;
+}
+
+export interface ExtensionInstallUrlRequest {
+  url: string;
 }
 
 export interface ExtensionConfigUpdateRequest {

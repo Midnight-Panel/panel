@@ -11,6 +11,9 @@ public record ExtensionSummaryResponse
     public string Category { get; init; } = "General";
     public string? WebsiteUrl { get; init; }
     public string? Icon { get; init; }
+    public string InstallSource { get; init; } = "file";
+    public string? SourceUrl { get; init; }
+    public string? PackageFileName { get; init; }
     public bool IsEnabled { get; init; } = true;
     public DateTimeOffset InstalledAt { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
@@ -21,6 +24,7 @@ public record ExtensionDetailResponse : ExtensionSummaryResponse
     public string? ConfigSchemaJson { get; init; }
     public string? ConfigValuesJson { get; init; }
     public string? ReadmeMarkdown { get; init; }
+    public List<string> InstalledFiles { get; init; } = [];
     public List<string> RequiredPermissions { get; init; } = [];
 }
 
@@ -34,9 +38,17 @@ public record ExtensionInstallRequest
     public string Category { get; init; } = "General";
     public string? WebsiteUrl { get; init; }
     public string? Icon { get; init; }
+    public string InstallSource { get; init; } = "file";
+    public string? SourceUrl { get; init; }
+    public string? PackageFileName { get; init; }
     public string? ConfigSchemaJson { get; init; }
     public string? ConfigValuesJson { get; init; }
     public string? ReadmeMarkdown { get; init; }
+}
+
+public record ExtensionInstallUrlRequest
+{
+    public string Url { get; init; } = "";
 }
 
 public record ExtensionConfigUpdateRequest

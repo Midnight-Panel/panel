@@ -81,3 +81,31 @@ public class ShardImportResult
     public string DetectedFormat { get; set; } = "";
     public List<string> Warnings { get; set; } = [];
 }
+
+public class ShardBatchImportItem
+{
+    public string? FileName { get; set; }
+    public string Content { get; set; } = "";
+}
+
+public class ShardBatchImportRequest
+{
+    public int? TargetCollectionId { get; set; }
+    public List<ShardBatchImportItem> Items { get; set; } = [];
+}
+
+public class ShardBatchImportItemResult
+{
+    public string? FileName { get; set; }
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public ShardImportResult? Shard { get; set; }
+}
+
+public class ShardBatchImportResult
+{
+    public int TotalCount { get; set; }
+    public int SucceededCount { get; set; }
+    public int FailedCount { get; set; }
+    public List<ShardBatchImportItemResult> Results { get; set; } = [];
+}

@@ -88,4 +88,29 @@ public class AdminShardsController : ControllerBase
             User.GetUserId(), result.ShardId, result.ShardName, result.DetectedFormat);
         return result;
     }
+
+    /// <summary>Batch imports multiple shard templates simultaneously</summary>
+    [HttpPost("import-batch")]
+    [RequirePermission(Permissions.AdminShardsWrite)]
+    public async Task<ShardBatchImportResult> ImportBatch([FromBody] ShardBatchImportRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _importExportService.ImportBatchAsync(request, cancellationToken);
+        _logger.LogInformation("User {ActorId} batch-imported {Succeeded}/{Total} shards",
+            User.GetUserId(), result.SucceededCount, result.TotalCount);
+        return result;
+    }
+
+    /// <summary>Uploads and imports multiple shard JSON files or ZIP archive simultaneously</summary>
+    [HttpPost("import-files")]
+    [RequirePermission(Permissions.AdminShardsWrite)]
+    public async Task<ShardBatchImportResult> ImportFiles(
+        [FromForm] IFormFileCollection files,
+        [FromQuery] int? targetCollectionId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _importExportService.ImportFilesAsync(files, targetCollectionId, cancellationToken);
+        _logger.LogInformation("User {ActorId} imported {Succeeded}/{Total} shards from uploaded files",
+            User.GetUserId(), result.SucceededCount, result.TotalCount);
+        return result;
+    }
 }

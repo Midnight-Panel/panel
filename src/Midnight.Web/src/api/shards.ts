@@ -2,6 +2,8 @@ import { api, toQueryString, tokens } from "./client";
 import type {
   PagedQuery,
   PagedResult,
+  ShardBatchImportRequest,
+  ShardBatchImportResult,
   ShardCollection,
   ShardCollectionRequest,
   ShardDetail,
@@ -82,7 +84,19 @@ export const shardsApi = {
   importShard: (data: ShardImportRequest) =>
     api.post<ShardImportResult>("/api/admin/shards/import", data),
 
-  // Variables
+  importShardsBatch: (data: ShardBatchImportRequest) =>
+    api.post<ShardBatchImportResult>("/api/admin/shards/import-batch", data),
+
+  uploadShardFiles: (files: File[], targetCollectionId?: number) => {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append("files", file, file.name);
+    }
+    const query = targetCollectionId ? `?targetCollectionId=${targetCollectionId}` : "";
+    return api.post<ShardBatchImportResult>(`/api/admin/shards/import-files${query}`, formData);
+  },
+
+  // Variablen
   listVariables: (shardId: number) =>
     api.get<ShardVariable[]>(`/api/admin/shards/${shardId}/variables`),
 

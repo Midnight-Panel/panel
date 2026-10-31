@@ -30,6 +30,18 @@ public class ExtensionEntity
     [MaxLength(512)]
     public string? WebsiteUrl { get; set; }
 
+    [MaxLength(32)]
+    public string InstallSource { get; set; } = "file";
+
+    [MaxLength(1024)]
+    public string? SourceUrl { get; set; }
+
+    [MaxLength(256)]
+    public string? PackageFileName { get; set; }
+
+    [MaxLength(512)]
+    public string? StoragePath { get; set; }
+
     public bool IsEnabled { get; set; } = true;
 
     [MaxLength(32768)]
