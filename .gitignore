@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+.DS_Store
+TestResults/
+
+# Runtime data of the panel (config, database, keys, avatars)
+storage/
+src/Midnight.ApiServer/storage/
+
+# Web frontend build output and dependencies
+src/Midnight.ApiServer/wwwroot/
+node_modules/

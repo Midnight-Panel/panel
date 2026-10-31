@@ -1,0 +1,320 @@
+{
+  "Account": {
+    "Overview": "Overview"
+  },
+  "AdminOverview": {
+    "Description": "Status of the panel and its nodes",
+    "LockedUsers": "Locked users",
+    "Memory": "Memory usage",
+    "NoNodes": "No nodes yet. Nodes are added in the next version.",
+    "NodeStatus": "Node status",
+    "Nodes": "Nodes",
+    "OperatingSystem": "Operating system",
+    "Runtime": "Runtime",
+    "Servers": "Servers",
+    "System": "System",
+    "Uptime": "Uptime",
+    "Users": "Users",
+    "Version": "Version"
+  },
+  "AdminUsers": {
+    "ConnectedSince": "Logged in",
+    "LastActivity": "Last activity",
+    "RevokeConfirm": "Sign out this session of {0}?",
+    "Revoked": "Session signed out",
+    "Sessions": "Sessions",
+    "SessionsHint": "This list shows every active login session on this panel."
+  },
+  "ApiKeys": {
+    "CopyNow": "Copy the key now. For security reasons it is only shown once.",
+    "Create": "Create API key",
+    "DeleteConfirm": "The API key \"{0}\" will stop working immediately.",
+    "Description": "Keys for scripts and integrations. Send them as \"Authorization: Bearer <key>\".",
+    "Empty": "You have no API keys yet.",
+    "Expires": "Expires",
+    "ExpiresHint": "Empty means the key never expires.",
+    "LastUsed": "Last used",
+    "Never": "Never",
+    "NoScopes": "Select at least one scope.",
+    "Prefix": "Key",
+    "Scopes": "Scopes",
+    "Title": "API keys"
+  },
+  "Common": {
+    "Back": "Back",
+    "Cancel": "Cancel",
+    "Continue": "Continue",
+    "Copy": "Copy",
+    "Delete": "Delete",
+    "Description": "Description",
+    "Done": "Done",
+    "Edit": "Edit",
+    "Email": "Email",
+    "Name": "Name",
+    "Password": "Password",
+    "Remove": "Remove",
+    "Save": "Save",
+    "SaveChanges": "Save changes",
+    "Saved": "Changes saved",
+    "Status": "Status",
+    "User": "User",
+    "Username": "Username",
+    "Copied": "Copied"
+  },
+  "Dashboard": {
+    "Cpu": "CPU usage",
+    "Disk": "Disk usage",
+    "Memory": "Memory usage",
+    "NoServers": "No servers yet",
+    "NoServersHint": "Servers created for you by an administrator will show up here.",
+    "Servers": "Servers",
+    "Subtitle": "Your servers and resources at a glance"
+  },
+  "Footer": {
+    "Api": "API"
+  },
+  "Forbidden": {
+    "Description": "You don't have permission to view this page.",
+    "Title": "Access denied"
+  },
+  "ForgotPassword": {
+    "BackToLogin": "Back to login",
+    "Description": "Enter your email and we'll send you a link to reset your password.",
+    "Sent": "If an account with this email exists, a reset link has been sent.",
+    "Submit": "Send reset link",
+    "Title": "Forgot password"
+  },
+  "Greeting": {
+    "Afternoon": "Good afternoon, ",
+    "Day": "Have a nice day, ",
+    "Evening": "Have a nice evening, ",
+    "Morning": "Good morning, ",
+    "Night": "Still awake, ",
+    "Sleep": "Sleep well, "
+  },
+  "Header": {
+    "Language": "Language",
+    "Logout": "Logout",
+    "Search": "Search pages…",
+    "ToggleSidebar": "Toggle sidebar"
+  },
+  "Impersonation": {
+    "Banner": "You are viewing the panel as {0}.",
+    "Stop": "Stop impersonation"
+  },
+  "Login": {
+    "Description": "Sign in to manage your servers",
+    "ForgotPassword": "Forgot password?",
+    "NoAccount": "No account yet?",
+    "Register": "Register",
+    "Submit": "Sign in",
+    "Title": "Welcome back",
+    "TwoFactorDescription": "Enter the 6 digit code from your authenticator app.",
+    "TwoFactorHint": "Open your authenticator app and enter the current 6 digit code.",
+    "TwoFactorTitle": "Two factor authentication"
+  },
+  "Nav": {
+    "Account": "Account",
+    "Admin": {
+      "Overview": "Overview",
+      "Roles": "Roles",
+      "Users": "Users",
+      "Nodes": "Nodes"
+    },
+    "Dashboard": "Dashboard",
+    "Section": {
+      "Admin": "Administration",
+      "Main": "Menu"
+    },
+    "Security": "Security",
+    "ApiKeys": "API keys"
+  },
+  "NotFound": {
+    "Back": "Back to dashboard",
+    "Description": "The page you are looking for doesn't exist.",
+    "Title": "Page not found"
+  },
+  "Permissions": {
+    "Everything": "Full access (*)"
+  },
+  "Profile": {
+    "AvatarHint": "PNG, JPEG or WebP, max. 1 MB",
+    "AvatarTooLarge": "The image must be smaller than 1 MB.",
+    "AvatarUpdated": "Avatar updated",
+    "Details": "Details",
+    "Saved": "Successfully updated details",
+    "Upload": "Upload",
+    "Avatar": "Profile picture"
+  },
+  "Register": {
+    "Description": "Create an account to get started",
+    "Disabled": "Registration is disabled. Ask an administrator for an account.",
+    "DisabledTitle": "Sign up disabled",
+    "HasAccount": "Already have an account?",
+    "Login": "Sign in",
+    "PasswordMismatch": "The passwords do not match",
+    "RepeatPassword": "Repeat your password",
+    "SetupHint": "This is a fresh installation. The first account becomes administrator.",
+    "Submit": "Sign up",
+    "Title": "Create account"
+  },
+  "ResetPassword": {
+    "Description": "Choose a new password for your account.",
+    "InvalidLink": "This reset link is invalid.",
+    "NewPassword": "New password",
+    "Submit": "Set password",
+    "Success": "Password changed. You can sign in now.",
+    "Title": "Reset password"
+  },
+  "Roles": {
+    "Create": "Create role",
+    "DeleteConfirm": "The role \"{0}\" will be removed from all users.",
+    "Description": "Roles bundle permissions and are assigned to users.",
+    "Edit": "Edit role",
+    "Empty": "No roles yet.",
+    "Permissions": "Permissions"
+  },
+  "Security": {
+    "ChangePassword": "Change password",
+    "CurrentPassword": "Current password",
+    "Device": "Device",
+    "DisableTwoFactor": "Disable 2FA",
+    "EnableTwoFactor": "Enable 2FA",
+    "ImpersonationHint": "Security settings are not available while viewing the panel as another user.",
+    "InstallApp": "Make sure to have one of the following apps installed on your phone",
+    "IpAddress": "IP address",
+    "LastUsed": "Last active",
+    "LogoutEverywhere": "Logout everywhere",
+    "LogoutEverywhereConfirm": "All sessions including this one will be signed out.",
+    "ManualKey": "If you have trouble using the QR code, select manual entry in your app and enter this key:",
+    "NewPassword": "New password",
+    "PasswordChanged": "Password changed. Other sessions were signed out.",
+    "PasswordHint": "At least 8 characters.",
+    "Revoke": "Sign out",
+    "ScanQrCode": "Scan the QR code with the chosen app and enter the generated code below",
+    "Sessions": "Active sessions",
+    "StepApp": "Install app",
+    "StepScan": "Scan & confirm",
+    "ThisDevice": "This device",
+    "TwoFactor": "Two factor authentication",
+    "TwoFactorActivated": "Two factor authentication enabled",
+    "TwoFactorDeactivated": "Two factor authentication disabled",
+    "TwoFactorDisabledText": "Enable two factor authentication to improve your account security",
+    "TwoFactorEnabledText": "Your account is protected with two factor authentication. To disable it, confirm with your password and a current code.",
+    "TwoFactorOff": "2FA off"
+  },
+  "ServerState": {
+    "Installing": "Installing",
+    "Offline": "Offline",
+    "Online": "Online",
+    "Starting": "Starting",
+    "Stopping": "Stopping"
+  },
+  "Table": {
+    "Empty": "No entries found",
+    "Search": "Search…",
+    "Showing": "Showing {0}–{1} of {2}",
+    "Next": "Next page",
+    "Previous": "Previous page"
+  },
+  "Time": {
+    "DaysAgo": "{0} days ago",
+    "HoursAgo": "{0} hours ago",
+    "JustNow": "just now",
+    "MinutesAgo": "{0} minutes ago"
+  },
+  "Users": {
+    "Active": "Active",
+    "Create": "Create user",
+    "Created": "Created",
+    "CreatedToast": "User {0} created",
+    "DangerZone": "Danger zone",
+    "Delete": "Delete user",
+    "DeleteConfirm": "The user {0} and all their sessions and API keys will be deleted.",
+    "Deleted": "User deleted",
+    "Description": "Manage accounts, sessions and roles",
+    "Impersonate": "View as user",
+    "LastLogin": "Last login",
+    "LockAccount": "Lock account (signs the user out everywhere)",
+    "Locked": "Locked",
+    "NewPassword": "New password",
+    "NewPasswordHint": "Leave empty to keep the current password",
+    "ResetTwoFactor": "Reset 2FA",
+    "ResetTwoFactorConfirm": "Two factor authentication of {0} will be disabled.",
+    "Roles": "Roles",
+    "RolesNeedPermission": "Changing roles requires the permission admin.roles.write.",
+    "DangerZoneHint": "These actions take effect immediately."
+  },
+  "Validation": {
+    "Email": "Enter a valid email address",
+    "Required": "This field is required",
+    "Username": "3-32 characters: letters, numbers, . _ -"
+  },
+  "Auth": {
+    "Tagline": "Open-source hosting panel for game and app servers"
+  },
+  "Allocations": {
+    "Create": "Add allocations",
+    "Created": "{0} allocation(s) added, {1} already existed",
+    "DeleteConfirm": "Delete {0} allocation(s)?",
+    "DeleteSelected": "Delete {0}",
+    "Description": "IP addresses and ports that can be assigned to servers on this node.",
+    "Free": "Free",
+    "IpAddress": "IP address",
+    "IpHint": "Use 0.0.0.0 to bind to all interfaces of the node.",
+    "Notes": "Notes",
+    "Port": "Port",
+    "Ports": "Ports",
+    "PortsHint": "Single ports and ranges, separated by commas, e.g. 25565, 25570-25600 (max. 1000 at once).",
+    "Server": "Server"
+  },
+  "Nodes": {
+    "Allocations": "Allocations",
+    "Checking": "Checking…",
+    "Cores": "cores",
+    "Cpu": "CPU",
+    "Create": "Create node",
+    "Created": "Node {0} created. Set up the daemon now.",
+    "DaemonVersion": "Daemon",
+    "Delete": "Delete node",
+    "DeleteConfirm": "The node {0} and all its allocations will be deleted.",
+    "DeleteHint": "Only possible while no servers run on this node.",
+    "Deleted": "Node deleted",
+    "Description": "Machines running the Midnight daemon.",
+    "DockerUnavailable": "Docker is not reachable on this node",
+    "Fqdn": "FQDN / IP",
+    "FqdnHint": "Hostname or IP address the panel and browsers use to reach the daemon.",
+    "FqdnInvalid": "Enter a hostname or IP address without http:// and port",
+    "Hostname": "Hostname",
+    "HttpPort": "Daemon port",
+    "Kernel": "Kernel",
+    "Latency": "Latency",
+    "LiveLogs": "Live",
+    "Logs": "Logs",
+    "NotConnected": "Daemon not connected",
+    "NotConnectedHint": "Install the daemon on the node and start it with the configuration from the setup tab.",
+    "Offline": "Offline",
+    "Online": "Online",
+    "PortRange": "Port must be between 1 and 65535",
+    "Ports": "Daemon / SFTP",
+    "Protocol": "protocol",
+    "ResetToken": "Reset token",
+    "ResetTokenConfirm": "The daemon loses its connection until the new configuration is installed on the node.",
+    "ResetTokenHint": "Use this if the token was leaked. The configuration on the node has to be replaced afterwards.",
+    "Running": "running",
+    "Settings": "Settings",
+    "SettingsHint": "Changed ports or SSL also have to be changed in the daemon configuration.",
+    "Setup": "Setup",
+    "SetupCommand": "Setup command",
+    "SetupSecret": "The configuration contains the secret node token. Only copy it to the node itself.",
+    "SetupStep1": "Install Docker and the Midnight daemon on the node.",
+    "SetupStep2": "Run the command below on the node to write /etc/midnight/config.json.",
+    "SetupStep3": "Start the daemon. The overview tab shows the node as online once it is connected.",
+    "SetupTitle": "Connect the daemon",
+    "SftpPort": "SFTP port",
+    "TokenReset": "New token created, update the configuration on the node",
+    "Unreachable": "The daemon is not reachable",
+    "UseSsl": "Use SSL",
+    "UseSslHint": "The daemon serves https with a certificate for the FQDN (e.g. Let's Encrypt)."
+  }
+}

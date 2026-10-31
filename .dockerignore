@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/storage/
+src/Midnight.ApiServer/wwwroot/
+tests/
+.git/
+.vs/
+.idea/
+*.user

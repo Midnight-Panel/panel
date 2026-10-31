@@ -1,0 +1,60 @@
+# Example deployment: panel + PostgreSQL behind Caddy (automatic https).
+# The installer (midnight-panel/installer) generates the same setup with your values.
+#
+#   POSTGRES_PASSWORD=change-me PANEL_DOMAIN=panel.example.com docker compose up -d --build
+
+services:
+  panel:
+    build: .
+    image: midnight/panel:local
+    restart: unless-stopped
+    environment:
+      MIDNIGHT_PublicUrl: https://${PANEL_DOMAIN:?set PANEL_DOMAIN}
+      MIDNIGHT_Database__Provider: PostgreSQL
+      MIDNIGHT_Database__ConnectionString: Host=db;Database=midnight;Username=midnight;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      MIDNIGHT_Security__TrustedProxies__0: 172.30.0.0/16
+    volumes:
+      - panel-storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [midnight]
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: midnight
+      POSTGRES_USER: midnight
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U midnight -d midnight"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [midnight]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${PANEL_DOMAIN} --to panel:8080
+    volumes:
+      - caddy-data:/data
+    depends_on: [panel]
+    networks: [midnight]
+
+volumes:
+  panel-storage:
+  db-data:
+  caddy-data:
+
+networks:
+  midnight:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
