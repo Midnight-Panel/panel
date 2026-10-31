@@ -14,15 +14,17 @@ import {
   ChatIcon,
   ChevronRightIcon,
   DatabaseIcon,
+  DownloadIcon,
+  FileIcon,
   FilterIcon,
   GearIcon,
   GlobeIcon,
+  LinkIcon,
   LockIcon,
   PluginIcon,
   PlusIcon,
   SearchIcon,
   TrashBinIcon,
-  UploadIcon,
 } from "@/icons";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { Permissions } from "@/lib/permissions";
@@ -91,7 +93,6 @@ export default function ExtensionsPage() {
     queryFn: () => extensionsApi.list(query, selectedCategory || undefined),
   });
 
-  // Client-side active state filtering if needed
   const filteredItems = useMemo(() => {
     if (!pagedExtensions?.items) return [];
     if (activeFilter === "active") {
@@ -124,6 +125,18 @@ export default function ExtensionsPage() {
       notifyError(err);
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleDownload = async (ext: ExtensionSummary) => {
+    try {
+      await extensionsApi.downloadPackage(
+        ext.id,
+        ext.packageFileName || `${ext.identifier}-v${ext.version}.zip`,
+      );
+      notifySuccess("Paketdatei wird heruntergeladen…");
+    } catch (err) {
+      notifyError(err);
     }
   };
 
@@ -267,19 +280,11 @@ export default function ExtensionsPage() {
         {can(Permissions.AdminExtensionsWrite) && (
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              onClick={() => setInstallModalOpen(true)}
-              className="w-full sm:w-auto"
-            >
-              <UploadIcon className="mr-1.5 size-4 text-brand-500" />
-              {t("Extensions.Upload")}
-            </Button>
-            <Button
               onClick={() => setInstallModalOpen(true)}
               className="w-full sm:w-auto"
             >
               <PlusIcon className="mr-1.5 size-4" />
-              {t("Extensions.Install")}
+              Erweiterung installieren (Datei / Link)
             </Button>
           </div>
         )}
@@ -297,7 +302,7 @@ export default function ExtensionsPage() {
             {t("Extensions.NoExtensions")}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Passe deine Suche an oder installiere ein neues Modul.
+            Installiere eine Erweiterung per Datei-Upload oder über einen Download-Link.
           </p>
         </div>
       ) : (
@@ -354,11 +359,26 @@ export default function ExtensionsPage() {
                   {ext.description || "Keine Beschreibung verfügbar."}
                 </p>
 
-                {/* Metadata tags */}
+                {/* Metadata & Source Tags */}
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
                   <span className="rounded-md bg-gray-100 px-2 py-0.5 dark:bg-white/5">
                     Von {ext.author}
                   </span>
+
+                  {ext.installSource === "url" ? (
+                    <span className="flex items-center gap-1 rounded-md bg-indigo-500/10 px-2 py-0.5 text-indigo-400">
+                      <LinkIcon className="size-3" /> Link
+                    </span>
+                  ) : ext.installSource === "file" ? (
+                    <span className="flex items-center gap-1 rounded-md bg-brand-500/10 px-2 py-0.5 text-brand-400">
+                      <FileIcon className="size-3" /> Datei
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                      <BoltIcon className="size-3" /> System
+                    </span>
+                  )}
+
                   <Badge
                     variant="light"
                     color={ext.isEnabled ? "success" : "warning"}
@@ -382,6 +402,16 @@ export default function ExtensionsPage() {
                 </Button>
 
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleDownload(ext)}
+                    className="text-gray-400 hover:text-brand-500 dark:hover:text-brand-400"
+                    title="Paketdatei herunterladen"
+                  >
+                    <DownloadIcon className="size-4" />
+                  </Button>
+
                   {can(Permissions.AdminExtensionsWrite) && (
                     <Button
                       variant="ghost"
@@ -410,7 +440,6 @@ export default function ExtensionsPage() {
       <InstallModal
         open={installModalOpen}
         onOpenChange={setInstallModalOpen}
-        categories={categories}
       />
 
       <ConfigModal

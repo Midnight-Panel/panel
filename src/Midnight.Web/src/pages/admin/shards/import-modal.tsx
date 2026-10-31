@@ -3,10 +3,11 @@ import type { ShardCollection } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/i18n";
-import { CheckCircleIcon, SparkIcon, UploadIcon } from "@/icons";
+import { CheckCircleIcon, FileIcon, LinkIcon, SparkIcon, UploadIcon } from "@/icons";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
@@ -20,7 +21,11 @@ interface ImportModalProps {
 export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps) {
   const { t } = useT();
   const fileInputId = useId();
+  const [activeTab, setActiveTab] = useState<"file" | "link">("file");
   const [content, setContent] = useState("");
+  const [url, setUrl] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [showRawJson, setShowRawJson] = useState(false);
   const [targetCollectionId, setTargetCollectionId] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
@@ -59,12 +64,31 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedFileName(file.name);
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
       setContent(text || "");
     };
     reader.readAsText(file);
+  };
+
+  const handleFetchUrl = async () => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    setBusy(true);
+    try {
+      const res = await fetch(trimmed);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Konnte Datei nicht abrufen.`);
+      const text = await res.text();
+      setContent(text);
+      setSelectedFileName(trimmed.split("/").pop() || "shard.json");
+      notifySuccess("Shard-Datei erfolgreich von URL geladen!");
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleImport = async () => {
@@ -79,6 +103,8 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
 
       notifySuccess(t("Shards.ImportSuccess", res.shardName, res.detectedFormat));
       setContent("");
+      setSelectedFileName(null);
+      setUrl("");
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
@@ -98,23 +124,75 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
           </DialogTitle>
         </DialogHeader>
 
+        {/* Tab Switcher: Datei vs Link */}
+        <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50/50 p-1 text-xs dark:border-gray-800 dark:bg-white/2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("file")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 font-medium transition-all ${
+              activeTab === "file"
+                ? "bg-brand-500 text-white shadow-xs"
+                : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+            }`}
+          >
+            <FileIcon className="size-4" />
+            Datei (File)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("link")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 font-medium transition-all ${
+              activeTab === "link"
+                ? "bg-brand-500 text-white shadow-xs"
+                : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+            }`}
+          >
+            <LinkIcon className="size-4" />
+            Per Link (URL)
+          </button>
+        </div>
+
         <div className="space-y-4 py-2">
-          {/* File Upload / Drag Drop */}
-          <div className="relative flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50/70 p-6 text-center hover:border-brand-500/50 transition-colors dark:border-gray-700 dark:bg-gray-900/40">
-            <UploadIcon className="size-8 text-brand-500 mb-2 opacity-80" />
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Click here to select a JSON file or paste the code below.
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Supports Midnight Shard (v1) &amp; PTDL templates</p>
-            <input
-              id={fileInputId}
-              type="file"
-              accept=".json,application/json"
-              onChange={handleFileUpload}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              aria-label="Select Shard JSON file"
-            />
-          </div>
+          {activeTab === "file" ? (
+            <div className="relative flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50/70 p-6 text-center hover:border-brand-500/50 transition-colors dark:border-gray-700 dark:bg-gray-900/40">
+              <UploadIcon className="size-8 text-brand-500 mb-2 opacity-80" />
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {selectedFileName ? selectedFileName : "Klicke hier, um eine Shard-Datei (.json) auszuwählen"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Unterstützt Midnight Shard (v1) &amp; Pterodactyl Eggs
+              </p>
+              <input
+                id={fileInputId}
+                type="file"
+                accept=".json,application/json"
+                onChange={handleFileUpload}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                aria-label="Select Shard JSON file"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Download-Link (URL)</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <LinkIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://raw.githubusercontent.com/.../shard.json"
+                    className="pl-9 font-mono text-xs"
+                  />
+                </div>
+                <Button type="button" variant="outline" onClick={handleFetchUrl} disabled={!url.trim() || busy}>
+                  {busy ? "Lädt…" : "Laden"}
+                </Button>
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                Direkter GitHub Raw Link oder Download-URL zu einer Shard- oder Egg-Datei.
+              </p>
+            </div>
+          )}
 
           {/* Target Collection Selection */}
           <div>
@@ -126,7 +204,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
               }
               className="mt-1.5 flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             >
-              <option value="">Automatic (from template or &quot;Imported&quot;)</option>
+              <option value="">Automatisch (aus Vorlage oder &quot;Imported&quot;)</option>
               {collections.map((c: ShardCollection) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -135,37 +213,46 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             </select>
           </div>
 
-          {/* JSON Textarea */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <Label>JSON Content</Label>
-              {detectedFormat === "midnight" && (
-                <Badge size="sm" variant="light" color="primary">
-                  <CheckCircleIcon className="size-3 mr-1" /> Midnight Shard v1
-                </Badge>
-              )}
-              {detectedFormat === "legacy" && (
-                <Badge size="sm" variant="light" color="warning">
-                  <SparkIcon className="size-3 mr-1" /> Legacy PTDL (Auto-conversion)
-                </Badge>
-              )}
-            </div>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder='{"formatVersion": "midnight_shard_v1", ...}'
-              className="h-36 font-mono text-xs resize-none"
-            />
-          </div>
-
           {/* Preview of Parsed Data */}
           {parsedName && (
-            <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3.5 text-xs space-y-1 dark:border-gray-800 dark:bg-gray-900/60">
-              <div className="flex items-center justify-between text-gray-800 dark:text-white/90">
-                <span className="font-semibold">{parsedName}</span>
-                <span className="text-gray-500 dark:text-gray-400">{parsedVariablesCount} Variables</span>
+            <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3.5 text-xs space-y-1.5 dark:border-gray-800 dark:bg-gray-900/60">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-800 dark:text-white/90">{parsedName}</span>
+                {detectedFormat === "midnight" && (
+                  <Badge size="sm" variant="light" color="primary">
+                    <CheckCircleIcon className="size-3 mr-1" /> Midnight Shard v1
+                  </Badge>
+                )}
+                {detectedFormat === "legacy" && (
+                  <Badge size="sm" variant="light" color="warning">
+                    <SparkIcon className="size-3 mr-1" /> Legacy PTDL
+                  </Badge>
+                )}
               </div>
-              {parsedAuthor && <p className="text-gray-500 dark:text-gray-400">Author: {parsedAuthor}</p>}
+              <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                <span>Autor: {parsedAuthor || "Unbekannt"}</span>
+                <span>{parsedVariablesCount} Variablen</span>
+              </div>
+            </div>
+          )}
+
+          {/* Optional Code Preview Toggle */}
+          {content && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowRawJson(!showRawJson)}
+                className="text-xs text-brand-500 hover:underline dark:text-brand-400"
+              >
+                {showRawJson ? "Rohdaten ausblenden" : "Rohdaten anzeigen"}
+              </button>
+              {showRawJson && (
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="mt-1.5 h-28 font-mono text-xs resize-none"
+                />
+              )}
             </div>
           )}
         </div>
@@ -179,7 +266,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             onClick={handleImport}
             disabled={busy || !content.trim()}
           >
-            {busy ? "Importing..." : t("Shards.Import")}
+            {busy ? "Importiere..." : t("Shards.Import")}
           </Button>
         </DialogFooter>
       </DialogContent>

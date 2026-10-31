@@ -13,5 +13,7 @@ public interface IExtensionService
     Task<ExtensionDetailResponse> UpdateConfigAsync(int id, string configValuesJson, CancellationToken cancellationToken = default);
     Task<ExtensionDetailResponse> InstallAsync(ExtensionInstallRequest request, CancellationToken cancellationToken = default);
     Task<ExtensionDetailResponse> UploadPackageAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<ExtensionDetailResponse> InstallFromUrlAsync(string url, CancellationToken cancellationToken = default);
+    Task<(Stream fileStream, string fileName, string contentType)> DownloadPackageAsync(int id, CancellationToken cancellationToken = default);
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

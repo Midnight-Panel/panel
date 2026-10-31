@@ -1,8 +1,9 @@
-import { api, toQueryString } from "./client";
+import { api, toQueryString, tokens } from "./client";
 import type {
   ExtensionConfigUpdateRequest,
   ExtensionDetail,
   ExtensionInstallRequest,
+  ExtensionInstallUrlRequest,
   ExtensionSummary,
   ExtensionToggleRequest,
   PagedQuery,
@@ -37,6 +38,29 @@ export const extensionsApi = {
     const formData = new FormData();
     formData.append("file", file, file.name);
     return api.post<ExtensionDetail>("/api/admin/extensions/upload", formData);
+  },
+
+  installFromUrl: (url: string) =>
+    api.post<ExtensionDetail>("/api/admin/extensions/url", { url } satisfies ExtensionInstallUrlRequest),
+
+  downloadPackage: async (id: number, fallbackFileName = "extension.zip") => {
+    const token = await tokens.getAccessToken();
+    const response = await fetch(`/api/admin/extensions/${id}/download`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "same-origin",
+    });
+    if (!response.ok) throw new Error("Download fehlgeschlagen");
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = fallbackFileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(a);
   },
 
   delete: (id: number) =>
