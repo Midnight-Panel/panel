@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Midnight.ApiServer.Features.Shards.Services;
@@ -38,7 +39,7 @@ public static class ShardVariableValidator
 
             if (rule.Equals("numeric", StringComparison.OrdinalIgnoreCase))
             {
-                if (!double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
+                if (!double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
                     return (false, $"'{variableName}' must be a number.");
                 continue;
             }
@@ -53,9 +54,9 @@ public static class ShardVariableValidator
             if (rule.StartsWith("min:", StringComparison.OrdinalIgnoreCase))
             {
                 var minStr = rule[4..];
-                if (double.TryParse(minStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var min))
+                if (double.TryParse(minStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var min))
                 {
-                    if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
+                    if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal < min)
                             return (false, $"'{variableName}' must be at least {min}.");
@@ -71,9 +72,9 @@ public static class ShardVariableValidator
             if (rule.StartsWith("max:", StringComparison.OrdinalIgnoreCase))
             {
                 var maxStr = rule[4..];
-                if (double.TryParse(maxStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var max))
+                if (double.TryParse(maxStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var max))
                 {
-                    if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
+                    if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal > max)
                             return (false, $"'{variableName}' may not exceed {max}.");
@@ -90,10 +91,10 @@ public static class ShardVariableValidator
             {
                 var parts = rule[8..].Split(',');
                 if (parts.Length == 2 &&
-                    double.TryParse(parts[0], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var bMin) &&
-                    double.TryParse(parts[1], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var bMax))
+                    double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var bMin) &&
+                    double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var bMax))
                 {
-                    if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
+                    if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal < bMin || numVal > bMax)
                             return (false, $"'{variableName}' must be between {bMin} and {bMax}.");

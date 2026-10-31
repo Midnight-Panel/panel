@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Midnight.ApiServer.Core.Configuration;
 using Midnight.ApiServer.Core.Database;
