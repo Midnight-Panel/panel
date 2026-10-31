@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Midnight.Shared.Http.Admin;
 
 namespace Midnight.ApiServer.Features.Branding.Models;
 
@@ -16,6 +18,11 @@ public record PoweredByInfo(
 /// </summary>
 public record BrandingResponse(
     string PanelName,
+    string? Slogan,
+    string? PanelUrl,
+    string? DefaultLanguage,
+    string? TimeZone,
+    List<FooterLinkItem>? FooterLinks,
     string? LogoLightUrl,
     string? LogoDarkUrl,
     string? FaviconUrl,
@@ -34,6 +41,11 @@ public record BrandingResponse(
 /// </summary>
 public record BrandingUpdateRequest(
     string PanelName,
+    string? Slogan,
+    string? PanelUrl,
+    string? DefaultLanguage,
+    string? TimeZone,
+    List<FooterLinkItem>? FooterLinks,
     string PrimaryColor,
     string AccentColor,
     string LoginBackgroundType,

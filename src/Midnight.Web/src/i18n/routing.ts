@@ -1,6 +1,6 @@
 export const routing = {
-  locales: ["en"] as const,
-  defaultLocale: "en",
+  locales: ["de", "en"] as const,
+  defaultLocale: "de",
 } as const;
 
 export type Locale = (typeof routing.locales)[number];

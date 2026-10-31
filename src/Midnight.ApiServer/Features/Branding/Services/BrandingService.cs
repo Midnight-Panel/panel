@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +15,7 @@ using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
 using Midnight.ApiServer.Features.Branding.Entities;
 using Midnight.ApiServer.Features.Branding.Models;
+using Midnight.Shared.Http.Admin;
 
 namespace Midnight.ApiServer.Features.Branding.Services;
 
@@ -20,6 +24,7 @@ public class BrandingService : IBrandingService
     private const string CacheKey = "midnight_branding_settings";
     private const long MaxFileSize = 2 * 1024 * 1024; // 2 MB
     private const string DefaultPoweredByUrl = "https://midnightpanel.com";
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private readonly DataContext _context;
     private readonly IMemoryCache _cache;
@@ -77,11 +82,73 @@ public class BrandingService : IBrandingService
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Synchronize AppConfiguration settings (Slogan, PublicUrl, Language, TimeZone, FooterLinks)
+        await SyncAppConfigAsync(request, cancellationToken);
+
         _cache.Remove(CacheKey);
 
         _logger.LogInformation("Audit: User {UserId} hat die Branding-Einstellungen aktualisiert.", actorUserId);
 
         return MapToResponse(entity);
+    }
+
+    private async Task SyncAppConfigAsync(BrandingUpdateRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var configPath = Path.Combine(_storagePaths.Root, ConfigurationBootstrapper.ConfigFileName);
+            if (!File.Exists(configPath))
+                return;
+
+            var json = await File.ReadAllTextAsync(configPath, cancellationToken);
+            var root = JsonNode.Parse(json)?.AsObject() ?? new JsonObject();
+
+            root["AppName"] = request.PanelName.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.Slogan))
+                root["Slogan"] = request.Slogan.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.PanelUrl))
+                root["PublicUrl"] = request.PanelUrl.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.DefaultLanguage))
+                root["DefaultLanguage"] = request.DefaultLanguage.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.TimeZone))
+                root["TimeZone"] = request.TimeZone.Trim();
+
+            if (request.FooterLinks != null)
+            {
+                if (root["Footer"] is not JsonObject footer)
+                {
+                    footer = new JsonObject();
+                    root["Footer"] = footer;
+                }
+
+                var cleanLinks = new List<FooterLinkItem>();
+                foreach (var link in request.FooterLinks)
+                {
+                    if (!string.IsNullOrWhiteSpace(link.Label) && !string.IsNullOrWhiteSpace(link.Url))
+                    {
+                        cleanLinks.Add(new FooterLinkItem
+                        {
+                            Id = string.IsNullOrWhiteSpace(link.Id) ? Guid.NewGuid().ToString("N")[..8] : link.Id.Trim(),
+                            Label = link.Label.Trim(),
+                            Url = link.Url.Trim(),
+                            NewTab = link.NewTab
+                        });
+                    }
+                }
+                footer["Links"] = JsonSerializer.SerializeToNode(cleanLinks, JsonOptions);
+            }
+
+            await File.WriteAllTextAsync(configPath, root.ToJsonString(JsonOptions), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Konnte config.json nicht synchronisieren: {Message}", ex.Message);
+        }
     }
 
     public async Task<BrandingResponse> UploadLogoAsync(LogoThemeType theme, Stream content, string originalName, int actorUserId, CancellationToken cancellationToken)
@@ -171,43 +238,45 @@ public class BrandingService : IBrandingService
         DeleteOldFile(entity.FaviconFileName);
 
         entity.PanelName = "Midnight Panel";
+        entity.LogoLightFileName = null;
+        entity.LogoDarkFileName = null;
+        entity.FaviconFileName = null;
         entity.PrimaryColor = "#465FFF";
         entity.AccentColor = "#7C3AED";
         entity.LoginBackgroundType = "gradient";
         entity.LoginBackgroundValue = "linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)";
         entity.CustomCss = null;
-        entity.LogoLightFileName = null;
-        entity.LogoDarkFileName = null;
-        entity.FaviconFileName = null;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
 
-        _logger.LogInformation("Audit: User {UserId} hat das Branding auf Werkseinstellungen zurückgesetzt.", actorUserId);
+        _logger.LogInformation("Audit: User {UserId} hat alle Branding-Einstellungen auf Standard zurückgesetzt.", actorUserId);
 
         return MapToResponse(entity);
     }
 
-    public async Task<(string Path, string ContentType)?> GetFileAsync(string fileName, CancellationToken cancellationToken)
+    public Task<(string Path, string ContentType)?> GetFileAsync(string fileName, CancellationToken cancellationToken)
     {
-        var safeFileName = Path.GetFileName(fileName);
-        var path = Path.Combine(_brandingDirectory, safeFileName);
+        if (string.IsNullOrWhiteSpace(fileName))
+            return Task.FromResult<(string, string)?>(null);
 
-        if (!File.Exists(path))
-            return null;
+        var safeName = Path.GetFileName(fileName);
+        var fullPath = Path.Combine(_brandingDirectory, safeName);
 
-        var ext = Path.GetExtension(safeFileName).ToLowerInvariant();
-        var contentType = ext switch
+        if (!File.Exists(fullPath))
+            return Task.FromResult<(string, string)?>(null);
+
+        var contentType = Path.GetExtension(safeName).ToLowerInvariant() switch
         {
             ".png" => "image/png",
-            ".svg" => "image/svg+xml",
             ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
             ".ico" => "image/x-icon",
             _ => "application/octet-stream"
         };
 
-        return await Task.FromResult<(string Path, string ContentType)?>((path, contentType));
+        return Task.FromResult<(string, string)?>((fullPath, contentType));
     }
 
     private async Task<string> SaveUploadedFileAsync(Stream content, string originalName, string prefix, CancellationToken cancellationToken)
@@ -215,27 +284,33 @@ public class BrandingService : IBrandingService
         using var memoryStream = new MemoryStream();
         await content.CopyToAsync(memoryStream, cancellationToken);
 
-        if (memoryStream.Length == 0 || memoryStream.Length > MaxFileSize)
-            throw HttpApiException.BadRequest("Die Datei muss zwischen 1 Byte und 2 MB groß sein.");
+        if (memoryStream.Length > MaxFileSize)
+            throw HttpApiException.BadRequest("Datei überschreitet die maximale Größe von 2 MB.");
 
-        var rawBytes = memoryStream.ToArray();
-        var extension = DetectAndValidateExtension(rawBytes, originalName);
+        if (memoryStream.Length < 4)
+            throw HttpApiException.BadRequest("Datei ist leer oder ungültig.");
 
-        byte[] finalBytes = rawBytes;
+        var buffer = memoryStream.ToArray();
+        var extension = DetectAndValidateFileType(buffer);
+
         if (extension == ".svg")
         {
-            finalBytes = SvgSanitizer.Sanitize(rawBytes);
+            var rawSvg = System.Text.Encoding.UTF8.GetString(buffer);
+            var sanitizedSvg = SvgSanitizer.Sanitize(rawSvg);
+            buffer = System.Text.Encoding.UTF8.GetBytes(sanitizedSvg);
         }
 
         Directory.CreateDirectory(_brandingDirectory);
-        var fileName = $"{prefix}_{Guid.NewGuid():N}{extension}";
-        var fullPath = Path.Combine(_brandingDirectory, fileName);
 
-        await File.WriteAllBytesAsync(fullPath, finalBytes, cancellationToken);
+        var randomSuffix = Guid.NewGuid().ToString("N")[..8];
+        var fileName = $"{prefix}_{randomSuffix}{extension}";
+        var targetPath = Path.Combine(_brandingDirectory, fileName);
+
+        await File.WriteAllBytesAsync(targetPath, buffer, cancellationToken);
         return fileName;
     }
 
-    private static string DetectAndValidateExtension(ReadOnlySpan<byte> bytes, string originalName)
+    private static string DetectAndValidateFileType(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length >= 8 && bytes[..8].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }))
             return ".png";
@@ -281,8 +356,50 @@ public class BrandingService : IBrandingService
     {
         var projectUrl = _configuration["Branding:PoweredByUrl"] ?? DefaultPoweredByUrl;
 
+        string slogan = "Game Server Management";
+        string panelUrl = "http://localhost:5220";
+        string defaultLanguage = "de";
+        string timeZone = "Europe/Berlin";
+        List<FooterLinkItem> footerLinks = [];
+
+        try
+        {
+            var configPath = Path.Combine(_storagePaths.Root, ConfigurationBootstrapper.ConfigFileName);
+            if (File.Exists(configPath))
+            {
+                var json = File.ReadAllText(configPath);
+                var root = JsonNode.Parse(json)?.AsObject();
+                if (root != null)
+                {
+                    if (root["Slogan"]?.GetValue<string>() is string s && !string.IsNullOrWhiteSpace(s))
+                        slogan = s;
+                    if (root["PublicUrl"]?.GetValue<string>() is string u && !string.IsNullOrWhiteSpace(u))
+                        panelUrl = u;
+                    if (root["DefaultLanguage"]?.GetValue<string>() is string l && !string.IsNullOrWhiteSpace(l))
+                        defaultLanguage = l;
+                    if (root["TimeZone"]?.GetValue<string>() is string z && !string.IsNullOrWhiteSpace(z))
+                        timeZone = z;
+                    if (root["Footer"]?["Links"] is JsonArray linksArr)
+                    {
+                        var deserialized = linksArr.Deserialize<List<FooterLinkItem>>();
+                        if (deserialized != null)
+                            footerLinks = deserialized;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Fehler beim Laden von Zusatzfeldern aus config.json: {Message}", ex.Message);
+        }
+
         return new BrandingResponse(
             PanelName: entity.PanelName,
+            Slogan: slogan,
+            PanelUrl: panelUrl,
+            DefaultLanguage: defaultLanguage,
+            TimeZone: timeZone,
+            FooterLinks: footerLinks,
             LogoLightUrl: entity.LogoLightFileName != null ? $"/api/branding/files/{entity.LogoLightFileName}" : null,
             LogoDarkUrl: entity.LogoDarkFileName != null ? $"/api/branding/files/{entity.LogoDarkFileName}" : null,
             FaviconUrl: entity.FaviconFileName != null ? $"/api/branding/files/{entity.FaviconFileName}" : null,

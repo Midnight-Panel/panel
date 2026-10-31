@@ -1,4 +1,5 @@
 import { useAuth } from "@/auth/AuthContext";
+import { useBranding } from "@/contexts/BrandingContext";
 import AppHeader from "@/components/layout/app-layout/header";
 import AppSidebar from "@/components/layout/app-layout/sidebar";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
@@ -15,13 +16,26 @@ export default function AppLayout() {
   const { t } = useT();
   const navigate = useNavigate();
 
-  const footerLinks =
-    settings.footerLinks && settings.footerLinks.length > 0
-      ? settings.footerLinks
-      : [
-          { id: "api-ref", label: t("Footer.Api"), url: "/api/reference", newTab: true },
-          { id: "github", label: "GitHub", url: "https://github.com/Midnight-Panel/panel", newTab: true },
-        ];
+  const { branding } = useBranding();
+
+  const rawLinks =
+    branding?.footerLinks && branding.footerLinks.length > 0
+      ? branding.footerLinks
+      : settings.footerLinks && settings.footerLinks.length > 0
+        ? settings.footerLinks
+        : [
+            { id: "api-ref", label: t("Footer.Api"), url: "/api/reference", newTab: true },
+            { id: "github", label: "GitHub", url: "https://github.com/Midnight-Panel/panel", newTab: true },
+          ];
+
+  // Strikt deduplizieren: Jeder Link (nach URL oder ID) erscheint nur einmal
+  const seenLinks = new Set<string>();
+  const footerLinks = rawLinks.filter((link) => {
+    const key = (link.url || link.id || "").toLowerCase().trim();
+    if (!key || seenLinks.has(key)) return false;
+    seenLinks.add(key);
+    return true;
+  });
 
   return (
     <SidebarProvider>
@@ -58,7 +72,7 @@ export default function AppLayout() {
 
           <footer className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-gray-200 pt-5 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span>© {new Date().getFullYear()} {settings.appName || "Midnight Panel"} · v{settings.version}</span>
+              <span>© {new Date().getFullYear()} {branding?.panelName || settings.appName || "Midnight Panel"} · v{settings.version}</span>
               {footerLinks.map((link) => (
                 <a
                   key={link.id || link.url}

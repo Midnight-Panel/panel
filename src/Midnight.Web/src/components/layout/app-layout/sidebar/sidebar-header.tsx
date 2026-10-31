@@ -9,45 +9,51 @@ interface AppSidebarHeaderProps {
 export default function AppSidebarHeader({ showContent }: AppSidebarHeaderProps) {
   const { branding } = useBranding();
 
-  const logoLight = branding?.logoLightUrl || "/images/logo/logo.png";
-  const logoDark = branding?.logoDarkUrl || "/images/logo/logo-dark.png";
+  const logoLight = branding?.logoLightUrl;
+  const logoDark = branding?.logoDarkUrl;
   const panelName = branding?.panelName || "Midnight Panel";
 
   return (
     <SidebarHeader className="px-5 py-6">
-      <Link to="/" className="flex items-center gap-2">
+      <Link to="/" className="flex items-center gap-2.5 overflow-hidden group">
         {showContent ? (
           <>
-            <img
-              className="h-7 w-auto object-contain dark:hidden"
-              src={logoLight}
-              alt={panelName}
-              onError={(e) => {
-                e.currentTarget.src = "/images/logo/logo.png";
-              }}
-            />
-            <img
-              className="hidden h-7 w-auto object-contain dark:block"
-              src={logoDark}
-              alt={panelName}
-              onError={(e) => {
-                e.currentTarget.src = "/images/logo/logo-dark.png";
-              }}
-            />
+            {logoLight && (
+              <img
+                className="h-7 w-auto max-w-[170px] object-contain dark:hidden transition-transform duration-200 group-hover:scale-102"
+                src={logoLight}
+                alt={panelName}
+              />
+            )}
+            {logoDark && (
+              <img
+                className="hidden h-7 w-auto max-w-[170px] object-contain dark:block transition-transform duration-200 group-hover:scale-102"
+                src={logoDark}
+                alt={panelName}
+              />
+            )}
+            {!logoLight && !logoDark && (
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <img
+                  src="/images/logo/logo-icon-dark.png"
+                  alt={panelName}
+                  className="size-7 object-contain shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <span className="font-outfit font-bold text-base text-gray-900 dark:text-white truncate tracking-tight">
+                  {panelName}
+                </span>
+              </div>
+            )}
           </>
         ) : (
-          <>
-            <img
-              src="/images/logo/logo-icon.png"
-              alt={panelName}
-              className="size-8 object-contain dark:hidden"
-            />
-            <img
-              src="/images/logo/logo-icon-dark.png"
-              alt={panelName}
-              className="hidden size-8 object-contain dark:block"
-            />
-          </>
+          <img
+            src="/images/logo/logo-icon-dark.png"
+            alt={panelName}
+            className="size-8 object-contain shrink-0"
+          />
         )}
       </Link>
     </SidebarHeader>

@@ -1,3 +1,5 @@
+import type { FooterLinkItem } from "@/api/types";
+
 export interface PoweredByInfo {
   readonly text: string;
   readonly url: string;
@@ -6,6 +8,11 @@ export interface PoweredByInfo {
 
 export interface BrandingResponse {
   panelName: string;
+  slogan?: string | null;
+  panelUrl?: string | null;
+  defaultLanguage?: string | null;
+  timeZone?: string | null;
+  footerLinks?: FooterLinkItem[];
   logoLightUrl: string | null;
   logoDarkUrl: string | null;
   faviconUrl: string | null;
@@ -20,6 +27,11 @@ export interface BrandingResponse {
 
 export interface BrandingUpdateRequest {
   panelName: string;
+  slogan?: string | null;
+  panelUrl?: string | null;
+  defaultLanguage?: string | null;
+  timeZone?: string | null;
+  footerLinks?: FooterLinkItem[];
   primaryColor: string;
   accentColor: string;
   loginBackgroundType: "none" | "gradient" | "image";

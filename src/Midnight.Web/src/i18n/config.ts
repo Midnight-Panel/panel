@@ -3,12 +3,13 @@ import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
 
 import en from "../messages/en.json";
+import de from "../messages/de.json";
 import { routing } from "./routing";
 
 const STORAGE_KEY = "midnight.language";
 
 i18n.on("languageChanged", (lng) => {
-  const locale = lng === "en" ? lng : routing.defaultLocale;
+  const locale = lng === "de" || lng === "en" ? lng : routing.defaultLocale;
   document.documentElement.lang = locale;
   document.documentElement.dir = "ltr";
 
@@ -19,14 +20,25 @@ i18n.on("languageChanged", (lng) => {
   }
 });
 
+const savedLang = (() => {
+  try {
+    return localStorage.getItem(STORAGE_KEY) || "de";
+  } catch {
+    return "de";
+  }
+})();
+
 i18n
   .use(ICU)
   .use(initReactI18next)
   .init({
-    resources: { en: { translation: en } },
-    lng: "en",
-    supportedLngs: ["en"],
-    fallbackLng: "en",
+    resources: {
+      de: { translation: de },
+      en: { translation: en },
+    },
+    lng: savedLang,
+    supportedLngs: ["de", "en"],
+    fallbackLng: "de",
     load: "languageOnly",
     keySeparator: ".",
     nsSeparator: false,

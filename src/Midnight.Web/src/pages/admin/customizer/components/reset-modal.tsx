@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +16,18 @@ interface ResetModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (scope: ResetScope) => Promise<void>;
+  initialScope?: ResetScope;
 }
 
-export function ResetModal({ open, onOpenChange, onConfirm }: ResetModalProps) {
-  const [scope, setScope] = useState<ResetScope>("all");
+export function ResetModal({ open, onOpenChange, onConfirm, initialScope = "all" }: ResetModalProps) {
+  const [scope, setScope] = useState<ResetScope>(initialScope);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && initialScope) {
+      setScope(initialScope);
+    }
+  }, [open, initialScope]);
 
   const handleReset = async () => {
     setLoading(true);
