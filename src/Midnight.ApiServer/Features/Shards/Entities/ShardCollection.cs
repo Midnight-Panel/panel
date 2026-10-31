@@ -1,8 +1,7 @@
 namespace Midnight.ApiServer.Features.Shards.Entities;
 
 /// <summary>
-/// Eine Gruppe bzw. Sammlung thematisch zusammengehörender Shards (z. B. "Minecraft", "Source Engine", "Voice Server").
-/// Entspricht dem Nest-Konzept, heißt im Midnightpanel Shard Collection.
+/// A collection of related shards (e.g. "Minecraft", "Source Engine", "Voice Servers").
 /// </summary>
 public class ShardCollection
 {

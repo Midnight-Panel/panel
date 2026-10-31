@@ -44,7 +44,7 @@ public class AdminShardsController : ControllerBase
     public async Task<ShardDetailResponse> Create([FromBody] ShardRequest request, CancellationToken cancellationToken)
     {
         var shard = await _shardService.CreateAsync(request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard {ShardId} ({Name}) erstellt", User.GetUserId(), shard.Id, shard.Name);
+        _logger.LogInformation("User {ActorId} created shard {ShardId} ({Name})", User.GetUserId(), shard.Id, shard.Name);
         return shard;
     }
 
@@ -53,7 +53,7 @@ public class AdminShardsController : ControllerBase
     public async Task<ShardDetailResponse> Update(int id, [FromBody] ShardRequest request, CancellationToken cancellationToken)
     {
         var shard = await _shardService.UpdateAsync(id, request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard {ShardId} aktualisiert", User.GetUserId(), id);
+        _logger.LogInformation("User {ActorId} updated shard {ShardId}", User.GetUserId(), id);
         return shard;
     }
 
@@ -62,11 +62,11 @@ public class AdminShardsController : ControllerBase
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _shardService.DeleteAsync(id, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard {ShardId} gelöscht", User.GetUserId(), id);
+        _logger.LogInformation("User {ActorId} deleted shard {ShardId}", User.GetUserId(), id);
         return NoContent();
     }
 
-    /// <summary>Exportiert die Shard-Vorlage als JSON-Paket (Version midnight_shard_v1)</summary>
+    /// <summary>Exports shard template as JSON package (version midnight_shard_v1)</summary>
     [HttpGet("{id:int}/export")]
     [RequirePermission(Permissions.AdminShardsRead)]
     public async Task<IActionResult> Export(int id, CancellationToken cancellationToken)
@@ -78,13 +78,13 @@ public class AdminShardsController : ControllerBase
         return File(jsonBytes, "application/json", filename);
     }
 
-    /// <summary>Importiert eine Shard-Vorlage (unterstützt Midnight-Format und Legacy-PTDL-Format)</summary>
+    /// <summary>Imports a shard template (supports native Midnight format and legacy PTDL format)</summary>
     [HttpPost("import")]
     [RequirePermission(Permissions.AdminShardsWrite)]
     public async Task<ShardImportResult> Import([FromBody] ShardImportRequest request, CancellationToken cancellationToken)
     {
         var result = await _importExportService.ImportAsync(request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard {ShardId} ({Name}) via {Format} importiert",
+        _logger.LogInformation("User {ActorId} imported shard {ShardId} ({Name}) via {Format}",
             User.GetUserId(), result.ShardId, result.ShardName, result.DetectedFormat);
         return result;
     }

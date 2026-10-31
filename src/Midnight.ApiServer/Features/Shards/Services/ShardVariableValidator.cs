@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace Midnight.ApiServer.Features.Shards.Services;
 
 /// <summary>
-/// Validierungs-Engine für Shard-Variablen.
-/// Unterstützt Regeln wie: required, string, numeric, integer, boolean, min:val, max:val, between:min,max, regex:pattern
+/// Validation engine for shard variables.
+/// Supports rules such as: required, string, numeric, integer, boolean, min:val, max:val, between:min,max, regex:pattern
 /// </summary>
 public static class ShardVariableValidator
 {
@@ -17,7 +17,7 @@ public static class ShardVariableValidator
         if (string.IsNullOrEmpty(value))
         {
             if (isRequired)
-                return (false, $"'{variableName}' ist ein Pflichtfeld.");
+                return (false, $"'{variableName}' is required.");
             return (true, null);
         }
 
@@ -32,21 +32,21 @@ public static class ShardVariableValidator
             if (rule.Equals("boolean", StringComparison.OrdinalIgnoreCase))
             {
                 if (!bool.TryParse(value, out _) && value != "0" && value != "1")
-                    return (false, $"'{variableName}' muss ein Wahrheitswert (true/false oder 1/0) sein.");
+                    return (false, $"'{variableName}' must be a boolean (true/false or 1/0).");
                 continue;
             }
 
             if (rule.Equals("numeric", StringComparison.OrdinalIgnoreCase))
             {
                 if (!double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
-                    return (false, $"'{variableName}' muss eine Zahl sein.");
+                    return (false, $"'{variableName}' must be a number.");
                 continue;
             }
 
             if (rule.Equals("integer", StringComparison.OrdinalIgnoreCase))
             {
                 if (!long.TryParse(value, out _))
-                    return (false, $"'{variableName}' muss eine Ganzzahl sein.");
+                    return (false, $"'{variableName}' must be an integer.");
                 continue;
             }
 
@@ -58,11 +58,11 @@ public static class ShardVariableValidator
                     if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal < min)
-                            return (false, $"'{variableName}' muss mindestens {min} sein.");
+                            return (false, $"'{variableName}' must be at least {min}.");
                     }
                     else if (value.Length < min)
                     {
-                        return (false, $"'{variableName}' muss mindestens {min} Zeichen lang sein.");
+                        return (false, $"'{variableName}' must be at least {min} characters long.");
                     }
                 }
                 continue;
@@ -76,11 +76,11 @@ public static class ShardVariableValidator
                     if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal > max)
-                            return (false, $"'{variableName}' darf maximal {max} sein.");
+                            return (false, $"'{variableName}' may not exceed {max}.");
                     }
                     else if (value.Length > max)
                     {
-                        return (false, $"'{variableName}' darf maximal {max} Zeichen lang sein.");
+                        return (false, $"'{variableName}' may not exceed {max} characters.");
                     }
                 }
                 continue;
@@ -96,11 +96,11 @@ public static class ShardVariableValidator
                     if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var numVal))
                     {
                         if (numVal < bMin || numVal > bMax)
-                            return (false, $"'{variableName}' muss zwischen {bMin} und {bMax} liegen.");
+                            return (false, $"'{variableName}' must be between {bMin} and {bMax}.");
                     }
                     else if (value.Length < bMin || value.Length > bMax)
                     {
-                        return (false, $"'{variableName}' muss zwischen {bMin} und {bMax} Zeichen lang sein.");
+                        return (false, $"'{variableName}' must be between {bMin} and {bMax} characters.");
                     }
                 }
                 continue;
@@ -112,11 +112,11 @@ public static class ShardVariableValidator
                 try
                 {
                     if (!Regex.IsMatch(value, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(200)))
-                        return (false, $"'{variableName}' entspricht nicht dem geforderten Format.");
+                        return (false, $"'{variableName}' does not match the required pattern.");
                 }
                 catch (ArgumentException)
                 {
-                    // Bei ungültigem Regex im Regelstring überspringen
+                    // Skip if regex syntax in rule definition is invalid
                 }
                 continue;
             }

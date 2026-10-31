@@ -68,7 +68,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
   };
 
   const handleDelete = async (col: ShardCollection) => {
-    if (!confirm(`Sammlung "${col.name}" wirklich löschen?`)) return;
+    if (!confirm(`Are you sure you want to delete collection "${col.name}"?`)) return;
     try {
       await shardsApi.deleteCollection(col.id);
       notifySuccess(t("Shards.CollectionDeleted"));
@@ -99,7 +99,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
               <Label className="text-slate-300">{t("Shards.CollectionName")}</Label>
               <Input
                 {...form.register("name", { required: true })}
-                placeholder="z. B. Minecraft, Source Engine, Discord Bots"
+                placeholder="e.g. Minecraft, Source Engine, Discord Bots"
                 className="mt-1.5 bg-slate-900 border-white/10"
               />
             </div>
@@ -107,7 +107,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
               <Label className="text-slate-300">{t("Shards.CollectionAuthor")}</Label>
               <Input
                 {...form.register("author")}
-                placeholder="z. B. Midnightpanel oder community@example.com"
+                placeholder="e.g. Midnightpanel or community@example.com"
                 className="mt-1.5 bg-slate-900 border-white/10"
               />
             </div>
@@ -115,7 +115,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
               <Label className="text-slate-300">{t("Common.Description")}</Label>
               <Textarea
                 {...form.register("description")}
-                placeholder="Optionale Beschreibung dieser Sammlung..."
+                placeholder="Optional description of this collection..."
                 className="mt-1.5 bg-slate-900 border-white/10 resize-none h-20"
               />
             </div>
@@ -131,10 +131,10 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
         ) : (
           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
             {isLoading ? (
-              <div className="py-8 text-center text-slate-400">Lade Sammlungen...</div>
+              <div className="py-8 text-center text-slate-400">Loading collections...</div>
             ) : collections.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-slate-400">
-                Noch keine Shard-Sammlungen vorhanden. Klicke auf &quot;Sammlung erstellen&quot;.
+                No shard collections found. Click &quot;Create Collection&quot;.
               </div>
             ) : (
               collections.map((col) => (
@@ -150,7 +150,7 @@ export function CollectionsModal({ open, onOpenChange }: CollectionsModalProps) 
                       </Badge>
                     </div>
                     {col.description && <p className="text-xs text-slate-400">{col.description}</p>}
-                    <span className="text-[11px] text-slate-500">Autor: {col.author}</span>
+                    <span className="text-[11px] text-slate-500">Author: {col.author}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Button variant="ghost" size="icon-sm" onClick={() => handleStartEdit(col)}>

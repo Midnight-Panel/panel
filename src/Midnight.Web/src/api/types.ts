@@ -36,11 +36,43 @@ export interface LoginResponse {
   expiresAt?: string | null;
 }
 
+export interface FooterLinkItem {
+  id: string;
+  label: string;
+  url: string;
+  newTab: boolean;
+}
+
 export interface PublicSettings {
   appName: string;
   version: string;
   registrationEnabled: boolean;
   setupRequired: boolean;
+  userApiEnabled?: boolean;
+  maintenanceMode?: boolean;
+  footerLinks?: FooterLinkItem[];
+}
+
+export interface AdminSettings {
+  appName: string;
+  publicUrl: string;
+  enableRegistration: boolean;
+  userApiEnabled: boolean;
+  maintenanceMode: boolean;
+  serverCreationEnabled: boolean;
+  telemetryEnabled: boolean;
+  footerLinks: FooterLinkItem[];
+}
+
+export interface AdminSettingsUpdateRequest {
+  appName: string;
+  publicUrl: string;
+  enableRegistration: boolean;
+  userApiEnabled: boolean;
+  maintenanceMode: boolean;
+  serverCreationEnabled: boolean;
+  telemetryEnabled: boolean;
+  footerLinks: FooterLinkItem[];
 }
 
 // Account

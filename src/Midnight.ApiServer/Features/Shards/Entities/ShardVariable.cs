@@ -1,7 +1,7 @@
 namespace Midnight.ApiServer.Features.Shards.Entities;
 
 /// <summary>
-/// Konfigurierbare Umgebungsvariable eines Shards mit Validierungsregeln und Benutzerrechten.
+/// Configurable environment variable for a shard, including validation rules and user permissions.
 /// </summary>
 public class ShardVariable
 {
@@ -18,7 +18,7 @@ public class ShardVariable
     public bool UserViewable { get; set; } = true;
     public bool UserEditable { get; set; } = true;
 
-    /// <summary>Validierungsregeln (z. B. "required|string|max:20" oder "required|numeric|between:1024,65535")</summary>
+    /// <summary>Validation rules (e.g. "required|string|max:20" or "required|numeric|between:1024,65535")</summary>
     public string Rules { get; set; } = "required|string";
 
     public int SortOrder { get; set; }

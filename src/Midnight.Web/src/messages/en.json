@@ -120,7 +120,8 @@
       "Roles": "Roles",
       "Users": "Users",
       "Nodes": "Nodes",
-      "Shards": "Shards"
+      "Shards": "Shards",
+      "Settings": "Settings"
     },
     "Dashboard": "Dashboard",
     "Section": {

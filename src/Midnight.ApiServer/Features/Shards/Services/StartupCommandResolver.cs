@@ -3,11 +3,11 @@ using System.Text.RegularExpressions;
 namespace Midnight.ApiServer.Features.Shards.Services;
 
 /// <summary>
-/// Extrahiert, validiert und ersetzt Platzhalter im Startbefehl eines Shards (z. B. {{SERVER_MEMORY}}, {{SERVER_JARFILE}}).
+/// Extracts, validates, and resolves placeholders in a shard's startup command (e.g. {{SERVER_MEMORY}}, {{SERVER_JARFILE}}).
 /// </summary>
 public static partial class StartupCommandResolver
 {
-    /// <summary>Systemvariablen, die vom Daemon oder Panel automatisch bereitgestellt werden</summary>
+    /// <summary>System variables automatically provided by the daemon or panel</summary>
     public static readonly HashSet<string> SystemVariables = new(StringComparer.OrdinalIgnoreCase)
     {
         "SERVER_MEMORY",
@@ -19,7 +19,7 @@ public static partial class StartupCommandResolver
     [GeneratedRegex(@"\{\{([a-zA-Z0-9_-]+)\}\}", RegexOptions.Compiled)]
     private static partial Regex PlaceholderRegex();
 
-    /// <summary>Extrahiert alle im Befehl vorkommenden {{PLATZHALTER}}</summary>
+    /// <summary>Extracts all {{PLACEHOLDER}} tokens present in the startup command</summary>
     public static HashSet<string> ExtractPlaceholders(string startupCommand)
     {
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -37,8 +37,8 @@ public static partial class StartupCommandResolver
     }
 
     /// <summary>
-    /// Prüft, ob alle im Befehl verwendeten Platzhalter entweder Systemvariablen oder definierte Shard-Variablen sind.
-    /// Gibt eine Liste von Fehlern zurück (leer wenn gültig).
+    /// Checks whether all placeholders used in the startup command are either system variables or defined shard variables.
+    /// Returns a list of validation errors (empty if valid).
     /// </summary>
     public static List<string> ValidatePlaceholders(string startupCommand, IEnumerable<string> definedVariables)
     {
@@ -51,7 +51,7 @@ public static partial class StartupCommandResolver
         {
             if (!allowed.Contains(placeholder))
             {
-                errors.Add($"Unbekannter Platzhalter '{{{{{placeholder}}}}}' im Startbefehl. Definiere die Variable zuerst.");
+                errors.Add($"Unknown placeholder '{{{{{placeholder}}}}}' in startup command. Define the variable first.");
             }
         }
 
@@ -59,7 +59,7 @@ public static partial class StartupCommandResolver
     }
 
     /// <summary>
-    /// Ersetzt alle Platzhalter durch die entsprechenden Werte.
+    /// Replaces all placeholders with their corresponding values.
     /// </summary>
     public static string ResolveStartupCommand(
         string startupCommand,
@@ -84,7 +84,7 @@ public static partial class StartupCommandResolver
             if (env.TryGetValue(key, out var val))
                 return val ?? "";
 
-            return match.Value; // Unverändert lassen, falls unbekannt
+            return match.Value; // Leave unchanged if unknown
         });
     }
 }

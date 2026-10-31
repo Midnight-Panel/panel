@@ -40,7 +40,7 @@ public class AdminShardCollectionsController : ControllerBase
     public async Task<ShardCollectionResponse> Create([FromBody] ShardCollectionRequest request, CancellationToken cancellationToken)
     {
         var collection = await _collectionService.CreateAsync(request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard-Sammlung {CollectionId} ({Name}) erstellt", User.GetUserId(), collection.Id, collection.Name);
+        _logger.LogInformation("User {ActorId} created shard collection {CollectionId} ({Name})", User.GetUserId(), collection.Id, collection.Name);
         return collection;
     }
 
@@ -49,7 +49,7 @@ public class AdminShardCollectionsController : ControllerBase
     public async Task<ShardCollectionResponse> Update(int id, [FromBody] ShardCollectionRequest request, CancellationToken cancellationToken)
     {
         var collection = await _collectionService.UpdateAsync(id, request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard-Sammlung {CollectionId} aktualisiert", User.GetUserId(), id);
+        _logger.LogInformation("User {ActorId} updated shard collection {CollectionId}", User.GetUserId(), id);
         return collection;
     }
 
@@ -58,7 +58,7 @@ public class AdminShardCollectionsController : ControllerBase
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _collectionService.DeleteAsync(id, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Shard-Sammlung {CollectionId} gelöscht", User.GetUserId(), id);
+        _logger.LogInformation("User {ActorId} deleted shard collection {CollectionId}", User.GetUserId(), id);
         return NoContent();
     }
 }

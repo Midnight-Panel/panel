@@ -32,7 +32,7 @@ public class ShardImportExportService : IShardImportExportService
             .Include(x => x.Collection)
             .Include(x => x.Variables)
             .FirstOrDefaultAsync(x => x.Id == shardId, cancellationToken)
-            ?? throw HttpApiException.NotFound("Shard nicht gefunden");
+            ?? throw HttpApiException.NotFound("Shard not found");
 
         return new ShardExportPackage
         {
@@ -79,7 +79,7 @@ public class ShardImportExportService : IShardImportExportService
     public async Task<ShardImportResult> ImportAsync(ShardImportRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Content))
-            throw HttpApiException.BadRequest("Der Import-Inhalt ist leer.");
+            throw HttpApiException.BadRequest("Import content is empty.");
 
         JsonDocument doc;
         try
@@ -88,26 +88,26 @@ public class ShardImportExportService : IShardImportExportService
         }
         catch (JsonException ex)
         {
-            throw HttpApiException.BadRequest("Ungültiges JSON-Format", ex.Message);
+            throw HttpApiException.BadRequest("Invalid JSON format", ex.Message);
         }
 
         using (doc)
         {
             var root = doc.RootElement;
 
-            // Erkennung des Formats
+            // Format detection: Native Midnightpanel format
             if (root.TryGetProperty("formatVersion", out var fvProp) && fvProp.GetString() == ShardExportPackage.CurrentFormatVersion)
             {
                 return await ImportMidnightFormatAsync(root, request.TargetCollectionId, cancellationToken);
             }
 
-            // Erkennung des PTDL Legacy-Formats (PTDL_v1 / PTDL_v2)
+            // Format detection: Legacy PTDL format
             if (root.TryGetProperty("meta", out var metaProp) || root.TryGetProperty("_comment", out _) || root.TryGetProperty("exported_at", out _))
             {
                 return await ImportPtdlLegacyFormatAsync(root, request.TargetCollectionId, cancellationToken);
             }
 
-            throw HttpApiException.BadRequest("Unbekanntes Dateiformat", "Die JSON-Datei konnte weder als Midnight-Shard noch als Legacy-Format identifiziert werden.");
+            throw HttpApiException.BadRequest("Unknown file format", "The JSON file could not be identified as a Midnight shard or legacy template.");
         }
     }
 
@@ -115,12 +115,12 @@ public class ShardImportExportService : IShardImportExportService
     {
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var package = root.Deserialize<ShardExportPackage>(options)
-                      ?? throw HttpApiException.BadRequest("Fehler beim Deserialisieren des Shard-Pakets.");
+                      ?? throw HttpApiException.BadRequest("Failed to deserialize shard package.");
 
         var collectionId = targetCollectionId ?? await EnsureCollectionAsync(package.Collection.Name, package.Collection.Description, package.Collection.Author, cancellationToken);
         var collection = await _context.ShardCollections.FirstAsync(x => x.Id == collectionId, cancellationToken);
 
-        // Name anpassen, falls bereits vorhanden
+        // Disambiguate name if already present in collection
         var uniqueName = await GetUniqueShardNameAsync(collectionId, package.Shard.Name, cancellationToken);
 
         var now = _timeProvider.GetUtcNow();
@@ -151,7 +151,7 @@ public class ShardImportExportService : IShardImportExportService
         _context.Shards.Add(shard);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Variablen hinzufügen
+        // Add variables
         var sort = 0;
         foreach (var v in package.Shard.Variables)
         {
@@ -190,11 +190,11 @@ public class ShardImportExportService : IShardImportExportService
         var description = root.TryGetProperty("description", out var d) ? d.GetString() : null;
         var author = root.TryGetProperty("author", out var a) ? a.GetString() ?? "Community" : "Community";
 
-        var collectionId = targetCollectionId ?? await EnsureCollectionAsync("Importiert", "Sammlung für importierte Vorlagen", "Midnightpanel", cancellationToken);
+        var collectionId = targetCollectionId ?? await EnsureCollectionAsync("Imported", "Collection for imported templates", "Midnightpanel", cancellationToken);
         var collection = await _context.ShardCollections.FirstAsync(x => x.Id == collectionId, cancellationToken);
         var uniqueName = await GetUniqueShardNameAsync(collectionId, name, cancellationToken);
 
-        // Docker Images auslesen
+        // Read Docker images
         var images = new Dictionary<string, string>();
         var defaultImage = "";
         if (root.TryGetProperty("images", out var imgObj) && imgObj.ValueKind == JsonValueKind.Object)
@@ -217,7 +217,7 @@ public class ShardImportExportService : IShardImportExportService
             var imgStr = singleImg.GetString() ?? "";
             if (!string.IsNullOrEmpty(imgStr))
             {
-                images["Standard"] = imgStr;
+                images["Default"] = imgStr;
                 defaultImage = imgStr;
             }
         }
@@ -227,7 +227,7 @@ public class ShardImportExportService : IShardImportExportService
             defaultImage = images.Values.First();
         }
 
-        // Start- und Stopp-Befehle
+        // Startup and stop commands
         var startup = root.TryGetProperty("startup", out var st) ? st.GetString() ?? "" : "";
         var stop = "";
         if (root.TryGetProperty("config", out var cfg) && cfg.TryGetProperty("stop", out var stopVal))
@@ -235,7 +235,7 @@ public class ShardImportExportService : IShardImportExportService
             stop = stopVal.GetString() ?? "";
         }
 
-        // Startup Done
+        // Startup Done detection
         var startupDone = "";
         if (root.TryGetProperty("config", out var cfgDone) && cfgDone.TryGetProperty("startup", out var suObj))
         {
@@ -245,7 +245,7 @@ public class ShardImportExportService : IShardImportExportService
             }
         }
 
-        // Konfigurationsdateien
+        // Configuration files
         var configFiles = new List<ShardConfigFileDto>();
         if (root.TryGetProperty("config", out var cfgFiles) && cfgFiles.TryGetProperty("files", out var fObj) && fObj.ValueKind == JsonValueKind.Object)
         {
@@ -275,7 +275,7 @@ public class ShardImportExportService : IShardImportExportService
             }
         }
 
-        // Installationsskripte
+        // Installation scripts
         var installScript = "";
         var installImage = "ghcr.io/midnightpanel/installers:alpine";
         var installInterpreter = "/bin/bash";
@@ -320,7 +320,7 @@ public class ShardImportExportService : IShardImportExportService
         _context.Shards.Add(shard);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Variablen importieren
+        // Import variables
         if (root.TryGetProperty("variables", out var vars) && vars.ValueKind == JsonValueKind.Array)
         {
             var sort = 0;
@@ -351,7 +351,7 @@ public class ShardImportExportService : IShardImportExportService
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-        warnings.Add("Die Vorlage wurde erfolgreich aus einem Legacy-Format in das moderne Midnightpanel Shard-Format konvertiert.");
+        warnings.Add("Template was successfully converted from legacy format to modern Midnightpanel Shard format.");
 
         return new ShardImportResult
         {

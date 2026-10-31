@@ -40,7 +40,10 @@ public class AuthController : ControllerBase
             AppName = config.AppName,
             Version = typeof(AuthController).Assembly.GetName().Version?.ToString(3) ?? "",
             RegistrationEnabled = config.Authentication.EnableRegistration || setupRequired,
-            SetupRequired = setupRequired
+            SetupRequired = setupRequired,
+            UserApiEnabled = config.Api.UserApiEnabled,
+            MaintenanceMode = config.Features.MaintenanceMode,
+            FooterLinks = config.Footer?.Links ?? []
         };
     }
 

@@ -1,6 +1,6 @@
 namespace Midnight.Shared.Http.Shards;
 
-/// <summary>Vollständiges Export-Paket eines Shards zur Portabilität und Versionierung</summary>
+/// <summary>Full export package of a shard for portability and versioning</summary>
 public class ShardExportPackage
 {
     public const string CurrentFormatVersion = "midnight_shard_v1";
@@ -56,17 +56,17 @@ public class ShardVariableExportData
     public int SortOrder { get; set; }
 }
 
-/// <summary>Anfrage zum Importieren eines Shards (aus Midnight-Format oder Pterodactyl-Format)</summary>
+/// <summary>Request to import a shard (from Midnight format or legacy template format)</summary>
 public class ShardImportRequest
 {
-    /// <summary>Optionale Collection-ID, falls in eine bestehende Sammlung importiert werden soll</summary>
+    /// <summary>Optional collection ID if importing into an existing collection</summary>
     public int? TargetCollectionId { get; set; }
 
-    /// <summary>JSON-Inhalt der Exportdatei</summary>
+    /// <summary>JSON content of the export file</summary>
     public string Content { get; set; } = "";
 }
 
-/// <summary>Rückmeldung nach erfolgreichem Import</summary>
+/// <summary>Result after successful import</summary>
 public class ShardImportResult
 {
     public int ShardId { get; set; }

@@ -16,7 +16,7 @@ import { useT } from "@/i18n";
 import { AlertIcon, CheckIcon, CopyIcon, EyeIcon, KeyIcon, PlusIcon, TrashBinIcon } from "@/icons";
 import { useConfirm } from "@/lib/confirm";
 import { notifyError } from "@/lib/notify";
-import { PermissionGroups } from "@/lib/permissions";
+import { PermissionGroups, Permissions } from "@/lib/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -28,7 +28,7 @@ interface CreateForm {
 }
 
 export default function ApiKeysPage() {
-  const { isImpersonating, can } = useAuth();
+  const { isImpersonating, can, settings } = useAuth();
   const { t, formatDate } = useT();
   const confirm = useConfirm();
   const queryClient = useQueryClient();
@@ -44,6 +44,8 @@ export default function ApiKeysPage() {
   const groups = PermissionGroups.map((g) => ({ ...g, permissions: g.permissions.filter(can) })).filter((g) => g.permissions.length > 0);
 
   if (isImpersonating) return <EmptyState icon={<EyeIcon />} title={t("Nav.ApiKeys")} description={t("Security.ImpersonationHint")} />;
+
+  const isApiDisabledForUser = settings.userApiEnabled === false && !can(Permissions.AdminSystemWrite);
 
   const openDialog = () => {
     reset();
@@ -100,11 +102,17 @@ export default function ApiKeysPage() {
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("ApiKeys.Title")}</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("ApiKeys.Description")}</p>
           </div>
-          <Button onClick={openDialog}>
+          <Button onClick={openDialog} disabled={isApiDisabledForUser}>
             <PlusIcon />
             {t("ApiKeys.Create")}
           </Button>
         </div>
+
+        {isApiDisabledForUser && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-3 text-xs text-amber-200 flex items-center gap-2">
+            <span>User API access is currently disabled by the administrator. Creating new API keys is unavailable.</span>
+          </div>
+        )}
 
         {keys.data && keys.data.length === 0 ? (
           <p className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{t("ApiKeys.Empty")}</p>

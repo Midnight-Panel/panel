@@ -4,8 +4,8 @@ using Midnight.Shared.Http.Shards;
 namespace Midnight.ApiServer.Features.Shards.Entities;
 
 /// <summary>
-/// Vorlage für einen Game- oder Anwendungs-Server (z. B. Paper, Rust, CS2, Node.js Bot).
-/// Definiert Startparameter, Docker-Images, Umgebungsvariablen und Skripte.
+/// Template for a game or application server (e.g. Paper, Rust, CS2, Node.js Bot).
+/// Defines startup parameters, container images, environment variables, and install scripts.
 /// </summary>
 public class Shard
 {
@@ -20,27 +20,27 @@ public class Shard
     public string Author { get; set; } = "";
     public string Version { get; set; } = "1.0.0";
 
-    /// <summary>Serialisiertes Wörterbuch: Label => Docker-Image</summary>
+    /// <summary>Serialized dictionary: Label => Docker image URI</summary>
     public string DockerImagesJson { get; set; } = "{}";
     public string DefaultDockerImage { get; set; } = "";
 
-    /// <summary>Startbefehl mit Platzhaltern wie {{SERVER_MEMORY}} und Variablen wie {{SERVER_JARFILE}}</summary>
+    /// <summary>Startup command with placeholders like {{SERVER_MEMORY}} and {{SERVER_JARFILE}}</summary>
     public string StartupCommand { get; set; } = "";
     public string? StopCommand { get; set; }
     public string StopSignal { get; set; } = "SIGTERM";
 
-    /// <summary>Serialisierte Liste von Konfigurationsdatei-Patches</summary>
+    /// <summary>Serialized list of configuration file patches</summary>
     public string ConfigFilesJson { get; set; } = "[]";
 
-    /// <summary>Erkennungsstring(s) für erfolgreichen Start (Startup-Done)</summary>
+    /// <summary>Detection string(s) for successful server boot (Startup-Done)</summary>
     public string StartupDone { get; set; } = "";
 
-    /// <summary>Installationsskript, Container-Image und Interpreter</summary>
+    /// <summary>Installation script, container image, and interpreter</summary>
     public string? InstallScript { get; set; }
     public string InstallImage { get; set; } = "ghcr.io/midnightpanel/installers:alpine";
     public string InstallInterpreter { get; set; } = "/bin/bash";
 
-    /// <summary>Zusatz-Features (EULA, PidLimit, FileDenylist) im JSON-Format</summary>
+    /// <summary>Additional features (EULA, PidLimit, FileDenylist) in JSON format</summary>
     public string FeaturesJson { get; set; } = "{}";
 
     public ICollection<ShardVariable> Variables { get; set; } = [];
@@ -48,7 +48,7 @@ public class Shard
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
-    // Hilfsmethoden für JSON-Typen
+    // Helper methods for JSON-serialized properties
     public Dictionary<string, string> GetDockerImages()
     {
         try

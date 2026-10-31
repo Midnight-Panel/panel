@@ -1,6 +1,6 @@
 namespace Midnight.Shared.Http.Shards;
 
-/// <summary>Details einer Shard-Variable</summary>
+/// <summary>Details of a shard variable</summary>
 public class ShardVariableResponse
 {
     public int Id { get; set; }
@@ -15,7 +15,7 @@ public class ShardVariableResponse
     public int SortOrder { get; set; }
 }
 
-/// <summary>Anfragemodell für das Erstellen/Bearbeiten einer Shard-Variable</summary>
+/// <summary>Request model to create or update a shard variable</summary>
 public class ShardVariableRequest
 {
     public string Name { get; set; } = "";
@@ -28,13 +28,13 @@ public class ShardVariableRequest
     public int SortOrder { get; set; }
 }
 
-/// <summary>Anfrage zur Validierung von Benutzereingaben für Shard-Variablen</summary>
+/// <summary>Request to validate user-provided values for shard variables</summary>
 public class ValidateVariablesRequest
 {
     public Dictionary<string, string?> Values { get; set; } = [];
 }
 
-/// <summary>Ergebnis der Variablenvalidierung</summary>
+/// <summary>Result of variable validation</summary>
 public class ValidateVariablesResponse
 {
     public bool IsValid => Errors.Count == 0;

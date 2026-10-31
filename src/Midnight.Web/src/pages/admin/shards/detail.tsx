@@ -137,7 +137,7 @@ export default function ShardDetailPage() {
   if (isLoading || !shard) {
     return (
       <div className="flex h-72 items-center justify-center text-slate-400">
-        Lade Shard-Details...
+        Loading shard details...
       </div>
     );
   }
@@ -250,7 +250,7 @@ export default function ShardDetailPage() {
     try {
       mappings = JSON.parse(cfgMappingsJson);
     } catch {
-      notifyError("Ungültiges JSON in den Mappings.");
+      notifyError("Invalid JSON in mappings.");
       return;
     }
 
@@ -326,7 +326,7 @@ export default function ShardDetailPage() {
               </Badge>
               <span className="text-xs text-slate-500">UUID: {shard.uuid}</span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">Autor: {shard.author} • v{shard.version}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Author: {shard.author} • v{shard.version}</p>
           </div>
         </div>
 
@@ -347,7 +347,7 @@ export default function ShardDetailPage() {
               className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30"
             >
               <FloppyDiscIcon className="size-4 mr-1.5" />
-              {busy ? "Speichern..." : t("Common.Save")}
+              {busy ? "Saving..." : t("Common.Save")}
             </Button>
           )}
         </div>
@@ -423,7 +423,7 @@ export default function ShardDetailPage() {
         <TabsContent value="config">
           <div className="space-y-6">
             <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
-              <h3 className="text-base font-semibold text-white">Start- und Stoppsteuerung</h3>
+              <h3 className="text-base font-semibold text-white">Startup & Shutdown Control</h3>
 
               {/* Startup Command */}
               <div>
@@ -437,7 +437,7 @@ export default function ShardDetailPage() {
                 {/* Live Placeholders Badges */}
                 {uniquePlaceholders.length > 0 && (
                   <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
-                    <span className="text-xs text-slate-500 mr-1">Erkannte Platzhalter:</span>
+                    <span className="text-xs text-slate-500 mr-1">Detected placeholders:</span>
                     {uniquePlaceholders.map((ph) => {
                       const isSystem = systemEnvVars.has(ph.toUpperCase());
                       const isDefined = definedEnvVars.has(ph.toUpperCase());
@@ -449,7 +449,7 @@ export default function ShardDetailPage() {
                           size="sm"
                         >
                           {`{{${ph}}}`}
-                          {isSystem ? " (System)" : isDefined ? " (Definiert)" : " (Unbekannt!)"}
+                          {isSystem ? " (System)" : isDefined ? " (Defined)" : " (Unknown!)"}
                         </Badge>
                       );
                     })}
@@ -470,9 +470,9 @@ export default function ShardDetailPage() {
                     {...form.register("stopSignal")}
                     className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <option value="SIGTERM">SIGTERM (Standard)</option>
-                    <option value="SIGINT">SIGINT (Strg+C)</option>
-                    <option value="SIGKILL">SIGKILL (Sofort beenden)</option>
+                    <option value="SIGTERM">SIGTERM (Default)</option>
+                    <option value="SIGINT">SIGINT (Ctrl+C)</option>
+                    <option value="SIGKILL">SIGKILL (Force kill)</option>
                   </select>
                 </div>
               </div>
@@ -493,7 +493,7 @@ export default function ShardDetailPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-white">{t("Shards.Config.ConfigFiles")}</h3>
-                  <p className="text-xs text-slate-400">Dateien, die vor dem Serverstart automatisch gepatcht werden.</p>
+                  <p className="text-xs text-slate-400">Files automatically patched before server startup.</p>
                 </div>
                 <Button size="sm" onClick={handleOpenAddConfigFile} className="bg-indigo-600 hover:bg-indigo-500">
                   <PlusIcon className="size-4 mr-1.5" />
@@ -504,7 +504,7 @@ export default function ShardDetailPage() {
               <div className="space-y-2">
                 {form.watch("configFiles")?.length === 0 ? (
                   <p className="text-xs text-slate-500 py-3 text-center border border-dashed border-white/5 rounded-xl">
-                    Keine Konfigurationsdateien definiert.
+                    No configuration files defined.
                   </p>
                 ) : (
                   form.watch("configFiles")?.map((cfg, idx) => (
@@ -517,7 +517,7 @@ export default function ShardDetailPage() {
                         <div className="flex items-center gap-2 text-slate-400 text-[11px]">
                           <span>Parser: {cfg.parser}</span>
                           <span>•</span>
-                          <span>{Object.keys(cfg.mappings || {}).length} Ersetzungen</span>
+                          <span>{Object.keys(cfg.mappings || {}).length} replacements</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -553,7 +553,7 @@ export default function ShardDetailPage() {
             <div className="space-y-2.5">
               {!shard.variables || shard.variables.length === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
-                  Noch keine Variablen für diesen Shard hinterlegt.
+                  No variables configured for this shard yet.
                 </div>
               ) : (
                 shard.variables.map((v) => (
@@ -569,17 +569,17 @@ export default function ShardDetailPage() {
                         </Badge>
                         {v.defaultValue && (
                           <span className="text-xs text-slate-400">
-                            Standard: <span className="font-mono text-slate-300">{v.defaultValue}</span>
+                            Default: <span className="font-mono text-slate-300">{v.defaultValue}</span>
                           </span>
                         )}
                       </div>
                       {v.description && <p className="text-xs text-slate-400">{v.description}</p>}
                       <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1">
-                        <span>Regeln: <span className="font-mono text-slate-400">{v.rules}</span></span>
+                        <span>Rules: <span className="font-mono text-slate-400">{v.rules}</span></span>
                         <span>•</span>
-                        <span>{v.userViewable ? "✓ Sichtbar" : "✗ Versteckt"}</span>
+                        <span>{v.userViewable ? "✓ Visible" : "✗ Hidden"}</span>
                         <span>•</span>
-                        <span>{v.userEditable ? "✓ Editierbar" : "✗ Schreibgeschützt"}</span>
+                        <span>{v.userEditable ? "✓ Editable" : "✗ Read-only"}</span>
                       </div>
                     </div>
 
@@ -598,7 +598,7 @@ export default function ShardDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 4: INSTALLATIONSSKRIPT */}
+        {/* TAB 4: INSTALL SCRIPT */}
         <TabsContent value="script">
           <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -627,19 +627,19 @@ export default function ShardDetailPage() {
                 onChange={(code) => form.setValue("installScript", code, { shouldDirty: true })}
                 language="bash"
                 minHeight="340px"
-                placeholder="#!/bin/bash\n# Installationsskript für diesen Servertyp\n..."
+                placeholder="#!/bin/bash\n# Installation script for this server type\n..."
               />
             </div>
           </Card>
         </TabsContent>
 
-        {/* TAB 5: DOCKER-IMAGES */}
+        {/* TAB 5: DOCKER IMAGES */}
         <TabsContent value="images">
           <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-white">{t("Shards.ImagesTab.Title")}</h3>
-                <p className="text-xs text-slate-400">Verfügbare Container-Images, die der Benutzer auswählen kann.</p>
+                <p className="text-xs text-slate-400">Available container images that the user can select.</p>
               </div>
               <Button size="sm" onClick={() => setImageDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-500">
                 <PlusIcon className="size-4 mr-1.5" />
@@ -675,7 +675,7 @@ export default function ShardDetailPage() {
                           onClick={() => form.setValue("defaultDockerImage", uri, { shouldDirty: true })}
                           className="text-xs text-slate-400 hover:text-white"
                         >
-                          Als Standard
+                          Set as Default
                         </Button>
                       )}
                       <Button
@@ -700,7 +700,7 @@ export default function ShardDetailPage() {
         <DialogContent className="sm:max-w-xl bg-[#0F172A] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              {editingVariableId ? "Variable bearbeiten" : t("Shards.VariablesTab.Add")}
+              {editingVariableId ? "Edit Variable" : t("Shards.VariablesTab.Add")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={variableForm.handleSubmit(handleSaveVariable)} className="space-y-4 py-2">
@@ -708,7 +708,7 @@ export default function ShardDetailPage() {
               <Label className="text-slate-300">{t("Common.Name")}</Label>
               <Input
                 {...variableForm.register("name", { required: true })}
-                placeholder="z. B. Server Jar File"
+                placeholder="e.g. Server Jar File"
                 className="mt-1.5 bg-slate-900 border-white/10"
               />
             </div>
@@ -735,13 +735,13 @@ export default function ShardDetailPage() {
                 placeholder="required|string|max:40"
                 className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
               />
-              <p className="mt-1 text-[11px] text-slate-500">Beispiele: required|numeric|between:1024,65535 oder required|string|max:50</p>
+              <p className="mt-1 text-[11px] text-slate-500">Examples: required|numeric|between:1024,65535 or required|string|max:50</p>
             </div>
             <div>
               <Label className="text-slate-300">{t("Common.Description")}</Label>
               <Textarea
                 {...variableForm.register("description")}
-                placeholder="Beschreibung für den Benutzer..."
+                placeholder="Description for the user..."
                 className="mt-1.5 bg-slate-900 border-white/10 resize-none h-18 text-xs"
               />
             </div>
@@ -778,7 +778,7 @@ export default function ShardDetailPage() {
       <Dialog open={configFileDialogOpen} onOpenChange={setConfigFileDialogOpen}>
         <DialogContent className="sm:max-w-lg bg-[#0F172A] border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Konfigurationsdatei</DialogTitle>
+            <DialogTitle className="text-lg font-bold">Configuration File</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
@@ -786,7 +786,7 @@ export default function ShardDetailPage() {
               <Input
                 value={cfgPath}
                 onChange={(e) => setCfgPath(e.target.value)}
-                placeholder="server.properties oder config/server.json"
+                placeholder="server.properties or config/server.json"
                 className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
               />
             </div>
@@ -838,7 +838,7 @@ export default function ShardDetailPage() {
               <Input
                 value={newImageLabel}
                 onChange={(e) => setNewImageLabel(e.target.value)}
-                placeholder="z. B. Java 21 oder Node.js 20"
+                placeholder="e.g. Java 21 or Node.js 20"
                 className="mt-1.5 bg-slate-900 border-white/10"
               />
             </div>

@@ -36,12 +36,12 @@ public partial class ShardVariableService : IShardVariableService
 
     public async Task<ShardVariable> GetAsync(int shardId, int id, CancellationToken cancellationToken)
         => await _context.ShardVariables.FirstOrDefaultAsync(x => x.ShardId == shardId && x.Id == id, cancellationToken)
-           ?? throw HttpApiException.NotFound("Shard-Variable nicht gefunden");
+           ?? throw HttpApiException.NotFound("Shard variable not found");
 
     public async Task<ShardVariableResponse> CreateAsync(int shardId, ShardVariableRequest request, CancellationToken cancellationToken)
     {
         var shard = await _context.Shards.FirstOrDefaultAsync(x => x.Id == shardId, cancellationToken)
-                    ?? throw HttpApiException.NotFound("Shard nicht gefunden");
+                    ?? throw HttpApiException.NotFound("Shard not found");
 
         var envVar = ValidateAndNormalizeEnv(request.EnvVariable);
         await EnsureUniqueEnvAsync(shardId, envVar, null, cancellationToken);
@@ -69,7 +69,7 @@ public partial class ShardVariableService : IShardVariableService
     public async Task<ShardVariableResponse> UpdateAsync(int shardId, int id, ShardVariableRequest request, CancellationToken cancellationToken)
     {
         var shard = await _context.Shards.FirstOrDefaultAsync(x => x.Id == shardId, cancellationToken)
-                    ?? throw HttpApiException.NotFound("Shard nicht gefunden");
+                    ?? throw HttpApiException.NotFound("Shard not found");
 
         var variable = await GetAsync(shardId, id, cancellationToken);
 
@@ -94,17 +94,17 @@ public partial class ShardVariableService : IShardVariableService
     public async Task DeleteAsync(int shardId, int id, CancellationToken cancellationToken)
     {
         var shard = await _context.Shards.FirstOrDefaultAsync(x => x.Id == shardId, cancellationToken)
-                    ?? throw HttpApiException.NotFound("Shard nicht gefunden");
+                    ?? throw HttpApiException.NotFound("Shard not found");
 
         var variable = await GetAsync(shardId, id, cancellationToken);
 
-        // Prüfen, ob die Variable noch im Startup-Befehl referenziert wird
+        // Check whether variable is still referenced in startup command
         var placeholders = StartupCommandResolver.ExtractPlaceholders(shard.StartupCommand);
         if (placeholders.Contains(variable.EnvVariable))
         {
             throw HttpApiException.Conflict(
-                "Variable wird noch verwendet",
-                $"Die Variable '{variable.EnvVariable}' wird aktuell im Startbefehl des Shards referenziert.");
+                "Variable is still in use",
+                $"Variable '{variable.EnvVariable}' is currently referenced in the shard's startup command.");
         }
 
         shard.UpdatedAt = _timeProvider.GetUtcNow();
@@ -116,13 +116,13 @@ public partial class ShardVariableService : IShardVariableService
     {
         var trimmed = env?.Trim().ToUpperInvariant() ?? "";
         if (string.IsNullOrWhiteSpace(trimmed))
-            throw HttpApiException.BadRequest("Die Umgebungsvariable darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Environment variable cannot be empty.");
 
         if (!EnvVariableRegex().IsMatch(trimmed))
-            throw HttpApiException.BadRequest("Der Variablenname darf nur Buchstaben, Zahlen und Unterstriche enthalten und nicht mit einer Zahl beginnen.");
+            throw HttpApiException.BadRequest("Variable name can only contain letters, numbers, and underscores and cannot start with a number.");
 
         if (StartupCommandResolver.SystemVariables.Contains(trimmed))
-            throw HttpApiException.BadRequest($"'{trimmed}' ist ein reservierter System-Variablenname.");
+            throw HttpApiException.BadRequest($"'{trimmed}' is a reserved system variable name.");
 
         return trimmed;
     }
@@ -130,13 +130,13 @@ public partial class ShardVariableService : IShardVariableService
     private async Task EnsureUniqueEnvAsync(int shardId, string env, int? exceptId, CancellationToken cancellationToken)
     {
         if (await _context.ShardVariables.AnyAsync(x => x.ShardId == shardId && x.Id != exceptId && x.EnvVariable == env, cancellationToken))
-            throw HttpApiException.Conflict($"Eine Variable mit dem Namen '{env}' existiert für diesen Shard bereits.");
+            throw HttpApiException.Conflict($"A variable named '{env}' already exists for this shard.");
     }
 
     private async Task EnsureShardExistsAsync(int shardId, CancellationToken cancellationToken)
     {
         if (!await _context.Shards.AnyAsync(x => x.Id == shardId, cancellationToken))
-            throw HttpApiException.NotFound("Shard nicht gefunden");
+            throw HttpApiException.NotFound("Shard not found");
     }
 
     private static ShardVariableResponse ToResponse(ShardVariable v) => new()

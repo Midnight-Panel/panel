@@ -1,6 +1,6 @@
 namespace Midnight.Shared.Http.Shards;
 
-/// <summary>Antwortmodell für eine Shard-Sammlung</summary>
+/// <summary>Response model for a shard collection</summary>
 public class ShardCollectionResponse
 {
     public int Id { get; set; }
@@ -13,7 +13,7 @@ public class ShardCollectionResponse
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
-/// <summary>Anfragemodell zum Erstellen oder Bearbeiten einer Shard-Sammlung</summary>
+/// <summary>Request model to create or update a shard collection</summary>
 public class ShardCollectionRequest
 {
     public string Name { get; set; } = "";

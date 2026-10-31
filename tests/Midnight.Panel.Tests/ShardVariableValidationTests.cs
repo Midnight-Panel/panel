@@ -10,7 +10,7 @@ public class ShardVariableValidationTests
         var (isValid, error) = ShardVariableValidator.ValidateValue("", "required|string", "SERVER_JARFILE");
 
         Assert.False(isValid);
-        Assert.Contains("Pflichtfeld", error);
+        Assert.Contains("is required", error);
     }
 
     [Fact]

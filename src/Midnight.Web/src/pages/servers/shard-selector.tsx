@@ -29,26 +29,26 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
   const [validationResult, setValidationResult] = useState<ValidateVariablesResponse | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Collections laden
+  // Load collections
   const { data: collections = [] } = useQuery({
     queryKey: ["user", "shards", "collections"],
     queryFn: () => shardsApi.listAllCollections(),
   });
 
-  // Shards der gewählten Collection laden
+  // Load shards for selected collection
   const { data: shards = [], isLoading: isShardsLoading } = useQuery({
     queryKey: ["user", "shards", selectedCollectionId],
     queryFn: () => shardsApi.listUserShards(selectedCollectionId),
   });
 
-  // Details des ausgewählten Shards laden
+  // Load selected shard details
   const { data: shardDetail } = useQuery({
     queryKey: ["user", "shard", selectedShardId],
     queryFn: () => (selectedShardId ? shardsApi.getUserShard(selectedShardId) : null),
     enabled: selectedShardId !== null,
   });
 
-  // Standardwerte initialisieren bei Shard-Wechsel
+  // Initialize default values when shard changes
   useEffect(() => {
     if (shardDetail) {
       setSelectedDockerImage(shardDetail.defaultDockerImage || Object.values(shardDetail.dockerImages)[0] || "");
@@ -61,7 +61,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
     }
   }, [shardDetail]);
 
-  // Live-Validierung der Variablen
+  // Live validation of variables
   useEffect(() => {
     if (!selectedShardId || !shardDetail) return;
 
@@ -95,7 +95,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
 
   return (
     <div className="space-y-6 text-white">
-      {/* 1. Schritt: Sammlung & Shard wählen */}
+      {/* Step 1: Select Collection & Shard */}
       <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -103,7 +103,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
               <span className="flex size-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold">1</span>
               {t("Shards.Selector.ChooseShard")}
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Wähle den Servertyp und die Laufzeitvorlage aus.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Select server type and runtime template.</p>
           </div>
 
           {/* Collection Filter Tabs / Select */}
@@ -128,10 +128,10 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
 
         {/* Shards Cards */}
         {isShardsLoading ? (
-          <div className="py-8 text-center text-xs text-slate-400">Lade Shards...</div>
+          <div className="py-8 text-center text-xs text-slate-400">Loading shards...</div>
         ) : shards.length === 0 ? (
           <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400">
-            In dieser Sammlung sind noch keine Shards vorhanden.
+            No shards available in this collection yet.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
@@ -163,7 +163,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
                   </div>
 
                   <p className="text-xs text-slate-400 line-clamp-2 min-h-[32px]">
-                    {s.description || "Keine Beschreibung verfügbar."}
+                    {s.description || "No description available."}
                   </p>
 
                   <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-white/5 pt-2">
@@ -177,7 +177,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
         )}
       </Card>
 
-      {/* 2. Schritt: Docker Image wählen */}
+      {/* Step 2: Select Docker Image */}
       {shardDetail && (
         <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4">
           <div>
@@ -185,7 +185,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
               <span className="flex size-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold">2</span>
               {t("Shards.Tabs.DockerImages")}
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Wähle das passende Container-Image für deine Serverversion.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Select the container image for your server version.</p>
           </div>
 
           <div className="max-w-md">
@@ -204,7 +204,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
         </Card>
       )}
 
-      {/* 3. Schritt: Dynamische Variablen */}
+      {/* Step 3: Dynamic Variables */}
       {shardDetail && (
         <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -214,7 +214,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
                 {t("Shards.Selector.ConfigureVariables")}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Passe die Variablen für deinen Server an. Pflichtfelder sind markiert.
+                Configure variables for your server. Required fields are marked.
               </p>
             </div>
             {isValidating && (
@@ -224,7 +224,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
 
           {shardDetail.variables.length === 0 ? (
             <p className="text-xs text-slate-500 py-3 text-center border border-dashed border-white/5 rounded-xl">
-              Dieser Shard benötigt keine benutzerdefinierten Variablen.
+              This shard does not require any custom variables.
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,7 +258,7 @@ export function ShardSelector({ onSelectionChange }: ShardSelectorProps) {
                           disabled={!variable.userEditable}
                         />
                         <span className="text-xs text-slate-400 font-mono">
-                          {currentVal === "true" || currentVal === "1" ? "Aktiviert (true)" : "Deaktiviert (false)"}
+                          {currentVal === "true" || currentVal === "1" ? "Enabled (true)" : "Disabled (false)"}
                         </span>
                       </div>
                     ) : (

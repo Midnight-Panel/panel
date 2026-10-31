@@ -86,7 +86,7 @@ public class ShardCollectionService : IShardCollectionService
 
     public async Task<ShardCollection> GetAsync(int id, CancellationToken cancellationToken)
         => await _context.ShardCollections.FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-           ?? throw HttpApiException.NotFound("Shard-Sammlung nicht gefunden");
+           ?? throw HttpApiException.NotFound("Shard collection not found");
 
     public async Task<ShardCollectionResponse> GetResponseAsync(int id, CancellationToken cancellationToken)
     {
@@ -110,7 +110,7 @@ public class ShardCollectionService : IShardCollectionService
     {
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name))
-            throw HttpApiException.BadRequest("Der Name der Shard-Sammlung darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Shard collection name cannot be empty.");
 
         await EnsureUniqueNameAsync(name, null, cancellationToken);
 
@@ -137,7 +137,7 @@ public class ShardCollectionService : IShardCollectionService
 
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name))
-            throw HttpApiException.BadRequest("Der Name der Shard-Sammlung darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Shard collection name cannot be empty.");
 
         await EnsureUniqueNameAsync(name, id, cancellationToken);
 
@@ -158,8 +158,8 @@ public class ShardCollectionService : IShardCollectionService
         var shardCount = await _context.Shards.CountAsync(x => x.CollectionId == id, cancellationToken);
         if (shardCount > 0)
             throw HttpApiException.Conflict(
-                "Sammlung kann nicht gelöscht werden",
-                $"Diese Shard-Sammlung enthält noch {shardCount} Shard(s). Lösche oder verschiebe diese zuerst.");
+                "Cannot delete collection",
+                $"This collection still contains {shardCount} shard(s). Delete or move them first.");
 
         _context.ShardCollections.Remove(collection);
         await _context.SaveChangesAsync(cancellationToken);
@@ -169,6 +169,6 @@ public class ShardCollectionService : IShardCollectionService
     {
         var lower = name.ToLower();
         if (await _context.ShardCollections.AnyAsync(x => x.Id != exceptId && x.Name.ToLower() == lower, cancellationToken))
-            throw HttpApiException.Conflict("Eine Shard-Sammlung mit diesem Namen existiert bereits.");
+            throw HttpApiException.Conflict("A shard collection with this name already exists.");
     }
 }

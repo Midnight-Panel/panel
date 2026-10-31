@@ -29,7 +29,7 @@ public class AdminShardVariablesController : ControllerBase
     public async Task<ShardVariableResponse> Create(int shardId, [FromBody] ShardVariableRequest request, CancellationToken cancellationToken)
     {
         var variable = await _variableService.CreateAsync(shardId, request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Variable {VarId} ({Env}) für Shard {ShardId} angelegt",
+        _logger.LogInformation("User {ActorId} created variable {VarId} ({Env}) for shard {ShardId}",
             User.GetUserId(), variable.Id, variable.EnvVariable, shardId);
         return variable;
     }
@@ -39,7 +39,7 @@ public class AdminShardVariablesController : ControllerBase
     public async Task<ShardVariableResponse> Update(int shardId, int id, [FromBody] ShardVariableRequest request, CancellationToken cancellationToken)
     {
         var variable = await _variableService.UpdateAsync(shardId, id, request, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Variable {VarId} für Shard {ShardId} aktualisiert",
+        _logger.LogInformation("User {ActorId} updated variable {VarId} for shard {ShardId}",
             User.GetUserId(), id, shardId);
         return variable;
     }
@@ -49,7 +49,7 @@ public class AdminShardVariablesController : ControllerBase
     public async Task<IActionResult> Delete(int shardId, int id, CancellationToken cancellationToken)
     {
         await _variableService.DeleteAsync(shardId, id, cancellationToken);
-        _logger.LogInformation("Benutzer {ActorId} hat Variable {VarId} für Shard {ShardId} gelöscht",
+        _logger.LogInformation("User {ActorId} deleted variable {VarId} for shard {ShardId}",
             User.GetUserId(), id, shardId);
         return NoContent();
     }

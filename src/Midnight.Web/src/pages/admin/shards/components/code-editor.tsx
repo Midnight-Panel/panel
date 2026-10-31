@@ -54,7 +54,7 @@ export function CodeEditor({
           onClick={handleCopy}
         >
           {copied ? <CheckIcon className="size-3.5 text-emerald-400" /> : <CopyIcon className="size-3.5" />}
-          {copied ? "Kopiert" : "Kopieren"}
+          {copied ? "Copied" : "Copy"}
         </Button>
       </div>
 

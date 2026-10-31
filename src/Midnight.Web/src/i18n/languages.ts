@@ -1,9 +1,8 @@
 import type { ComponentType, SVGProps } from "react";
 
-import DeFlagIcon from "@/icons/flag-de.svg?react";
 import UsFlagIcon from "@/icons/flag-us.svg?react";
 
-import { type Locale, isRtl, routing } from "./routing";
+import { type Locale, isRtl } from "./routing";
 
 export interface Language {
   id: Locale;
@@ -17,12 +16,9 @@ export interface Language {
 
 export const languages: readonly Language[] = [
   { id: "en", name: "English", shortName: "EN", FlagIcon: UsFlagIcon },
-  { id: "de", name: "Deutsch", shortName: "DE", FlagIcon: DeFlagIcon },
 ];
 
-const defaultLanguage = languages.find(
-  (l) => l.id === routing.defaultLocale,
-) as Language;
+const defaultLanguage = languages[0];
 
 export const getLanguage = (locale: Locale): Language =>
   languages.find((l) => l.id === locale) ?? defaultLanguage;

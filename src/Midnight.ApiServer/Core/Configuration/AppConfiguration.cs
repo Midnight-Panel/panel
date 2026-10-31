@@ -1,3 +1,5 @@
+using Midnight.Shared.Http.Admin;
+
 namespace Midnight.ApiServer.Core.Configuration;
 
 /// <summary>
@@ -14,6 +16,9 @@ public class AppConfiguration
     public DatabaseConfiguration Database { get; set; } = new();
     public AuthenticationConfiguration Authentication { get; set; } = new();
     public SecurityConfiguration Security { get; set; } = new();
+    public ApiConfiguration Api { get; set; } = new();
+    public FeaturesConfiguration Features { get; set; } = new();
+    public FooterConfiguration Footer { get; set; } = new();
 }
 
 public class DatabaseConfiguration
@@ -56,4 +61,31 @@ public class SecurityConfiguration
     /// Loopback is always trusted.
     /// </summary>
     public List<string> TrustedProxies { get; set; } = [];
+}
+
+public class ApiConfiguration
+{
+    /// <summary>Global toggle to enable or disable user API keys and API access for regular users.</summary>
+    public bool UserApiEnabled { get; set; } = true;
+}
+
+public class FeaturesConfiguration
+{
+    /// <summary>When true, displays maintenance banner and restricts regular user access.</summary>
+    public bool MaintenanceMode { get; set; } = false;
+
+    /// <summary>Whether regular users can create new game servers.</summary>
+    public bool ServerCreationEnabled { get; set; } = true;
+
+    /// <summary>Telemetry and diagnostic reporting toggle.</summary>
+    public bool TelemetryEnabled { get; set; } = false;
+}
+
+public class FooterConfiguration
+{
+    public List<FooterLinkItem> Links { get; set; } =
+    [
+        new() { Id = "api-ref", Label = "API Reference", Url = "/api/reference", NewTab = true },
+        new() { Id = "github", Label = "GitHub", Url = "https://github.com/Midnight-Panel/panel", NewTab = true }
+    ];
 }

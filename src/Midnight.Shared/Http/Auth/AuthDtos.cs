@@ -61,4 +61,8 @@ public class PublicSettingsResponse
 
     /// <summary>True if no user exists yet. The first registered user becomes administrator.</summary>
     public bool SetupRequired { get; set; }
+
+    public bool UserApiEnabled { get; set; } = true;
+    public bool MaintenanceMode { get; set; }
+    public List<Midnight.Shared.Http.Admin.FooterLinkItem> FooterLinks { get; set; } = [];
 }

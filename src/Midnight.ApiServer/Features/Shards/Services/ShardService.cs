@@ -109,7 +109,7 @@ public class ShardService : IShardService
                .Include(x => x.Collection)
                .Include(x => x.Variables)
                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-           ?? throw HttpApiException.NotFound("Shard nicht gefunden");
+           ?? throw HttpApiException.NotFound("Shard not found");
 
     public async Task<ShardDetailResponse> GetDetailAsync(int id, CancellationToken cancellationToken)
     {
@@ -120,11 +120,11 @@ public class ShardService : IShardService
     public async Task<ShardDetailResponse> CreateAsync(ShardRequest request, CancellationToken cancellationToken)
     {
         var collection = await _context.ShardCollections.FirstOrDefaultAsync(x => x.Id == request.CollectionId, cancellationToken)
-                         ?? throw HttpApiException.BadRequest("Die angegebene Shard-Sammlung existiert nicht.");
+                         ?? throw HttpApiException.BadRequest("The specified shard collection does not exist.");
 
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name))
-            throw HttpApiException.BadRequest("Der Name des Shards darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Shard name cannot be empty.");
 
         await EnsureUniqueNameAsync(request.CollectionId, name, null, cancellationToken);
 
@@ -153,7 +153,7 @@ public class ShardService : IShardService
         shard.SetConfigFiles(request.ConfigFiles);
         shard.SetFeatures(request.Features);
 
-        // Fallback für DefaultDockerImage, falls leer
+        // Fallback for DefaultDockerImage if empty
         if (string.IsNullOrWhiteSpace(shard.DefaultDockerImage) && request.DockerImages.Count > 0)
         {
             shard.DefaultDockerImage = request.DockerImages.Values.First();
@@ -174,21 +174,21 @@ public class ShardService : IShardService
         {
             var exists = await _context.ShardCollections.AnyAsync(x => x.Id == request.CollectionId, cancellationToken);
             if (!exists)
-                throw HttpApiException.BadRequest("Die angegebene Shard-Sammlung existiert nicht.");
+                throw HttpApiException.BadRequest("The specified shard collection does not exist.");
         }
 
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name))
-            throw HttpApiException.BadRequest("Der Name des Shards darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Shard name cannot be empty.");
 
         await EnsureUniqueNameAsync(request.CollectionId, name, id, cancellationToken);
 
-        // Validierung der Platzhalter im Startup-Befehl gegen bereits definierte Variablen
+        // Validate placeholders in startup command against defined shard variables
         var definedVars = shard.Variables.Select(v => v.EnvVariable).ToList();
         var placeholderErrors = StartupCommandResolver.ValidatePlaceholders(request.StartupCommand ?? "", definedVars);
         if (placeholderErrors.Count > 0)
         {
-            throw HttpApiException.BadRequest("Ungültige Platzhalter im Startbefehl", string.Join(" ", placeholderErrors));
+            throw HttpApiException.BadRequest("Invalid placeholders in startup command", string.Join(" ", placeholderErrors));
         }
 
         shard.CollectionId = request.CollectionId;
@@ -223,12 +223,6 @@ public class ShardService : IShardService
     public async Task DeleteAsync(int id, CancellationToken cancellationToken)
     {
         var shard = await GetAsync(id, cancellationToken);
-
-        // Löschschutz: Shard darf nicht gelöscht werden, wenn aktive Server darauf basieren
-        // Prüfen auf zugewiesene Server via Allocations oder spätere Server-Tabelle
-        var hasActiveServers = await _context.Allocations.AnyAsync(x => x.ServerId != null, cancellationToken);
-        // Falls in Phase 3 Server hinzugefügt werden, wird hier x => x.ShardId == id geprüft.
-        // Um Löschschutz-Integrität zu demonstrieren, prüfen wir auch explizit eine Dummy-/Metadata-Abfrage.
 
         _context.Shards.Remove(shard);
         await _context.SaveChangesAsync(cancellationToken);
@@ -268,7 +262,7 @@ public class ShardService : IShardService
     {
         var lower = name.ToLower();
         if (await _context.Shards.AnyAsync(x => x.CollectionId == collectionId && x.Id != exceptId && x.Name.ToLower() == lower, cancellationToken))
-            throw HttpApiException.Conflict("Ein Shard mit diesem Namen existiert bereits in dieser Sammlung.");
+            throw HttpApiException.Conflict("A shard with this name already exists in this collection.");
     }
 
     private static ShardDetailResponse ToDetailResponse(Shard shard) => new()

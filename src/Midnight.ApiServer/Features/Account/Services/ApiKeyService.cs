@@ -1,4 +1,5 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Midnight.ApiServer.Core.Configuration;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
 using Midnight.ApiServer.Core.Security;
@@ -14,11 +15,13 @@ public class ApiKeyService
 
     private readonly DataContext _context;
     private readonly TimeProvider _timeProvider;
+    private readonly IOptionsMonitor<AppConfiguration> _configuration;
 
-    public ApiKeyService(DataContext context, TimeProvider timeProvider)
+    public ApiKeyService(DataContext context, TimeProvider timeProvider, IOptionsMonitor<AppConfiguration> configuration)
     {
         _context = context;
         _timeProvider = timeProvider;
+        _configuration = configuration;
     }
 
     public async Task<List<ApiKeyResponse>> ListAsync(int userId, CancellationToken cancellationToken)
@@ -35,6 +38,11 @@ public class ApiKeyService
     /// <param name="ownerPermissions">Permissions of the creating user, scopes can't exceed them</param>
     public async Task<CreateApiKeyResponse> CreateAsync(int userId, IEnumerable<string> ownerPermissions, CreateApiKeyRequest request, CancellationToken cancellationToken)
     {
+        var granted = ownerPermissions.ToList();
+
+        if (!_configuration.CurrentValue.Api.UserApiEnabled && !Permissions.Has(granted, Permissions.AdminSystemWrite))
+            throw HttpApiException.Forbidden("User API access is currently disabled by administrator.");
+
         var now = _timeProvider.GetUtcNow();
 
         if (request.ExpiresAt.HasValue && request.ExpiresAt.Value <= now)

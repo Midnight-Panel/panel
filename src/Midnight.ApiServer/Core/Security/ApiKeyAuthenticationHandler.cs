@@ -17,16 +17,19 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
 
     private readonly DataContext _context;
     private readonly UserAuthCache _authCache;
+    private readonly IOptionsMonitor<Midnight.ApiServer.Core.Configuration.AppConfiguration> _configuration;
 
     public ApiKeyAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
         DataContext context,
-        UserAuthCache authCache) : base(options, logger, encoder)
+        UserAuthCache authCache,
+        IOptionsMonitor<Midnight.ApiServer.Core.Configuration.AppConfiguration> configuration) : base(options, logger, encoder)
     {
         _context = context;
         _authCache = authCache;
+        _configuration = configuration;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -53,6 +56,9 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
 
         if (user == null || user.IsLocked)
             return AuthenticateResult.Fail("User not found or locked");
+
+        if (!_configuration.CurrentValue.Api.UserApiEnabled && !Midnight.Shared.Permissions.Has(user.Permissions, Midnight.Shared.Permissions.AdminSystemWrite))
+            return AuthenticateResult.Fail("User API access is currently disabled by administrator");
 
         if (apiKey.LastUsedAt == null || now - apiKey.LastUsedAt.Value > LastUsedUpdateInterval)
         {

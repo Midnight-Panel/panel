@@ -46,13 +46,13 @@ export default function ShardsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Sammlungen laden für Filter
+  // Load collections for filtering
   const { data: collections = [] } = useQuery({
     queryKey: ["admin", "shards", "collections", "all"],
     queryFn: () => shardsApi.listAllCollections(),
   });
 
-  // Shards laden
+  // Load shards
   const query: PagedQuery = {
     page,
     pageSize,
@@ -64,7 +64,7 @@ export default function ShardsPage() {
     queryFn: () => shardsApi.listShards(query, selectedCollectionId),
   });
 
-  // Formular für neuen Shard
+  // Form for new Shard
   const createForm = useForm<ShardRequest>({
     defaultValues: {
       collectionId: collections[0]?.id || 1,
@@ -134,7 +134,7 @@ export default function ShardsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Shards durchsuchen..."
+              placeholder="Search shards..."
               className="pl-9 bg-[#0F172A] border-white/10 text-white"
             />
           </div>
@@ -209,13 +209,13 @@ export default function ShardsPage() {
 
       {/* Shard Grid */}
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-slate-400">Lade Shards...</div>
+        <div className="flex h-64 items-center justify-center text-slate-400">Loading shards...</div>
       ) : !pagedShards || pagedShards.items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/10 bg-[#0F172A]/40 p-12 text-center">
           <BoxIcon className="mx-auto size-12 text-slate-500 mb-3 opacity-60" />
-          <h3 className="text-base font-semibold text-white">Keine Shards gefunden</h3>
+          <h3 className="text-base font-semibold text-white">No shards found</h3>
           <p className="mt-1 text-sm text-slate-400">
-            Erstelle deinen ersten Shard oder importiere eine bestehende Vorlage.
+            Create your first shard or import an existing template.
           </p>
         </div>
       ) : (
@@ -251,7 +251,7 @@ export default function ShardsPage() {
 
                   {/* Description */}
                   <p className="mt-3 text-xs text-slate-400 line-clamp-2 min-h-[32px]">
-                    {shard.description || "Keine Beschreibung hinterlegt."}
+                    {shard.description || "No description provided."}
                   </p>
                 </div>
 
@@ -260,7 +260,7 @@ export default function ShardsPage() {
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <Badge variant="light" color="primary" size="sm">
-                        {shard.variableCount} Variablen
+                        {shard.variableCount} Variables
                       </Badge>
                     </div>
 
@@ -307,7 +307,7 @@ export default function ShardsPage() {
           {pagedShards.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
               <span>
-                Seite {page} von {pagedShards.totalPages} ({pagedShards.totalCount} Shards)
+                Page {page} of {pagedShards.totalPages} ({pagedShards.totalCount} shards)
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -317,7 +317,7 @@ export default function ShardsPage() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   className="border-white/10"
                 >
-                  Zurück
+                  Previous
                 </Button>
                 <Button
                   variant="outline"
@@ -326,7 +326,7 @@ export default function ShardsPage() {
                   onClick={() => setPage((p) => Math.min(pagedShards.totalPages, p + 1))}
                   className="border-white/10"
                 >
-                  Weiter
+                  Next
                 </Button>
               </div>
             </div>
@@ -360,7 +360,7 @@ export default function ShardsPage() {
                 <Label className="text-slate-300">{t("Shards.General.Name")}</Label>
                 <Input
                   {...createForm.register("name", { required: true })}
-                  placeholder="z. B. Paper, CS2, Rust"
+                  placeholder="e.g. Paper, CS2, Rust"
                   className="mt-1.5 bg-slate-900 border-white/10"
                 />
               </div>
@@ -378,7 +378,7 @@ export default function ShardsPage() {
               <Label className="text-slate-300">{t("Shards.General.Author")}</Label>
               <Input
                 {...createForm.register("author")}
-                placeholder="z. B. team@midnightpanel.io"
+                placeholder="e.g. team@midnightpanel.io"
                 className="mt-1.5 bg-slate-900 border-white/10"
               />
             </div>
@@ -387,7 +387,7 @@ export default function ShardsPage() {
               <Label className="text-slate-300">{t("Common.Description")}</Label>
               <Textarea
                 {...createForm.register("description")}
-                placeholder="Kurzbeschreibung des Shards..."
+                placeholder="Brief description of the shard..."
                 className="mt-1.5 bg-slate-900 border-white/10 resize-none h-18"
               />
             </div>
@@ -406,7 +406,7 @@ export default function ShardsPage() {
                 {t("Common.Cancel")}
               </Button>
               <Button type="submit" disabled={busy} className="bg-indigo-600 hover:bg-indigo-500">
-                {busy ? "Erstelle..." : t("Shards.Create")}
+                {busy ? "Creating..." : t("Shards.Create")}
               </Button>
             </DialogFooter>
           </form>
