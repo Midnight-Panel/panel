@@ -65,7 +65,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
       setParsedValues(parsed);
       setJsonError(null);
     } catch (e: unknown) {
-      setJsonError(e instanceof Error ? e.message : "Ungültiges JSON-Format");
+      setJsonError(e instanceof Error ? e.message : "Invalid JSON format");
     }
   };
 
@@ -88,7 +88,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
       onOpenChange(false);
     } catch (err: unknown) {
       if (err instanceof SyntaxError) {
-        setJsonError("Ungültiges JSON-Format. Bitte überprüfe die Syntax.");
+        setJsonError("Invalid JSON format. Please check the syntax.");
       } else {
         notifyError(err);
       }
@@ -112,14 +112,14 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
                 {extension?.name} · {t("Extensions.Settings")}
               </DialogTitle>
               <DialogDescription>
-                Passe die Parameter und Einstellungen für diese Erweiterung an.
+                Adjust the parameters and settings for this extension.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="py-12 text-center text-sm text-gray-400">Lade Konfiguration…</div>
+          <div className="py-12 text-center text-sm text-gray-400">Loading configuration…</div>
         ) : (
           <div className="space-y-4 py-2">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-white/5">
@@ -137,7 +137,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                   }`}
                 >
-                  Formular
+                  Form
                 </button>
                 <button
                   type="button"
@@ -157,7 +157,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
               <div className="max-h-[380px] space-y-3.5 overflow-y-auto pr-1">
                 {configKeys.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                    Keine Schlüssel konfiguriert. Wechsle zu "Raw JSON", um Konfigurationsparameter hinzuzufügen.
+                    No keys configured. Switch to "Raw JSON" to add configuration parameters.
                   </div>
                 ) : (
                   configKeys.map((key) => {
@@ -176,7 +176,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
                               {key}
                             </Label>
                             <span className="block text-xs text-gray-500 dark:text-gray-400">
-                              Schalter für {key}
+                              Toggle for {key}
                             </span>
                           </div>
                           <Switch
@@ -201,7 +201,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
                               isNum ? Number(e.target.value) : e.target.value,
                             )
                           }
-                          placeholder={`Wert für ${key}`}
+                          placeholder={`Value for ${key}`}
                           className="font-mono text-sm"
                         />
                       </div>
@@ -231,7 +231,7 @@ export function ConfigModal({ extension, open, onOpenChange }: ConfigModalProps)
             {t("Common.Cancel")}
           </Button>
           <Button onClick={handleSave} disabled={busy || !!jsonError}>
-            {busy ? "Speichert…" : t("Common.Save")}
+            {busy ? "Saving…" : t("Common.Save")}
           </Button>
         </DialogFooter>
       </DialogContent>

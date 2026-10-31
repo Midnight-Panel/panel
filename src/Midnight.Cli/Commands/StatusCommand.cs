@@ -8,7 +8,7 @@ public class StatusCommand : ICommand
     private readonly IStatusService _statusService;
 
     public string Name => "status";
-    public string Description => "Show the status of the panel compose stack and the daemon (--json)";
+    public string Description => "Show the status of the panel compose stack and the demon (--json)";
 
     public StatusCommand(IStatusService statusService)
     {

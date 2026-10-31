@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,6 +12,17 @@ namespace Midnight.ApiServer.Migrations.Postgres
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterColumn<string>(
+                name: "CustomCss",
+                table: "BrandingSettings",
+                type: "character varying(32768)",
+                maxLength: 32768,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldMaxLength: 32768,
+                oldNullable: true);
+
             migrationBuilder.CreateTable(
                 name: "Extensions",
                 columns: table => new
@@ -27,8 +38,8 @@ namespace Midnight.ApiServer.Migrations.Postgres
                     Icon = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     WebsiteUrl = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    ConfigSchemaJson = table.Column<string>(type: "text", maxLength: 32768, nullable: true),
-                    ConfigValuesJson = table.Column<string>(type: "text", maxLength: 32768, nullable: true),
+                    ConfigSchemaJson = table.Column<string>(type: "character varying(32768)", maxLength: 32768, nullable: true),
+                    ConfigValuesJson = table.Column<string>(type: "character varying(32768)", maxLength: 32768, nullable: true),
                     ReadmeMarkdown = table.Column<string>(type: "text", nullable: true),
                     InstalledAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
@@ -55,6 +66,17 @@ namespace Midnight.ApiServer.Migrations.Postgres
         {
             migrationBuilder.DropTable(
                 name: "Extensions");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "CustomCss",
+                table: "BrandingSettings",
+                type: "text",
+                maxLength: 32768,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "character varying(32768)",
+                oldMaxLength: 32768,
+                oldNullable: true);
         }
     }
 }

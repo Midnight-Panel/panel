@@ -16,7 +16,7 @@ import type {
 } from "./types";
 
 export const shardsApi = {
-  // Sammlungen
+  // Collections
   listCollections: (query: PagedQuery) =>
     api.get<PagedResult<ShardCollection>>(`/api/admin/shards/collections?${toQueryString(query)}`),
 
@@ -66,7 +66,7 @@ export const shardsApi = {
       credentials: "same-origin",
     });
 
-    if (!response.ok) throw new Error("Export fehlgeschlagen");
+    if (!response.ok) throw new Error("Export failed");
 
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
@@ -82,7 +82,7 @@ export const shardsApi = {
   importShard: (data: ShardImportRequest) =>
     api.post<ShardImportResult>("/api/admin/shards/import", data),
 
-  // Variablen
+  // Variables
   listVariables: (shardId: number) =>
     api.get<ShardVariable[]>(`/api/admin/shards/${shardId}/variables`),
 

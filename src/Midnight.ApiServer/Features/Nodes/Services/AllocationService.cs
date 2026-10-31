@@ -20,9 +20,13 @@ public class AllocationService
         _context = context;
     }
 
-    public async Task<PagedResult<AllocationResponse>> ListAsync(int nodeId, PagedQuery query, CancellationToken cancellationToken)
+    /// <param name="free">Only allocations that are not assigned to a server</param>
+    public async Task<PagedResult<AllocationResponse>> ListAsync(int nodeId, PagedQuery query, bool free, CancellationToken cancellationToken)
     {
         var allocations = _context.Allocations.AsNoTracking().Where(x => x.NodeId == nodeId);
+
+        if (free)
+            allocations = allocations.Where(x => x.ServerId == null);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {

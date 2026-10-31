@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Midnight.Shared.Http;
 
-/// <summary>Json settings used by the api, the client and the daemon: camelCase and enums as strings</summary>
+/// <summary>Json settings used by the api, the client and the demon: camelCase and enums as strings</summary>
 public static class JsonDefaults
 {
     public static readonly JsonSerializerOptions Options = Create();

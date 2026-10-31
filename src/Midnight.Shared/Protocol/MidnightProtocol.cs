@@ -1,7 +1,7 @@
 namespace Midnight.Shared.Protocol;
 
 /// <summary>
-/// Versioning of the panel &lt;-&gt; daemon protocol. Both sides send the header on every request
+/// Versioning of the panel &lt;-&gt; demon protocol. Both sides send the header on every request
 /// and reject requests with an incompatible major version.
 /// </summary>
 public static class MidnightProtocol

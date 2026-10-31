@@ -4,7 +4,7 @@ using Midnight.ApiServer.Core.Security;
 using Midnight.ApiServer.Features.Nodes.Services;
 using Midnight.Shared;
 using Midnight.Shared.Http;
-using Midnight.Shared.Http.Daemon;
+using Midnight.Shared.Http.Demon;
 using Midnight.Shared.Http.Nodes;
 
 namespace Midnight.ApiServer.Features.Nodes.Http;
@@ -63,7 +63,7 @@ public class AdminNodesController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Live status of the daemon (system info, docker). Offline nodes return Online = false, not an error.</summary>
+    /// <summary>Live status of the demon (system info, docker). Offline nodes return Online = false, not an error.</summary>
     [HttpGet("{id:int}/status")]
     [RequirePermission(Permissions.AdminNodesRead)]
     public async Task<NodeStatusResponse> Status(int id, CancellationToken cancellationToken)
@@ -71,7 +71,7 @@ public class AdminNodesController : ControllerBase
 
     [HttpGet("{id:int}/logs")]
     [RequirePermission(Permissions.AdminNodesRead)]
-    public async Task<DaemonLogsResponse> Logs(int id, [FromQuery] int lines = 200, CancellationToken cancellationToken = default)
+    public async Task<DemonLogsResponse> Logs(int id, [FromQuery] int lines = 200, CancellationToken cancellationToken = default)
     {
         var node = await _nodeService.GetAsync(id, cancellationToken);
 
@@ -81,11 +81,11 @@ public class AdminNodesController : ControllerBase
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or NodeException && !cancellationToken.IsCancellationRequested)
         {
-            throw new HttpApiException(StatusCodes.Status502BadGateway, "The daemon is not reachable", e.Message);
+            throw new HttpApiException(StatusCodes.Status502BadGateway, "The demon is not reachable", e.Message);
         }
     }
 
-    /// <summary>Daemon configuration including the secret token. Needs write access.</summary>
+    /// <summary>Demon configuration including the secret token. Needs write access.</summary>
     [HttpGet("{id:int}/setup")]
     [RequirePermission(Permissions.AdminNodesWrite)]
     public async Task<NodeSetupResponse> Setup(int id, CancellationToken cancellationToken)
@@ -100,10 +100,11 @@ public class AdminNodesController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>free=true: only allocations without server (for the server create form)</summary>
     [HttpGet("{id:int}/allocations")]
     [RequirePermission(Permissions.AdminNodesRead)]
-    public Task<PagedResult<AllocationResponse>> Allocations(int id, [FromQuery] PagedQuery query, CancellationToken cancellationToken)
-        => _allocationService.ListAsync(id, query, cancellationToken);
+    public Task<PagedResult<AllocationResponse>> Allocations(int id, [FromQuery] PagedQuery query, [FromQuery] bool free = false, CancellationToken cancellationToken = default)
+        => _allocationService.ListAsync(id, query, free, cancellationToken);
 
     [HttpPost("{id:int}/allocations")]
     [RequirePermission(Permissions.AdminNodesWrite)]

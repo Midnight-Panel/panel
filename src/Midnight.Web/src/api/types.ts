@@ -213,7 +213,7 @@ export interface DockerInfo {
 }
 
 export interface SystemInfo {
-  daemonVersion: string;
+  demonVersion: string;
   protocolVersion: number;
   operatingSystem: string;
   kernelVersion: string;
@@ -255,7 +255,7 @@ export interface CreateAllocationsResponse {
   skipped: number;
 }
 
-export interface DaemonLogs {
+export interface DemonLogs {
   lines: string[];
 }
 
@@ -482,3 +482,222 @@ export interface ExtensionToggleRequest {
   isEnabled: boolean;
 }
 
+
+// Servers (Midnight.Shared/Http/Servers, Enums, Protocol/ConsoleProtocol)
+
+/** Live container state, from the demon */
+export type ServerState = "Offline" | "Starting" | "Online" | "Stopping" | "Installing";
+
+/** Lifecycle of a server in the panel */
+export type ServerStatus = "Installing" | "InstallFailed" | "Ready";
+
+export type PowerAction = "Start" | "Stop" | "Restart" | "Kill";
+
+export interface ServerLimits {
+  /** Percent of one core (100 = 1 core), 0 = unlimited */
+  cpu: number;
+  /** MiB */
+  memory: number;
+  /** MiB, 0 = disabled, -1 = unlimited */
+  swap: number;
+  /** MiB, 0 = unlimited */
+  disk: number;
+  /** 10-1000 */
+  ioWeight: number;
+  /** e.g. "0", "0-3" or "0,2,4", empty = all cores */
+  threads?: string | null;
+  oomKillerDisabled: boolean;
+}
+
+export interface ServerFeatureLimits {
+  databases: number;
+  allocations: number;
+  backups: number;
+}
+
+export interface ServerAllocation {
+  id: number;
+  ipAddress: string;
+  port: number;
+  notes?: string | null;
+  isPrimary: boolean;
+}
+
+export interface ServerVariable {
+  shardVariableId: number;
+  name: string;
+  description?: string | null;
+  envVariable: string;
+  defaultValue?: string | null;
+  /** null = the default */
+  value?: string | null;
+  userViewable: boolean;
+  userEditable: boolean;
+  rules: string;
+}
+
+export interface AdminServerSummary {
+  id: number;
+  uuid: string;
+  name: string;
+  ownerId: number;
+  ownerUsername: string;
+  nodeId: number;
+  nodeName: string;
+  shardId: number;
+  shardName: string;
+  status: ServerStatus;
+  suspended: boolean;
+  /** "ip:port" */
+  primaryAllocation?: string | null;
+  limits: ServerLimits;
+  createdAt: string;
+}
+
+export interface AdminServerDetail extends AdminServerSummary {
+  description?: string | null;
+  ownerEmail: string;
+  dockerImage: string;
+  /** null = the shard's command */
+  startupCommand?: string | null;
+  shardStartupCommand: string;
+  /** Label => image */
+  shardDockerImages: Record<string, string>;
+  featureLimits: ServerFeatureLimits;
+  allocations: ServerAllocation[];
+  variables: ServerVariable[];
+  installedAt?: string | null;
+  updatedAt: string;
+}
+
+export interface CreateServerRequest {
+  name: string;
+  description?: string | null;
+  ownerId: number;
+  nodeId: number;
+  shardId: number;
+  dockerImage?: string | null;
+  startupCommand?: string | null;
+  limits: ServerLimits;
+  featureLimits: ServerFeatureLimits;
+  primaryAllocationId: number;
+  additionalAllocationIds: number[];
+  /** EnvVariable => value */
+  variables: Record<string, string>;
+  startOnCompletion: boolean;
+  skipInstall: boolean;
+}
+
+export interface UpdateServerDetailsRequest {
+  name: string;
+  description?: string | null;
+  ownerId: number;
+}
+
+export interface UpdateServerBuildRequest {
+  limits: ServerLimits;
+  featureLimits: ServerFeatureLimits;
+  primaryAllocationId: number;
+  additionalAllocationIds: number[];
+}
+
+export interface UpdateServerStartupRequest {
+  shardId: number;
+  dockerImage: string;
+  startupCommand?: string | null;
+  variables: Record<string, string>;
+}
+
+export interface ServerSummary {
+  uuid: string;
+  name: string;
+  description?: string | null;
+  nodeName: string;
+  shardName: string;
+  status: ServerStatus;
+  suspended: boolean;
+  primaryAllocation?: string | null;
+  limits: ServerLimits;
+  isOwner: boolean;
+}
+
+export interface ServerDetail extends ServerSummary {
+  ownerUsername: string;
+  nodeFqdn: string;
+  sftpPort: number;
+  dockerImage: string;
+  startupPreview: string;
+  featureLimits: ServerFeatureLimits;
+  allocations: ServerAllocation[];
+  /** Only the variables the user may see */
+  variables: ServerVariable[];
+  /** Server permissions of the current user, ["*"] for the owner and admins (see lib/server-permissions) */
+  permissions: string[];
+}
+
+export interface ServerStats {
+  /** Percent of one core (200 = two cores) */
+  cpuPercent: number;
+  memoryBytes: number;
+  memoryLimitBytes: number;
+  diskBytes: number;
+  networkRxBytes: number;
+  networkTxBytes: number;
+  /** 0 when offline */
+  uptimeSeconds: number;
+}
+
+export interface ServerResources {
+  state: ServerState;
+  /** False when the node could not be reached */
+  nodeOnline: boolean;
+  stats: ServerStats;
+}
+
+export interface PowerRequest {
+  action: PowerAction;
+}
+
+export interface CommandRequest {
+  command: string;
+}
+
+export interface UpdateServerVariablesRequest {
+  variables: Record<string, string>;
+}
+
+export interface RenameServerRequest {
+  name: string;
+  description?: string | null;
+}
+
+export interface ConsoleTicket {
+  ticket: string;
+  /** Relative websocket path: /api/servers/{uuid}/console?ticket=... */
+  path: string;
+}
+
+/** Websocket messages of the console, {"event": "...", "data": ...} */
+export type ConsoleServerMessage =
+  | { event: "history"; data: string[] }
+  | { event: "console"; data: string }
+  | { event: "install-output"; data: string }
+  | { event: "install-started"; data: null }
+  | { event: "install-completed"; data: boolean | null }
+  | { event: "status"; data: ServerState }
+  | { event: "stats"; data: ServerStats }
+  | { event: "notice"; data: string }
+  | { event: "error"; data: string }
+  | { event: "backup-completed"; data: BackupCompletedEvent }
+  | { event: "backup-restore-started"; data: null }
+  | { event: "backup-restore-completed"; data: { successful: boolean } | null };
+
+export interface BackupCompletedEvent {
+  uuid: string;
+  successful: boolean;
+  bytes: number;
+}
+
+export type ConsoleClientMessage =
+  | { event: "command"; data: string }
+  | { event: "power"; data: PowerAction };

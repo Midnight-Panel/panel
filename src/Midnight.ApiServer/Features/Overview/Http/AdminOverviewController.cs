@@ -31,9 +31,7 @@ public class AdminOverviewController : ControllerBase
             UserCount = await _context.Users.CountAsync(cancellationToken),
             LockedUserCount = await _context.Users.CountAsync(x => x.IsLocked, cancellationToken),
             NodeCount = await _context.Nodes.CountAsync(cancellationToken),
-            // TODO: Phase 3 - real server count
-
-            ServerCount = 0,
+            ServerCount = await _context.Servers.CountAsync(cancellationToken),
             Version = typeof(AdminOverviewController).Assembly.GetName().Version?.ToString(3) ?? "",
             Uptime = DateTime.Now - process.StartTime,
             MemoryUsageBytes = process.WorkingSet64,

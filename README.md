@@ -1,10 +1,10 @@
 # Midnight Panel
 
 Open-source panel for hosting game and app servers on Docker. This repository contains the web panel
-(ASP.NET Core API in C# + React/TypeScript frontend based on [TailAdmin](https://tailadmin.com)). The node daemon lives in
+(ASP.NET Core API in C# + React/TypeScript frontend based on [TailAdmin](https://tailadmin.com)). The node demon lives in
 [Midnight-Panel/demon](https://github.com/Midnight-Panel/demon).
 
-> Status: **Phase 2** – nodes, allocations and the daemon connection (status, system info, logs, boot sync).
+> Status: **Phase 2** – nodes, allocations and the demon connection (status, system info, logs, boot sync).
 
 ## Installation
 
@@ -21,14 +21,14 @@ Caddy with automatic HTTPS) and installs the `midnight` management CLI.
 
 | Command | Description |
 |---|---|
-| `midnight install [panel\|daemon\|both]` | Run pre-flight checks (OS, RAM, disk, ports, firewall) and install components with repair/reconfigure support. |
-| `midnight status [--json]` | View real-time container states, database health, daemon status, and disk space (or emit JSON for monitoring). |
+| `midnight install [panel\|demon\|both]` | Run pre-flight checks (OS, RAM, disk, ports, firewall) and install components with repair/reconfigure support. |
+| `midnight status [--json]` | View real-time container states, database health, demon status, and disk space (or emit JSON for monitoring). |
 | `midnight backup [dir] [--encrypt] [--keep N]` | Dump PostgreSQL, `.env`, storage & state into `.tar.gz` (permissions 600) with SHA-256 and optional AES-256 encryption. |
 | `midnight restore <archive>` | Verify checksum, inspect manifest, create pre-restore safety backup, stop stack, restore DB & storage, restart and health-check. |
 | `midnight update [target] [--use-images]` | Pre-update safety backup, update via GHCR images or source build, post-update health check with **automatic rollback** on failure. |
 | `midnight rollback [target]` | Revert to previous version and restore database dump from pre-update backup. |
 | `midnight doctor` | Deep diagnostic audit: pre-flight checks, verify strict 600 permissions on secrets, Docker daemon, SSL and logs. |
-| `midnight logs [target] [-f] [--tail N]` | Inspect logs for `panel`, `db`, `caddy`, `daemon`, or `installer`. |
+| `midnight logs [target] [-f] [--tail N]` | Inspect logs for `panel`, `db`, `caddy`, `demon`, or `installer`. |
 | `midnight completion [bash\|zsh]` | Generate shell tab-completion scripts. |
 
 ## Requirements
@@ -36,12 +36,12 @@ Caddy with automatic HTTPS) and installs the `midnight` management CLI.
 - .NET SDK 10.0
 - Node.js 20+ (the frontend is built automatically during `dotnet build`, `-p:SkipWebBuild=true` skips it)
 
-The daemon references `src/Midnight.Shared` from this repository, so both repositories are expected next to each other:
+The demon references `src/Midnight.Shared` from this repository, so both repositories are expected next to each other:
 
 ```
 midnight-panel/
 ├── panel/   # this repository
-└── demon/   # daemon repository
+└── demon/   # demon repository
 ```
 
 ## Development
@@ -106,7 +106,7 @@ dotnet ef migrations add <Name> --project src/Midnight.ApiServer --context Postg
 - Rate limiting on login, register and password reset (per IP, configurable).
 - Admins see and can revoke every active login session (`/admin/users/sessions`).
 - Node tokens: `mdn_<tokenId>.<token>`, the secret is stored encrypted with Data Protection. The same token
-  authenticates panel → daemon and daemon → panel (`/api/nodes/remote/*`). The setup page needs `admin.nodes.write`.
+  authenticates panel → demon and demon → panel (`/api/nodes/remote/*`). The setup page needs `admin.nodes.write`.
 
 ## Open items
 
@@ -120,7 +120,7 @@ Things that are intentionally not done yet and marked with `// TODO:` in the cod
 ## Roadmap
 
 1. ~~Scaffolding, layout, auth with JWT and 2FA, users, permissions~~
-2. ~~Daemon base, nodes, allocations~~
+2. ~~Demon base, nodes, allocations~~
 3. Images (eggs) and servers, installation, power actions
 4. Live console and stats over WebSocket
 5. File manager, SFTP

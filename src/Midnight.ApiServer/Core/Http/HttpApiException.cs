@@ -9,6 +9,9 @@ public class HttpApiException : Exception
     public int StatusCode { get; }
     public string Title { get; }
 
+    /// <summary>Optional field => message map, written as "errors" extension of the problem response</summary>
+    public IReadOnlyDictionary<string, string>? Errors { get; init; }
+
     public HttpApiException(int statusCode, string title, string? detail = null) : base(detail ?? title)
     {
         StatusCode = statusCode;

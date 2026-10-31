@@ -9,7 +9,7 @@ public class UpdateCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "update";
-    public string Description => "Update panel or daemon with automatic backup, health check and rollback";
+    public string Description => "Update panel or demon with automatic backup, health check and rollback";
 
     public UpdateCommand(IUpdateService updateService, IConsoleOutput console)
     {
@@ -37,9 +37,9 @@ public class UpdateCommand : ICommand
         }
 
         bool success;
-        if (target == "daemon")
+        if (target == "demon")
         {
-            success = await _updateService.UpdateDaemonAsync(targetVersion, cancellationToken);
+            success = await _updateService.UpdateDemonAsync(targetVersion, cancellationToken);
         }
         else
         {
@@ -56,7 +56,7 @@ public class RollbackCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "rollback";
-    public string Description => "Manually roll panel or daemon back to the previous version";
+    public string Description => "Manually roll panel or demon back to the previous version";
 
     public RollbackCommand(IUpdateService updateService, IConsoleOutput console)
     {
@@ -74,12 +74,12 @@ public class RollbackCommand : ICommand
 
         if (!confirmed)
         {
-            _console.WriteWarning("Rollback abgebrochen.");
+            _console.WriteWarning("Rollback aborted.");
             return ExitCodes.Cancelled;
         }
 
-        var success = target == "daemon"
-            ? await _updateService.RollbackDaemonAsync(cancellationToken)
+        var success = target == "demon"
+            ? await _updateService.RollbackDemonAsync(cancellationToken)
             : await _updateService.RollbackPanelAsync(cancellationToken);
 
         return success ? ExitCodes.Success : ExitCodes.GeneralError;

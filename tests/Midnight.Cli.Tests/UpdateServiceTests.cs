@@ -64,7 +64,7 @@ public class UpdateServiceTests
 
         // Assert
         Assert.False(result);
-        Assert.Contains(_console.Messages, m => m.Contains("AUTOMATISCHEN ROLLBACK"));
+        Assert.Contains(_console.Messages, m => m.Contains("AUTOMATIC ROLLBACK"));
 
         var state = await _stateService.LoadAsync();
         // Version must be reset to the previous one
@@ -85,7 +85,7 @@ public class UpdateServiceTests
 
         // Assert
         Assert.True(result);
-        Assert.Contains(_console.Messages, m => m.Contains("Wechsle automatisch zu Source-Build"));
+        Assert.Contains(_console.Messages, m => m.Contains("Switching to source build automatically"));
         Assert.Contains(_processRunner.ExecutedCommands, c => c.Arguments.Contains("up -d --build"));
     }
 }

@@ -150,7 +150,7 @@ public class ConsoleOutput : IConsoleOutput
 
         while (true)
         {
-            Console.Write($"Auswahl [1-{options.Count}]: ");
+            Console.Write($"Selection [1-{options.Count}]: ");
             var input = Console.ReadLine()?.Trim();
             if (string.IsNullOrEmpty(input))
                 return defaultIndex;
@@ -194,7 +194,7 @@ public class ConsoleOutput : IConsoleOutput
 
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"--- Auszug aus dem Installer-Log ({logFilePath}, letzte {lines} Zeilen) ---");
+            Console.WriteLine($"--- Installer log excerpt ({logFilePath}, last {lines} lines) ---");
             Console.ResetColor();
 
             foreach (var l in tail)

@@ -36,15 +36,15 @@ public class StatusService : IStatusService
         {
             PanelVersion = state.PanelVersion,
             PanelDomain = state.PanelDomain,
-            DaemonVersion = state.DaemonVersion,
+            DemonVersion = state.DemonVersion,
             Architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString()
         };
 
-        // Freier Speicherplatz
+        // Free disk space
         var freeBytes = _fileSystem.GetFreeDiskSpaceBytes("/opt/midnight");
         report.DiskFreeSpace = $"{freeBytes / (1024.0 * 1024 * 1024):F1} GB";
 
-        // Docker Compose Container Status abfragen
+        // Query Docker Compose container status
         var psRes = await _processRunner.RunAsync(
             "docker",
             "compose -f /opt/midnight/panel/docker-compose.yml ps --format json",
@@ -55,7 +55,7 @@ public class StatusService : IStatusService
             report.PanelStatus = "Running";
             try
             {
-                // Docker compose ps kann entweder ein JSON-Array oder Newline-delimitierte JSON-Objekte ausgeben
+                // Docker compose ps can output either a JSON array or newline-delimited JSON objects
                 var lines = psRes.StandardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
@@ -85,9 +85,9 @@ public class StatusService : IStatusService
             report.DatabaseHealth = "Offline";
         }
 
-        // Daemon Systemd Status abfragen
-        var daemonRes = await _processRunner.RunAsync("systemctl", "is-active midnight-daemon", cancellationToken: cancellationToken);
-        report.DaemonStatus = daemonRes.Success ? daemonRes.StandardOutput.Trim() : "inactive";
+        // Query demon systemd status
+        var demonRes = await _processRunner.RunAsync("systemctl", "is-active midnight-demon", cancellationToken: cancellationToken);
+        report.DemonStatus = demonRes.Success ? demonRes.StandardOutput.Trim() : "inactive";
 
         return report;
     }
@@ -108,10 +108,10 @@ public class StatusService : IStatusService
 
         _console.WriteLine($"Panel Version:   {report.PanelVersion} (Domain: {report.PanelDomain ?? "n/a"})");
         _console.WriteLine($"Panel Status:    {(report.PanelStatus == "Running" ? "[✓] Online" : "[✗] Offline")}");
-        _console.WriteLine($"Datenbank:       {(report.DatabaseHealth == "Healthy" ? "[✓] Healthy" : "[!] " + report.DatabaseHealth)}");
-        _console.WriteLine($"Daemon Status:   {(report.DaemonStatus == "active" ? "[✓] Active" : "[!] " + report.DaemonStatus)} ({report.DaemonVersion})");
-        _console.WriteLine($"Speicherplatz:   {report.DiskFreeSpace} frei auf /opt/midnight");
-        _console.WriteLine($"Architektur:     {report.Architecture}");
+        _console.WriteLine($"Database:        {(report.DatabaseHealth == "Healthy" ? "[✓] Healthy" : "[!] " + report.DatabaseHealth)}");
+        _console.WriteLine($"Demon Status:   {(report.DemonStatus == "active" ? "[✓] Active" : "[!] " + report.DemonStatus)} ({report.DemonVersion})");
+        _console.WriteLine($"Disk space:      {report.DiskFreeSpace} free on /opt/midnight");
+        _console.WriteLine($"Architecture:    {report.Architecture}");
         _console.WriteLine();
 
         if (report.Containers.Count > 0)

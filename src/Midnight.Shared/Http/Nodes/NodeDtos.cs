@@ -32,16 +32,16 @@ public class NodeRequest
     public bool UseSsl { get; set; }
 }
 
-/// <summary>Live state of a node, fetched from the daemon</summary>
+/// <summary>Live state of a node, fetched from the demon</summary>
 public class NodeStatusResponse
 {
     public bool Online { get; set; }
 
-    /// <summary>Why the daemon could not be reached, null when online</summary>
+    /// <summary>Why the demon could not be reached, null when online</summary>
     public string? Error { get; set; }
 
     public int? LatencyMs { get; set; }
-    public Daemon.SystemInfoResponse? System { get; set; }
+    public Demon.SystemInfoResponse? System { get; set; }
 }
 
 public class NodeSetupResponse

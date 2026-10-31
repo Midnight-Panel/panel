@@ -28,6 +28,9 @@ public class ApiExceptionHandler : IExceptionHandler
                     Title = apiException.Title,
                     Detail = apiException.Message == apiException.Title ? null : apiException.Message
                 };
+
+                if (apiException.Errors is { Count: > 0 })
+                    problem.Extensions["errors"] = apiException.Errors;
                 break;
 
             case OperationCanceledException when httpContext.RequestAborted.IsCancellationRequested:

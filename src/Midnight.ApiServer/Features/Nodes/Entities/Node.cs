@@ -1,13 +1,13 @@
 namespace Midnight.ApiServer.Features.Nodes.Entities;
 
-/// <summary>A machine running the Midnight daemon</summary>
+/// <summary>A machine running the Midnight demon</summary>
 public class Node
 {
     public int Id { get; set; }
 
     public string Name { get; set; } = "";
 
-    /// <summary>Hostname or ip the panel and browsers use to reach the daemon</summary>
+    /// <summary>Hostname or ip the panel and browsers use to reach the demon</summary>
     public string Fqdn { get; set; } = "";
 
     public int HttpPort { get; set; } = 8080;

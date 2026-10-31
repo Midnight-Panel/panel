@@ -64,7 +64,7 @@ public class ExtensionService : IExtensionService
         return new PagedResult<ExtensionSummaryResponse>
         {
             Items = items,
-            Total = total,
+            TotalCount = total,
             Page = query.SafePage,
             PageSize = query.SafePageSize
         };
@@ -85,7 +85,7 @@ public class ExtensionService : IExtensionService
     {
         var entity = await _context.Extensions.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound("Erweiterung wurde nicht gefunden.");
+            throw HttpApiException.NotFound("Extension not found.");
 
         return MapToDetail(entity);
     }
@@ -94,7 +94,7 @@ public class ExtensionService : IExtensionService
     {
         var entity = await _context.Extensions.AsNoTracking().FirstOrDefaultAsync(x => x.Identifier == identifier, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound($"Erweiterung '{identifier}' wurde nicht gefunden.");
+            throw HttpApiException.NotFound($"Extension '{identifier}' not found.");
 
         return MapToDetail(entity);
     }
@@ -103,7 +103,7 @@ public class ExtensionService : IExtensionService
     {
         var entity = await _context.Extensions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound("Erweiterung wurde nicht gefunden.");
+            throw HttpApiException.NotFound("Extension not found.");
 
         entity.IsEnabled = isEnabled;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
@@ -117,16 +117,16 @@ public class ExtensionService : IExtensionService
     {
         var entity = await _context.Extensions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound("Erweiterung wurde nicht gefunden.");
+            throw HttpApiException.NotFound("Extension not found.");
 
         try
         {
-            // Validiere dass es valides JSON ist
+            // Validate that it is valid JSON
             using var doc = JsonDocument.Parse(configValuesJson);
         }
         catch (Exception ex)
         {
-            throw HttpApiException.BadRequest($"Ungültiges JSON-Konfigurationsformat: {ex.Message}");
+            throw HttpApiException.BadRequest($"Invalid JSON configuration format: {ex.Message}");
         }
 
         entity.ConfigValuesJson = configValuesJson;
@@ -141,11 +141,11 @@ public class ExtensionService : IExtensionService
     {
         var identifier = request.Identifier.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(identifier))
-            throw HttpApiException.BadRequest("Identifier darf nicht leer sein.");
+            throw HttpApiException.BadRequest("Identifier must not be empty.");
 
         var existing = await _context.Extensions.FirstOrDefaultAsync(x => x.Identifier == identifier, cancellationToken);
         if (existing != null)
-            throw HttpApiException.BadRequest($"Eine Erweiterung mit der Kennung '{identifier}' ist bereits installiert.");
+            throw HttpApiException.BadRequest($"An extension with the identifier '{identifier}' is already installed.");
 
         var entity = new ExtensionEntity
         {
@@ -174,13 +174,13 @@ public class ExtensionService : IExtensionService
     public async Task<ExtensionDetailResponse> UploadPackageAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         if (!fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-            throw HttpApiException.BadRequest("Erweiterungspaket muss eine .zip Datei sein.");
+            throw HttpApiException.BadRequest("Extension package must be a .zip file.");
 
         using var archive = new ZipArchive(fileStream, ZipArchiveMode.Read);
         var manifestEntry = archive.GetEntry("extension.json") ?? archive.GetEntry("manifest.json");
 
         if (manifestEntry == null)
-            throw HttpApiException.BadRequest("Das Paket enthält weder 'extension.json' noch 'manifest.json'.");
+            throw HttpApiException.BadRequest("The package contains neither 'extension.json' nor 'manifest.json'.");
 
         ExtensionInstallRequest? manifest;
         using (var stream = manifestEntry.Open())
@@ -189,7 +189,7 @@ public class ExtensionService : IExtensionService
         }
 
         if (manifest == null || string.IsNullOrWhiteSpace(manifest.Identifier))
-            throw HttpApiException.BadRequest("Ungültige Manifest-Datei in der Erweiterung.");
+            throw HttpApiException.BadRequest("Invalid manifest file in the extension.");
 
         var readmeEntry = archive.GetEntry("README.md") ?? archive.GetEntry("readme.md");
         if (readmeEntry != null)
@@ -205,7 +205,7 @@ public class ExtensionService : IExtensionService
     {
         var entity = await _context.Extensions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound("Erweiterung wurde nicht gefunden.");
+            throw HttpApiException.NotFound("Extension not found.");
 
         _context.Extensions.Remove(entity);
         await _context.SaveChangesAsync(cancellationToken);
@@ -223,7 +223,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "discord-notifier",
                 Name = "Discord Webhook Notifier",
-                Description = "Sendet automatische Benachrichtigungen über Server-Starts, Stops, Abstürze und Sicherheits-Events direkt in Discord-Kanäle.",
+                Description = "Sends automatic notifications about server starts, stops, crashes and security events directly to Discord channels.",
                 Version = "1.2.0",
                 Author = "Midnight Team",
                 Category = "Integration",
@@ -234,14 +234,14 @@ public class ExtensionService : IExtensionService
                 {
                   "type": "object",
                   "properties": {
-                    "webhookUrl": { "type": "string", "title": "Discord Webhook URL", "description": "Die Ziel-Webhook-URL von Discord" },
-                    "notifyOnCrash": { "type": "boolean", "title": "Crash-Alerts senden", "default": true },
-                    "notifyOnBackup": { "type": "boolean", "title": "Backup-Status melden", "default": true }
+                    "webhookUrl": { "type": "string", "title": "Discord Webhook URL", "description": "The target Discord webhook URL" },
+                    "notifyOnCrash": { "type": "boolean", "title": "Send crash alerts", "default": true },
+                    "notifyOnBackup": { "type": "boolean", "title": "Report backup status", "default": true }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"webhookUrl": "", "notifyOnCrash": true, "notifyOnBackup": true}""",
-                ReadmeMarkdown = "# Discord Webhook Notifier\n\nIntegriere dein Game-Server-Panel nahtlos mit deinem Discord-Server.",
+                ReadmeMarkdown = "# Discord Webhook Notifier\n\nSeamlessly integrate your game server panel with your Discord server.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -249,7 +249,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "backup-scheduler",
                 Name = "Automated Backup Scheduler",
-                Description = "Erweiterte Zeitpläne mit Cron-Syntax für periodische Server-Backups inklusive optionaler Cloudflare R2 / S3 Cloud-Synchronisation.",
+                Description = "Advanced cron-based schedules for periodic server backups, including optional Cloudflare R2 / S3 cloud sync.",
                 Version = "2.0.1",
                 Author = "Midnight Core",
                 Category = "Administration",
@@ -260,13 +260,13 @@ public class ExtensionService : IExtensionService
                 {
                   "type": "object",
                   "properties": {
-                    "cronExpression": { "type": "string", "title": "Standard-Cron-Ausdruck", "default": "0 3 * * *" },
-                    "keepDays": { "type": "number", "title": "Aufbewahrung (Tage)", "default": 14 }
+                    "cronExpression": { "type": "string", "title": "Default cron expression", "default": "0 3 * * *" },
+                    "keepDays": { "type": "number", "title": "Retention (days)", "default": 14 }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"cronExpression": "0 3 * * *", "keepDays": 14}""",
-                ReadmeMarkdown = "# Automated Backup Scheduler\n\nSichere deine Game-Server-Daten vollautomatisch.",
+                ReadmeMarkdown = "# Automated Backup Scheduler\n\nBack up your game server data fully automatically.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -274,10 +274,10 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "audit-log-exporter",
                 Name = "Security Audit Exporter",
-                Description = "Exportiert Login-Versuche, 2FA-Aktivierungen und administrative Änderungen für SIEM-Systeme und externe Log-Server.",
+                Description = "Exports login attempts, 2FA activations and administrative changes to SIEM systems and external log servers.",
                 Version = "1.0.4",
                 Author = "Security SIG",
-                Category = "Sicherheit",
+                Category = "Security",
                 Icon = "LockIcon",
                 WebsiteUrl = "https://midnightpanel.com",
                 IsEnabled = false,
@@ -291,7 +291,7 @@ public class ExtensionService : IExtensionService
                 }
                 """,
                 ConfigValuesJson = """{"exportFormat": "JSON", "remoteSyslogHost": ""}""",
-                ReadmeMarkdown = "# Security Audit Exporter\n\nErhöhte Compliance und Nachvollziehbarkeit für Midnight Panel.",
+                ReadmeMarkdown = "# Security Audit Exporter\n\nImproved compliance and traceability for Midnight Panel.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -299,7 +299,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "resource-analytics",
                 Name = "Node & Resource Analytics",
-                Description = "Erstellt detaillierte Performance-Reports und Langzeit-Metriken über CPU-, RAM- und Festplatten-Auslastung.",
+                Description = "Creates detailed performance reports and long-term metrics on CPU, RAM and disk usage.",
                 Version = "1.1.0",
                 Author = "Midnight Metrics",
                 Category = "Tools",
@@ -310,13 +310,13 @@ public class ExtensionService : IExtensionService
                 {
                   "type": "object",
                   "properties": {
-                    "retentionDays": { "type": "number", "title": "Metriken-Aufbewahrung (Tage)", "default": 30 },
-                    "samplingIntervalSec": { "type": "number", "title": "Intervall (Sekunden)", "default": 60 }
+                    "retentionDays": { "type": "number", "title": "Metrics retention (days)", "default": 30 },
+                    "samplingIntervalSec": { "type": "number", "title": "Interval (seconds)", "default": 60 }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"retentionDays": 30, "samplingIntervalSec": 60}""",
-                ReadmeMarkdown = "# Node & Resource Analytics\n\nPräzise Analysen für deine Game-Server-Infrastruktur.",
+                ReadmeMarkdown = "# Node & Resource Analytics\n\nPrecise analytics for your game server infrastructure.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -324,7 +324,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "subdomain-manager",
                 Name = "Cloudflare Subdomain Automator",
-                Description = "Verbindet Cloudflare DNS automatisch mit neuen Game-Servern (z. B. s1.arwenagg.de -> Node IP:Port).",
+                Description = "Automatically connects Cloudflare DNS to new game servers (e.g. s1.arwenagg.de -> node IP:port).",
                 Version = "1.3.2",
                 Author = "Community",
                 Category = "Integration",
@@ -337,12 +337,12 @@ public class ExtensionService : IExtensionService
                   "properties": {
                     "apiToken": { "type": "string", "title": "Cloudflare API Token" },
                     "zoneId": { "type": "string", "title": "Zone ID" },
-                    "baseDomain": { "type": "string", "title": "Basis-Domain", "default": "arwenagg.de" }
+                    "baseDomain": { "type": "string", "title": "Base domain", "default": "arwenagg.de" }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"apiToken": "", "zoneId": "", "baseDomain": "arwenagg.de"}""",
-                ReadmeMarkdown = "# Cloudflare Subdomain Automator\n\nNie wieder DNS-Einträge manuell für Spieler anlegen.",
+                ReadmeMarkdown = "# Cloudflare Subdomain Automator\n\nNever create DNS records for players by hand again.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             }

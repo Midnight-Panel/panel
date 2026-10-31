@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Midnight.ApiServer.Features.Branding.Entities;
+using Midnight.ApiServer.Features.Databases.Entities;
 using Midnight.ApiServer.Features.Extensions.Entities;
 using Midnight.ApiServer.Features.Nodes.Entities;
+using Midnight.ApiServer.Features.Servers.Entities;
 using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.ApiServer.Features.Users.Entities;
 
@@ -36,6 +38,15 @@ public abstract class DataContext : DbContext
     public DbSet<ShardVariable> ShardVariables => Set<ShardVariable>();
     public DbSet<BrandingSettings> BrandingSettings => Set<BrandingSettings>();
     public DbSet<ExtensionEntity> Extensions => Set<ExtensionEntity>();
+    public DbSet<Server> Servers => Set<Server>();
+    public DbSet<ServerVariable> ServerVariables => Set<ServerVariable>();
+    public DbSet<Subuser> Subusers => Set<Subuser>();
+    public DbSet<Backup> Backups => Set<Backup>();
+    public DbSet<Schedule> Schedules => Set<Schedule>();
+    public DbSet<ScheduleTask> ScheduleTasks => Set<ScheduleTask>();
+    public DbSet<ServerActivity> ServerActivities => Set<ServerActivity>();
+    public DbSet<DatabaseHost> DatabaseHosts => Set<DatabaseHost>();
+    public DbSet<ServerDatabase> ServerDatabases => Set<ServerDatabase>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,11 +107,182 @@ public abstract class DataContext : DbContext
         {
             allocation.HasIndex(x => new { x.NodeId, x.IpAddress, x.Port }).IsUnique();
             allocation.Property(x => x.IpAddress).HasMaxLength(45);
-            allocation.Property(x => x.Notes).HasMaxLength(128);
+            allocation.Property(x => x.Notes).HasMaxLength(255);
 
             allocation.HasOne(x => x.Node)
                 .WithMany(x => x.Allocations)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            allocation.HasOne(x => x.Server)
+                .WithMany(x => x.Allocations)
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Server>(server =>
+        {
+            server.HasIndex(x => x.Uuid).IsUnique();
+            server.HasIndex(x => x.PrimaryAllocationId).IsUnique();
+
+            server.Property(x => x.Name).HasMaxLength(64);
+            server.Property(x => x.Description).HasMaxLength(512);
+            server.Property(x => x.DockerImage).HasMaxLength(256);
+            server.Property(x => x.StartupCommand).HasMaxLength(4096);
+            server.Property(x => x.Threads).HasMaxLength(64);
+
+            // Owners, nodes and shards with servers can't be deleted, the services report a proper error first
+            server.HasOne(x => x.Owner)
+                .WithMany()
+                .HasForeignKey(x => x.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            server.HasOne(x => x.Node)
+                .WithMany()
+                .HasForeignKey(x => x.NodeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            server.HasOne(x => x.Shard)
+                .WithMany()
+                .HasForeignKey(x => x.ShardId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            server.HasOne(x => x.PrimaryAllocation)
+                .WithMany()
+                .HasForeignKey(x => x.PrimaryAllocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ServerVariable>(variable =>
+        {
+            variable.HasIndex(x => new { x.ServerId, x.ShardVariableId }).IsUnique();
+            variable.Property(x => x.Value).HasMaxLength(1024);
+
+            variable.HasOne(x => x.Server)
+                .WithMany(x => x.Variables)
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            variable.HasOne(x => x.ShardVariable)
+                .WithMany()
+                .HasForeignKey(x => x.ShardVariableId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── Server features: everything is deleted with the server ──────────
+
+        modelBuilder.Entity<Subuser>(subuser =>
+        {
+            subuser.HasIndex(x => new { x.ServerId, x.UserId }).IsUnique();
+            subuser.Property(x => x.PermissionsJson).HasMaxLength(4096);
+
+            subuser.HasOne(x => x.Server)
+                .WithMany(x => x.Subusers)
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Deleting a user removes their access to other servers
+            subuser.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Backup>(backup =>
+        {
+            backup.HasIndex(x => x.Uuid).IsUnique();
+            backup.HasIndex(x => x.ServerId);
+            backup.Property(x => x.Name).HasMaxLength(191);
+            backup.Property(x => x.IgnoredFiles).HasMaxLength(8192);
+            backup.Property(x => x.Checksum).HasMaxLength(128);
+
+            backup.HasOne(x => x.Server)
+                .WithMany()
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Schedule>(schedule =>
+        {
+            schedule.HasIndex(x => x.ServerId);
+            schedule.HasIndex(x => new { x.IsActive, x.NextRunAt });
+            schedule.Property(x => x.Name).HasMaxLength(191);
+            schedule.Property(x => x.Minute).HasMaxLength(64);
+            schedule.Property(x => x.Hour).HasMaxLength(64);
+            schedule.Property(x => x.DayOfMonth).HasMaxLength(64);
+            schedule.Property(x => x.Month).HasMaxLength(64);
+            schedule.Property(x => x.DayOfWeek).HasMaxLength(64);
+
+            schedule.HasOne(x => x.Server)
+                .WithMany()
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ScheduleTask>(task =>
+        {
+            task.HasIndex(x => new { x.ScheduleId, x.Sequence });
+            task.Property(x => x.Payload).HasMaxLength(2048);
+
+            task.HasOne(x => x.Schedule)
+                .WithMany(x => x.Tasks)
+                .HasForeignKey(x => x.ScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ServerActivity>(activity =>
+        {
+            activity.HasIndex(x => new { x.ServerId, x.CreatedAt });
+            activity.Property(x => x.Event).HasMaxLength(64);
+            activity.Property(x => x.PropertiesJson).HasMaxLength(4096);
+            activity.Property(x => x.IpAddress).HasMaxLength(64);
+
+            activity.HasOne(x => x.Server)
+                .WithMany()
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // The log stays when the user is deleted
+            activity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DatabaseHost>(host =>
+        {
+            host.HasIndex(x => x.Name).IsUnique();
+            host.Property(x => x.Name).HasMaxLength(64);
+            host.Property(x => x.Host).HasMaxLength(255);
+            host.Property(x => x.Username).HasMaxLength(64);
+            host.Property(x => x.Password).HasMaxLength(1024);
+
+            host.HasOne(x => x.Node)
+                .WithMany()
+                .HasForeignKey(x => x.NodeId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ServerDatabase>(database =>
+        {
+            database.HasIndex(x => new { x.DatabaseHostId, x.Name }).IsUnique();
+            database.HasIndex(x => new { x.DatabaseHostId, x.Username }).IsUnique();
+            database.HasIndex(x => x.ServerId);
+            database.Property(x => x.Name).HasMaxLength(64);
+            database.Property(x => x.Username).HasMaxLength(32);
+            database.Property(x => x.Password).HasMaxLength(1024);
+            database.Property(x => x.Remote).HasMaxLength(64);
+
+            // The service drops the databases on the host before the server is deleted
+            database.HasOne(x => x.Server)
+                .WithMany()
+                .HasForeignKey(x => x.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Hosts with databases can't be deleted (409 from the service)
+            database.HasOne(x => x.DatabaseHost)
+                .WithMany(x => x.Databases)
+                .HasForeignKey(x => x.DatabaseHostId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PasswordResetToken>(token =>

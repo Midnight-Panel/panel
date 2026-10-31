@@ -63,14 +63,14 @@ public class RestoreServiceTests
         var service = CreateService();
         var archive = "/var/backups/midnight/backup.tar.gz";
         _fileSystem.Files[archive] = "backup-content";
-        _console.ConfirmResponse = false; // User sagt 'Nein'
+        _console.ConfirmResponse = false; // User says 'No'
 
         // Act
         var result = await service.RestoreAsync(archive);
 
         // Assert
         Assert.False(result);
-        Assert.Contains(_console.Messages, m => m.Contains("abgebrochen"));
+        Assert.Contains(_console.Messages, m => m.Contains("aborted"));
     }
 
     [Fact]
@@ -91,8 +91,8 @@ public class RestoreServiceTests
 
         // Assert
         Assert.True(result);
-        Assert.Contains(_console.Messages, m => m.Contains("Sicherheits-Backup gespeichert"));
-        Assert.Contains(_console.Messages, m => m.Contains("Wiederherstellung erfolgreich abgeschlossen"));
+        Assert.Contains(_console.Messages, m => m.Contains("Safety backup saved"));
+        Assert.Contains(_console.Messages, m => m.Contains("Restore completed successfully"));
 
         // docker down and up were called
         Assert.Contains(_processRunner.ExecutedCommands, c => c.Arguments.Contains("down"));

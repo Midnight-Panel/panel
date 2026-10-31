@@ -19,7 +19,7 @@ public class CompletionService : ICompletionService
             prev="${COMP_WORDS[COMP_CWORD-1]}"
 
             commands="install status start stop restart logs update rollback configure config create-admin backup restore doctor ssl completion uninstall self-update version"
-            targets="panel daemon both"
+            targets="panel demon both"
 
             case "$prev" in
                 midnight)
@@ -65,14 +65,14 @@ public class CompletionService : ICompletionService
             local -a commands targets
 
             commands=(
-                'install:Install Midnight Panel and/or Daemon'
-                'status:Show status of the panel stack and daemon (--json)'
-                'start:Start panel or daemon'
-                'stop:Stop panel or daemon'
-                'restart:Restart panel or daemon'
+                'install:Install Midnight Panel and/or Demon'
+                'status:Show status of the panel stack and demon (--json)'
+                'start:Start panel or demon'
+                'stop:Stop panel or demon'
+                'restart:Restart panel or demon'
                 'logs:Show live logs'
-                'update:Update panel or daemon with health check & rollback'
-                'rollback:Manually roll back panel or daemon to the previous version'
+                'update:Update panel or demon with health check & rollback'
+                'rollback:Manually roll back panel or demon to the previous version'
                 'configure:Interactive configuration wizard'
                 'config:Get or set configuration values'
                 'create-admin:Create a new administrator account'
@@ -88,7 +88,7 @@ public class CompletionService : ICompletionService
 
             targets=(
                 'panel:Web panel'
-                'daemon:Midnight Daemon'
+                'demon:Midnight Demon'
                 'both:Both components'
             )
 

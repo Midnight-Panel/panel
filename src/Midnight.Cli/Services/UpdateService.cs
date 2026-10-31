@@ -9,12 +9,12 @@ public interface IUpdateService
         bool? useImages = null,
         CancellationToken cancellationToken = default);
 
-    Task<bool> UpdateDaemonAsync(
+    Task<bool> UpdateDemonAsync(
         string? targetVersion = null,
         CancellationToken cancellationToken = default);
 
     Task<bool> RollbackPanelAsync(CancellationToken cancellationToken = default);
-    Task<bool> RollbackDaemonAsync(CancellationToken cancellationToken = default);
+    Task<bool> RollbackDemonAsync(CancellationToken cancellationToken = default);
 }
 
 public class UpdateService : IUpdateService
@@ -145,22 +145,22 @@ public class UpdateService : IUpdateService
         return false;
     }
 
-    public async Task<bool> UpdateDaemonAsync(
+    public async Task<bool> UpdateDemonAsync(
         string? targetVersion = null,
         CancellationToken cancellationToken = default)
     {
         var state = await _stateService.LoadAsync();
         var version = targetVersion ?? "latest";
-        _console.WriteHeader($"Midnight Daemon Update ({state.DaemonVersion} -> {version})");
+        _console.WriteHeader($"Midnight Demon Update ({state.DemonVersion} -> {version})");
 
         var srcDir = "/opt/midnight/src/demon";
         if (!_fileSystem.DirectoryExists(srcDir))
         {
-            _console.WriteError($"Daemon source directory '{srcDir}' not found.");
+            _console.WriteError($"Demon source directory '{srcDir}' not found.");
             return false;
         }
 
-        _console.WriteInfo("Updating daemon repository...");
+        _console.WriteInfo("Updating demon repository...");
         await _processRunner.RunAsync("git", "fetch --tags", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         if (version != "latest")
         {
@@ -171,22 +171,22 @@ public class UpdateService : IUpdateService
             await _processRunner.RunAsync("git", "pull origin main", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         }
 
-        _console.WriteInfo("Recompiling daemon binary...");
-        var buildRes = await _processRunner.RunAsync("dotnet", "publish -c Release -o /opt/midnight/daemon", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
+        _console.WriteInfo("Recompiling demon binary...");
+        var buildRes = await _processRunner.RunAsync("dotnet", "publish -c Release -o /opt/midnight/demon", workingDirectory: srcDir, isMutating: true, cancellationToken: cancellationToken);
         if (!buildRes.Success && !_context.DryRun)
         {
-            _console.WriteError($"Failed to compile the daemon: {buildRes.Output}");
+            _console.WriteError($"Failed to compile the demon: {buildRes.Output}");
             return false;
         }
 
-        _console.WriteInfo("Restarting midnight-daemon service...");
-        await _processRunner.RunAsync("systemctl", "restart midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
+        _console.WriteInfo("Restarting midnight-demon service...");
+        await _processRunner.RunAsync("systemctl", "restart midnight-demon", isMutating: true, cancellationToken: cancellationToken);
 
-        state.PreviousDaemonVersion = state.DaemonVersion;
-        state.DaemonVersion = version;
+        state.PreviousDemonVersion = state.DemonVersion;
+        state.DemonVersion = version;
         await _stateService.SaveAsync(state);
 
-        _console.WriteSuccess($"Midnight Daemon successfully updated to {version}!");
+        _console.WriteSuccess($"Midnight Demon successfully updated to {version}!");
         return true;
     }
 
@@ -230,16 +230,16 @@ public class UpdateService : IUpdateService
         return true;
     }
 
-    public async Task<bool> RollbackDaemonAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> RollbackDemonAsync(CancellationToken cancellationToken = default)
     {
         var state = await _stateService.LoadAsync();
-        if (string.IsNullOrEmpty(state.PreviousDaemonVersion))
+        if (string.IsNullOrEmpty(state.PreviousDemonVersion))
         {
-            _console.WriteError("No previous daemon version registered for rollback.");
+            _console.WriteError("No previous demon version registered for rollback.");
             return false;
         }
 
-        return await UpdateDaemonAsync(state.PreviousDaemonVersion, cancellationToken);
+        return await UpdateDemonAsync(state.PreviousDemonVersion, cancellationToken);
     }
 
     private async Task<bool> BuildFromSourceAsync(string version, CancellationToken cancellationToken)

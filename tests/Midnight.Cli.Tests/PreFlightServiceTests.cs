@@ -39,7 +39,7 @@ public class PreFlightServiceTests
     [Fact]
     public async Task CheckRam_FailsWhenBelowMinimumRequirements()
     {
-        // Arrange: 1024 MB RAM (unter 1500 MB Mindestgrenze)
+        // Arrange: 1024 MB RAM (below the 1500 MB minimum)
         var service = CreateService();
         _fileSystem.Files["/proc/meminfo"] = "MemTotal:        1048576 kB\n";
 
@@ -48,7 +48,7 @@ public class PreFlightServiceTests
 
         // Assert
         Assert.Equal(CheckStatus.Failed, result.Status);
-        Assert.Contains("Mindestanforderung", result.Details);
+        Assert.Contains("minimum requirement", result.Details);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class PreFlightServiceTests
     [Fact]
     public void CheckDiskSpace_FailsWhenUnder5GB()
     {
-        // Arrange: 3 GB frei
+        // Arrange: 3 GB free
         var service = CreateService();
         _fileSystem.FreeDiskSpaceBytes = 3L * 1024 * 1024 * 1024;
 

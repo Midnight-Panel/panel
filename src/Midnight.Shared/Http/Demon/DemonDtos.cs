@@ -1,9 +1,9 @@
-namespace Midnight.Shared.Http.Daemon;
+namespace Midnight.Shared.Http.Demon;
 
-/// <summary>Returned by the daemon on GET /api/system/info</summary>
+/// <summary>Returned by the demon on GET /api/system/info</summary>
 public class SystemInfoResponse
 {
-    public string DaemonVersion { get; set; } = "";
+    public string DemonVersion { get; set; } = "";
     public int ProtocolVersion { get; set; }
     public string OperatingSystem { get; set; } = "";
     public string KernelVersion { get; set; } = "";
@@ -37,8 +37,8 @@ public class DockerInfo
     public int Images { get; set; }
 }
 
-/// <summary>Returned by the daemon on GET /api/system/logs</summary>
-public class DaemonLogsResponse
+/// <summary>Returned by the demon on GET /api/system/logs</summary>
+public class DemonLogsResponse
 {
     public List<string> Lines { get; set; } = [];
 }
@@ -48,7 +48,7 @@ public class BootResponse
 {
     public string NodeName { get; set; } = "";
 
-    // TODO: Phase 3 - full server definitions (image, limits, allocations, variables)
+    /// <summary>Uuid and name only, the full configurations come from GET /api/nodes/remote/servers</summary>
     public List<BootServer> Servers { get; set; } = [];
 }
 

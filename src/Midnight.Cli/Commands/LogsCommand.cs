@@ -8,7 +8,7 @@ public class LogsCommand : ICommand
     private readonly CliContext _context;
 
     public string Name => "logs";
-    public string Description => "Zeige Container- oder Daemon-Logs an (-f, --tail)";
+    public string Description => "Show container or demon logs (-f, --tail)";
 
     public LogsCommand(IProcessRunner processRunner, CliContext context)
     {
@@ -37,10 +37,10 @@ public class LogsCommand : ICommand
             return ExitCodes.Success;
         }
 
-        if (target == "daemon")
+        if (target == "demon")
         {
             var followArg = follow ? "-f" : "";
-            await _processRunner.RunAsync("journalctl", $"-u midnight-daemon -n {tail} {followArg}", cancellationToken: cancellationToken);
+            await _processRunner.RunAsync("journalctl", $"-u midnight-demon -n {tail} {followArg}", cancellationToken: cancellationToken);
             return ExitCodes.Success;
         }
 

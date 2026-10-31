@@ -7,7 +7,7 @@ namespace Midnight.ApiServer.Features.Shards.Services;
 /// </summary>
 public static partial class StartupCommandResolver
 {
-    /// <summary>System variables automatically provided by the daemon or panel</summary>
+    /// <summary>System variables automatically provided by the demon or panel</summary>
     public static readonly HashSet<string> SystemVariables = new(StringComparer.OrdinalIgnoreCase)
     {
         "SERVER_MEMORY",

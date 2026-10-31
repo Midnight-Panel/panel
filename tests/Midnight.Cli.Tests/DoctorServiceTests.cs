@@ -26,7 +26,7 @@ public class DoctorServiceTests
     [Fact]
     public async Task Doctor_WarnsWhenSensitiveFileHasPermissiveMode()
     {
-        // Arrange: .env hat 644 statt 600
+        // Arrange: .env has 644 instead of 600
         var service = CreateService();
         _fileSystem.Files["/opt/midnight/panel/.env"] = "DB_PASS=123";
         _fileSystem.Permissions["/opt/midnight/panel/.env"] = "644";
@@ -34,11 +34,11 @@ public class DoctorServiceTests
         // Act
         var result = await service.RunDoctorAsync();
 
-        // Assert: Hat Warnung bzgl. Dateirechte gemeldet
+        // Assert: reported a warning about file permissions
         var envCheck = _console.CheckedItems.FirstOrDefault(i => i.Name.Contains(".env"));
         Assert.NotNull(envCheck);
         Assert.Equal(CheckStatus.Warning, envCheck.Status);
-        Assert.Contains("Rechte sind 644", envCheck.Details);
+        Assert.Contains("Permissions are 644", envCheck.Details);
         Assert.Contains("chmod 600", envCheck.Remediation);
     }
 

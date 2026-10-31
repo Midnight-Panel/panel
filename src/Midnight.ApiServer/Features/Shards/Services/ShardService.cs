@@ -224,6 +224,11 @@ public class ShardService : IShardService
     {
         var shard = await GetAsync(id, cancellationToken);
 
+        var servers = await _context.Servers.CountAsync(x => x.ShardId == id, cancellationToken);
+
+        if (servers > 0)
+            throw HttpApiException.Conflict("The shard is still in use", $"{servers} server(s) use this shard. Change their shard or delete them first.");
+
         _context.Shards.Remove(shard);
         await _context.SaveChangesAsync(cancellationToken);
     }

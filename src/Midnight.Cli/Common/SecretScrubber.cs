@@ -30,7 +30,7 @@ public static partial class SecretScrubber
     private static partial Regex ConnectionStringPasswordPattern();
 
     /// <summary>
-    /// Entfernt sensible Daten aus einem String.
+    /// Removes sensitive data from a string.
     /// </summary>
     public static string Redact(string? input)
     {
@@ -39,21 +39,21 @@ public static partial class SecretScrubber
 
         var result = input;
 
-        // Key-Value-Zuweisungen (z.B. in .env oder JSON)
+        // Key-value assignments (e.g. in .env or JSON)
         result = KeyValuePattern().Replace(result, m =>
         {
             var key = m.Groups[1].Value;
             return $"{key}=********";
         });
 
-        // CLI-Flags (z.B. --password geheim)
+        // CLI flags (e.g. --password secret)
         result = CliFlagPattern().Replace(result, m =>
         {
             var flag = m.Groups[1].Value;
             return $"{flag} ********";
         });
 
-        // Connection-Strings (z.B. Password=abc;)
+        // Connection strings (e.g. Password=abc;)
         result = ConnectionStringPasswordPattern().Replace(result, "$1=********");
 
         return result;

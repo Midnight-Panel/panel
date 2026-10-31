@@ -1,5 +1,5 @@
 import { api } from "@/api/client";
-import type { DaemonLogs } from "@/api/types";
+import type { DemonLogs } from "@/api/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
@@ -24,7 +24,7 @@ export default function NodeLogsPage() {
 
   const logs = useQuery({
     queryKey: ["admin", "nodes", node.id, "logs"],
-    queryFn: () => api.get<DaemonLogs>(`/api/admin/nodes/${node.id}/logs?lines=500`),
+    queryFn: () => api.get<DemonLogs>(`/api/admin/nodes/${node.id}/logs?lines=500`),
     refetchInterval: live ? 3_000 : false,
     retry: false,
   });

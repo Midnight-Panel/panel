@@ -9,8 +9,8 @@ public interface IPreFlightService
 {
     Task<PreFlightResult> RunAllChecksAsync(
         int panelPort = 80,
-        int daemonPort = 8088,
-        bool isDaemonIncluded = true,
+        int demonPort = 8088,
+        bool isDemonIncluded = true,
         CancellationToken cancellationToken = default);
 
     Task<bool> EnsureDockerInstalledAsync(CancellationToken cancellationToken = default);
@@ -38,8 +38,8 @@ public class PreFlightService : IPreFlightService
 
     public async Task<PreFlightResult> RunAllChecksAsync(
         int panelPort = 80,
-        int daemonPort = 8088,
-        bool isDaemonIncluded = true,
+        int demonPort = 8088,
+        bool isDemonIncluded = true,
         CancellationToken cancellationToken = default)
     {
         var checks = new List<CheckItem>();
@@ -63,7 +63,7 @@ public class PreFlightService : IPreFlightService
         // 6. Ports in use
         var portsToCheck = new List<int> { 80, 443 };
         if (panelPort != 80 && panelPort != 443) portsToCheck.Add(panelPort);
-        if (isDaemonIncluded) portsToCheck.Add(daemonPort);
+        if (isDemonIncluded) portsToCheck.Add(demonPort);
 
         var portConflicts = await CheckPortConflictsAsync(portsToCheck, cancellationToken);
         if (portConflicts.Count == 0)

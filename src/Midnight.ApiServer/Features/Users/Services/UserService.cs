@@ -147,7 +147,10 @@ public class UserService
 
         var user = await GetAsync(id, cancellationToken);
 
-        // TODO: Phase 3 - refuse deletion while the user still owns servers
+        var servers = await _context.Servers.CountAsync(x => x.OwnerId == id, cancellationToken);
+
+        if (servers > 0)
+            throw HttpApiException.Conflict("The user still owns servers", $"Delete the {servers} server(s) of this user or transfer them to another user first");
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync(cancellationToken);

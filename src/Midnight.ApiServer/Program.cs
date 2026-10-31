@@ -12,8 +12,10 @@ using Midnight.ApiServer.Features.Account.Services;
 using Midnight.ApiServer.Features.Auth.Http;
 using Midnight.ApiServer.Features.Auth.Services;
 using Midnight.ApiServer.Features.Branding.Services;
+using Midnight.ApiServer.Features.Databases.Services;
 using Midnight.ApiServer.Features.Extensions.Services;
 using Midnight.ApiServer.Features.Nodes.Services;
+using Midnight.ApiServer.Features.Servers.Services;
 using Midnight.ApiServer.Features.Shards.Services;
 using Midnight.ApiServer.Features.SystemSettings.Services;
 using Midnight.ApiServer.Features.Users.Services;
@@ -60,6 +62,7 @@ builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(storagePaths.Keys));
 
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddMidnightDatabase(configuration, storagePaths.Root);
 builder.Services.AddMidnightAuthentication(configuration);
 builder.Services.AddSingleton<IMailSender, LogMailSender>();
@@ -145,8 +148,28 @@ builder.Services.AddScoped<IShardImportExportService, ShardImportExportService>(
 builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 builder.Services.AddScoped<IBrandingService, BrandingService>();
 builder.Services.AddScoped<IExtensionService, ExtensionService>();
+builder.Services.AddScoped<ServerService>();
+builder.Services.AddScoped<ConsoleProxy>();
+builder.Services.AddSingleton<ConsoleTicketService>();
+builder.Services.AddSingleton<DownloadTicketService>();
+builder.Services.AddScoped<ServerAccessService>();
+builder.Services.AddScoped<ActivityService>();
+builder.Services.AddScoped<SubuserService>();
+builder.Services.AddScoped<BackupService>();
+builder.Services.AddScoped<ServerNetworkService>();
+builder.Services.AddScoped<ScheduleService>();
+builder.Services.AddScoped<ScheduleRunner>();
+builder.Services.AddSingleton<ScheduleDispatcher>();
+builder.Services.AddHostedService<ScheduleWorker>();
+builder.Services.AddSingleton<IDatabaseExecutor, MySqlDatabaseExecutor>();
+builder.Services.AddScoped<DatabaseHostService>();
+builder.Services.AddScoped<ServerDatabaseService>();
 
 builder.Services.AddHttpClient(NodeClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(5));
+
+// Uploads, downloads and long file operations: no overall timeout (callers use their own), but don't hang on connecting
+builder.Services.AddHttpClient(NodeClient.StreamingHttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan)
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { ConnectTimeout = TimeSpan.FromSeconds(10) });
 
 var app = builder.Build();
 
@@ -172,6 +195,9 @@ var staticFileOptions = new StaticFileOptions
 };
 
 app.UseStaticFiles(staticFileOptions);
+
+// Server console (/api/servers/{uuid}/console), proxied to the demon
+app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
 
 app.UseRouting();
 

@@ -125,14 +125,16 @@ public class NodeService
     {
         var node = await GetAsync(id, cancellationToken);
 
-        if (await _context.Allocations.AnyAsync(x => x.NodeId == id && x.ServerId != null, cancellationToken))
-            throw HttpApiException.Conflict("The node still has servers", "Delete or move all servers of this node first");
+        var servers = await _context.Servers.CountAsync(x => x.NodeId == id, cancellationToken);
+
+        if (servers > 0 || await _context.Allocations.AnyAsync(x => x.NodeId == id && x.ServerId != null, cancellationToken))
+            throw HttpApiException.Conflict("The node still has servers", $"Delete the {servers} server(s) of this node first");
 
         _context.Nodes.Remove(node);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Generates a new token. The daemon has to be reconfigured afterwards.</summary>
+    /// <summary>Generates a new token. The demon has to be reconfigured afterwards.</summary>
     public async Task ResetTokenAsync(int id, CancellationToken cancellationToken)
     {
         var node = await GetAsync(id, cancellationToken);
@@ -143,7 +145,7 @@ public class NodeService
 
     public string GetToken(Node node) => _protector.Unprotect(node.Token);
 
-    /// <summary>Finds the node of a token sent by a daemon. Null if the token is unknown or wrong.</summary>
+    /// <summary>Finds the node of a token sent by a demon. Null if the token is unknown or wrong.</summary>
     public async Task<Node?> AuthenticateAsync(string tokenId, string token, CancellationToken cancellationToken)
     {
         var node = await _context.Nodes.AsNoTracking().FirstOrDefaultAsync(x => x.TokenId == tokenId, cancellationToken);

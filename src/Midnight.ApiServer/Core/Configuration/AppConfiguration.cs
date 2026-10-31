@@ -13,7 +13,7 @@ public class AppConfiguration
     /// <summary>Short description or slogan of the panel</summary>
     public string Slogan { get; set; } = "Game Server Management";
 
-    /// <summary>Public url of the panel, used for links in mails and the daemon setup command</summary>
+    /// <summary>Public url of the panel, used for links in mails and the demon setup command</summary>
     public string PublicUrl { get; set; } = "http://localhost:5220";
 
     /// <summary>Default language of the panel, e.g. 'de' or 'en'</summary>
@@ -28,6 +28,13 @@ public class AppConfiguration
     public ApiConfiguration Api { get; set; } = new();
     public FeaturesConfiguration Features { get; set; } = new();
     public FooterConfiguration Footer { get; set; } = new();
+    public ServersConfiguration Servers { get; set; } = new();
+}
+
+public class ServersConfiguration
+{
+    /// <summary>Max size of one file upload request (all files together), streamed to the demon. Default 1 GiB.</summary>
+    public long MaxUploadBytes { get; set; } = 1024L * 1024 * 1024;
 }
 
 public class DatabaseConfiguration

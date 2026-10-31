@@ -259,7 +259,7 @@ export default function AdminSettingsPage() {
                     placeholder="http://localhost:5220"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Base URL used for daemon connection commands and authentication links.
+                    Base URL used for demon connection commands and authentication links.
                   </p>
                 </div>
               </div>

@@ -39,10 +39,10 @@ public class BackupServiceTests
         Assert.EndsWith(".tar.gz", archivePath);
         Assert.True(_fileSystem.FileExists(archivePath));
 
-        // Rechte 600 verifiziert
+        // Verify permissions are 600
         Assert.Equal("600", _fileSystem.Permissions[archivePath]);
 
-        // SHA-256 Checksumme verifiziert
+        // Verify SHA-256 checksum
         var shaPath = $"{archivePath}.sha256";
         Assert.True(_fileSystem.FileExists(shaPath));
     }
@@ -50,7 +50,7 @@ public class BackupServiceTests
     [Fact]
     public async Task CleanOldBackups_EnforcesRetentionKeepCount()
     {
-        // Arrange: 5 alte Backups anlegen
+        // Arrange: create 5 old backups
         var service = CreateService();
         var backupDir = "/var/backups/midnight";
 

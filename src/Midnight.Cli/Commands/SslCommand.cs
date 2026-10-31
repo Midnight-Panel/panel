@@ -83,7 +83,7 @@ public class UninstallCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "uninstall";
-    public string Description => "Remove Midnight Panel and/or Daemon from the system";
+    public string Description => "Remove Midnight Panel and/or Demon from the system";
 
     public UninstallCommand(IProcessRunner processRunner, IFileSystem fileSystem, IConsoleOutput console)
     {
@@ -108,8 +108,8 @@ public class UninstallCommand : ICommand
         await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml down -v", isMutating: true, cancellationToken: cancellationToken);
 
         _console.WriteInfo("Removing systemd service...");
-        await _processRunner.RunAsync("systemctl", "disable --now midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
-        _fileSystem.DeleteFile("/etc/systemd/system/midnight-daemon.service");
+        await _processRunner.RunAsync("systemctl", "disable --now midnight-demon", isMutating: true, cancellationToken: cancellationToken);
+        _fileSystem.DeleteFile("/etc/systemd/system/midnight-demon.service");
 
         _console.WriteInfo("Removing configuration and data directories...");
         _fileSystem.DeleteDirectory("/opt/midnight", recursive: true);

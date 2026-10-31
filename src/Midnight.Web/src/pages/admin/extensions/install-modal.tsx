@@ -93,7 +93,7 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
             <div>
               <DialogTitle>{t("Extensions.Install")}</DialogTitle>
               <DialogDescription>
-                Installiere Erweiterungen über ein ZIP-Archiv oder registriere ein neues Modul manuell.
+                Install extensions from a ZIP archive or register a new module manually.
               </DialogDescription>
             </div>
           </div>
@@ -111,7 +111,7 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
             }`}
           >
             <UploadIcon className="size-3.5" />
-            Paket-Upload (.zip)
+            Package upload (.zip)
           </button>
           <button
             type="button"
@@ -123,7 +123,7 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
             }`}
           >
             <PlusIcon className="size-3.5" />
-            Manuell registrieren
+            Register manually
           </button>
         </div>
 
@@ -148,15 +148,15 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
                 <UploadIcon className="size-6" />
               </div>
               <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90">
-                {selectedFile ? selectedFile.name : "Klicke zum Auswählen des Archivs"}
+                {selectedFile ? selectedFile.name : "Click to select an archive"}
               </h4>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Unterstützt werden signierte oder verpackte .zip Dateien mit einem{" "}
-                <code className="text-brand-400">extension.json</code> Manifest.
+                Signed or packaged .zip files with an{" "}
+                <code className="text-brand-400">extension.json</code> manifest are supported.
               </p>
               {selectedFile && (
                 <div className="mt-3 text-xs font-medium text-emerald-500">
-                  Ausgewählt: {(selectedFile.size / 1024).toFixed(1)} KB
+                  Selected: {(selectedFile.size / 1024).toFixed(1)} KB
                 </div>
               )}
             </div>
@@ -166,7 +166,7 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
                 {t("Common.Cancel")}
               </Button>
               <Button onClick={handleUpload} disabled={!selectedFile || busy}>
-                {busy ? "Wird installiert…" : "Paket installieren"}
+                {busy ? "Installing…" : "Install package"}
               </Button>
             </DialogFooter>
           </div>
@@ -177,13 +177,13 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
                 <Label className="text-xs">Identifier *</Label>
                 <Input
                   {...register("identifier", {
-                    required: "Identifier ist erforderlich",
+                    required: "Identifier is required",
                     pattern: {
                       value: /^[a-z0-9-_]+$/,
-                      message: "Nur Kleinbuchstaben, Ziffern und Bindestriche",
+                      message: "Only lowercase letters, digits and hyphens",
                     },
                   })}
-                  placeholder="z.B. discord-webhook"
+                  placeholder="e.g. discord-webhook"
                   className="font-mono text-xs"
                 />
                 {errors.identifier && (
@@ -194,25 +194,25 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
               <div className="space-y-1">
                 <Label className="text-xs">Name *</Label>
                 <Input
-                  {...register("name", { required: "Name ist erforderlich" })}
-                  placeholder="z.B. Discord Notifier"
+                  {...register("name", { required: "Name is required" })}
+                  placeholder="e.g. Discord Notifier"
                 />
                 {errors.name && <p className="text-[11px] text-red-500">{errors.name.message}</p>}
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Beschreibung</Label>
+              <Label className="text-xs">Description</Label>
               <Textarea
                 {...register("description")}
-                placeholder="Kurze Zusammenfassung der Funktion…"
+                placeholder="Short summary of what it does…"
                 className="h-20 text-xs"
               />
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Kategorie</Label>
+                <Label className="text-xs">Category</Label>
                 <select
                   {...register("category")}
                   className="flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-xs text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
@@ -235,14 +235,14 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Autor</Label>
+                <Label className="text-xs">Author</Label>
                 <Input {...register("author")} placeholder="Midnightpanel" className="text-xs" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Webseite URL</Label>
+                <Label className="text-xs">Website URL</Label>
                 <Input
                   {...register("websiteUrl")}
                   placeholder="https://example.com"
@@ -261,7 +261,7 @@ export function InstallModal({ open, onOpenChange, categories }: InstallModalPro
                 {t("Common.Cancel")}
               </Button>
               <Button type="submit" disabled={busy}>
-                {busy ? "Registriere…" : "Erweiterung anlegen"}
+                {busy ? "Registering…" : "Create extension"}
               </Button>
             </DialogFooter>
           </form>

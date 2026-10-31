@@ -132,7 +132,7 @@ export default function ExtensionsPage() {
     try {
       await extensionsApi.delete(ext.id);
       await queryClient.invalidateQueries({ queryKey: ["admin", "extensions"] });
-      notifySuccess(`Erweiterung "${ext.name}" deinstalliert.`);
+      notifySuccess(`Extension "${ext.name}" uninstalled.`);
     } catch (err) {
       notifyError(err);
     }
@@ -150,7 +150,7 @@ export default function ExtensionsPage() {
         <div className="rounded-2xl border border-gray-200 bg-white p-4.5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Installierte Module
+              Installed modules
             </span>
             <div className="flex size-7 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
               <PluginIcon className="size-4" />
@@ -164,7 +164,7 @@ export default function ExtensionsPage() {
         <div className="rounded-2xl border border-gray-200 bg-white p-4.5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Aktivierte Module
+              Enabled modules
             </span>
             <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
               <BoltIcon className="size-4" />
@@ -178,7 +178,7 @@ export default function ExtensionsPage() {
         <div className="rounded-2xl border border-gray-200 bg-white p-4.5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Kategorien
+              Categories
             </span>
             <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
               <FilterIcon className="size-4" />
@@ -237,7 +237,7 @@ export default function ExtensionsPage() {
                   : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
               }`}
             >
-              Alle
+              All
             </button>
             <button
               type="button"
@@ -248,7 +248,7 @@ export default function ExtensionsPage() {
                   : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
               }`}
             >
-              Aktiv
+              Active
             </button>
             <button
               type="button"
@@ -259,7 +259,7 @@ export default function ExtensionsPage() {
                   : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
               }`}
             >
-              Inaktiv
+              Inactive
             </button>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function ExtensionsPage() {
       {/* Grid of Extension Cards */}
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-          Lade Erweiterungen…
+          Loading extensions…
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-gray-800 dark:bg-white/3">
@@ -297,7 +297,7 @@ export default function ExtensionsPage() {
             {t("Extensions.NoExtensions")}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Passe deine Suche an oder installiere ein neues Modul.
+            Adjust your search or install a new module.
           </p>
         </div>
       ) : (
@@ -351,13 +351,13 @@ export default function ExtensionsPage() {
 
                 {/* Description */}
                 <p className="mt-3.5 min-h-[36px] text-xs text-gray-600 line-clamp-2 dark:text-gray-300">
-                  {ext.description || "Keine Beschreibung verfügbar."}
+                  {ext.description || "No description available."}
                 </p>
 
                 {/* Metadata tags */}
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
                   <span className="rounded-md bg-gray-100 px-2 py-0.5 dark:bg-white/5">
-                    Von {ext.author}
+                    By {ext.author}
                   </span>
                   <Badge
                     variant="light"
@@ -395,7 +395,7 @@ export default function ExtensionsPage() {
                   )}
 
                   <Link to={`/admin/extensions/${ext.id}`}>
-                    <Button variant="ghost" size="icon-sm" title="Details öffnen">
+                    <Button variant="ghost" size="icon-sm" title="Open details">
                       <ChevronRightIcon className="size-4 text-gray-400" />
                     </Button>
                   </Link>

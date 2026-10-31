@@ -9,7 +9,7 @@ public class ExtensionCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "extension";
-    public string Description => "Verwalte Erweiterungen und Plugins für das Midnight Panel";
+    public string Description => "Manage extensions and plugins for the Midnight Panel";
 
     public ExtensionCommand(IProcessRunner processRunner, IConsoleOutput console)
     {
@@ -34,14 +34,14 @@ public class ExtensionCommand : ICommand
     private async Task<int> ListExtensionsAsync(string[] args, CancellationToken cancellationToken)
     {
         var isJson = args.Any(a => a.Equals("--json", StringComparison.OrdinalIgnoreCase));
-        _console.WriteInfo("Rufe installierte Erweiterungen ab...");
+        _console.WriteInfo("Fetching installed extensions...");
 
         var sql = "SELECT \"Identifier\", \"Name\", \"Category\", \"Version\", \"IsEnabled\" FROM \"Extensions\" ORDER BY \"Category\", \"Name\";";
         var res = await RunPostgresQueryAsync(sql, cancellationToken);
 
         if (!res.Success)
         {
-            _console.WriteError($"Konnte Erweiterungen nicht abrufen: {res.Output}");
+            _console.WriteError($"Could not fetch extensions: {res.Output}");
             return ExitCodes.GeneralError;
         }
 
@@ -51,7 +51,7 @@ public class ExtensionCommand : ICommand
             return ExitCodes.Success;
         }
 
-        _console.WriteSuccess("Installierte Midnight Panel Erweiterungen:");
+        _console.WriteSuccess("Installed Midnight Panel extensions:");
         _console.WriteLine("----------------------------------------------------------------------");
         _console.WriteLine(res.Output.Trim());
         _console.WriteLine("----------------------------------------------------------------------");
@@ -63,24 +63,24 @@ public class ExtensionCommand : ICommand
         var identifier = args.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
         if (string.IsNullOrWhiteSpace(identifier))
         {
-            _console.WriteError($"Bitte gib einen Identifier an: midnight extension {(isEnable ? "enable" : "disable")} <identifier>");
+            _console.WriteError($"Please specify an identifier: midnight extension {(isEnable ? "enable" : "disable")} <identifier>");
             return ExitCodes.InvalidArguments;
         }
 
         var statusText = isEnable ? "true" : "false";
-        var verb = isEnable ? "aktiviert" : "deaktiviert";
+        var verb = isEnable ? "enabled" : "disabled";
 
-        _console.WriteInfo($"Setze Erweiterung '{identifier}' auf {verb}...");
+        _console.WriteInfo($"Setting extension '{identifier}' to {verb}...");
         var sql = $"UPDATE \"Extensions\" SET \"IsEnabled\" = {statusText}, \"UpdatedAt\" = NOW() WHERE LOWER(\"Identifier\") = LOWER('{identifier}');";
 
         var res = await RunPostgresQueryAsync(sql, cancellationToken);
         if (res.Success)
         {
-            _console.WriteSuccess($"Erweiterung '{identifier}' wurde erfolgreich {verb}.");
+            _console.WriteSuccess($"Extension '{identifier}' was {verb} successfully.");
             return ExitCodes.Success;
         }
 
-        _console.WriteError($"Fehler beim Ändern des Status: {res.Output}");
+        _console.WriteError($"Failed to change status: {res.Output}");
         return ExitCodes.GeneralError;
     }
 
@@ -89,11 +89,11 @@ public class ExtensionCommand : ICommand
         var filePath = args.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
         {
-            _console.WriteError($"Bitte gib einen gültigen Pfad zu einer .zip-Datei an: midnight extension install <pfad.zip>");
+            _console.WriteError($"Please specify a valid path to a .zip file: midnight extension install <path.zip>");
             return ExitCodes.InvalidArguments;
         }
 
-        _console.WriteInfo($"Kopiere Erweiterungspaket '{filePath}' in den Panel-Container...");
+        _console.WriteInfo($"Copying extension package '{filePath}' into the panel container...");
         var dest = $"/tmp/{Path.GetFileName(filePath)}";
 
         var cpRes = await _processRunner.RunAsync(
@@ -104,11 +104,11 @@ public class ExtensionCommand : ICommand
 
         if (!cpRes.Success)
         {
-            _console.WriteError($"Fehler beim Kopieren des Pakets: {cpRes.Output}");
+            _console.WriteError($"Failed to copy package: {cpRes.Output}");
             return ExitCodes.GeneralError;
         }
 
-        _console.WriteSuccess($"Paket '{Path.GetFileName(filePath)}' bereitgestellt. Importiere über das Web-Panel.");
+        _console.WriteSuccess($"Package '{Path.GetFileName(filePath)}' staged. Import it via the web panel.");
         return ExitCodes.Success;
     }
 
@@ -124,16 +124,16 @@ public class ExtensionCommand : ICommand
     private int PrintHelp()
     {
         _console.WriteLine("""
-        midnight extension - Verwalte Erweiterungen und Plugins
+        midnight extension - Manage extensions and plugins
 
-        VERWENDUNG:
-          midnight extension <subcommand> [optionen]
+        USAGE:
+          midnight extension <subcommand> [options]
 
-        BEFEHLE:
-          list [--json]              Liste alle installierten Erweiterungen auf
-          enable <identifier>        Aktiviere eine Erweiterung
-          disable <identifier>       Deaktiviere eine Erweiterung
-          install <archiv.zip>       Kopiere und installiere ein Erweiterungspaket
+        COMMANDS:
+          list [--json]              List all installed extensions
+          enable <identifier>        Enable an extension
+          disable <identifier>       Disable an extension
+          install <archive.zip>      Copy and install an extension package
         """);
         return ExitCodes.Success;
     }

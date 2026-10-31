@@ -53,18 +53,18 @@ public class CommandDispatcher
     private void PrintHelp()
     {
         Console.WriteLine("""
-        midnight - Installation and management CLI for Midnight Panel & Daemon
+        midnight - Installation and management CLI for Midnight Panel & Demon
 
         USAGE:
           midnight <command> [target] [options]
 
         CORE COMMANDS:
-          install [panel|daemon|both]    Install Midnight Panel and/or Daemon
+          install [panel|demon|both]    Install Midnight Panel and/or Demon
           status [--json]                Show status of containers and services
-          start [panel|daemon|both]      Start components
-          stop [panel|daemon|both]       Stop components
-          restart [panel|daemon|both]    Restart components
-          logs [target] [-f] [--tail N]  Show live logs (panel, db, caddy, daemon, installer)
+          start [panel|demon|both]      Start components
+          stop [panel|demon|both]       Stop components
+          restart [panel|demon|both]    Restart components
+          logs [target] [-f] [--tail N]  Show live logs (panel, db, caddy, demon, installer)
 
         MAINTENANCE & UPDATES:
           update [target] [--use-images] Update with automatic backup & auto-rollback

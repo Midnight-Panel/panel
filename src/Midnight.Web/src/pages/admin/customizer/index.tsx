@@ -590,7 +590,7 @@ export default function AdminCustomizerPage() {
                         className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-4 py-2.5 text-sm text-gray-900 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:focus:bg-transparent"
                       />
                       <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                        Public panel URL for daemon connections and invite links.
+                        Public panel URL for demon connections and invite links.
                       </p>
                     </div>
                   </div>

@@ -56,7 +56,7 @@ export default function NodeOverviewPage() {
     [t("Nodes.Kernel"), `${system.kernelVersion} (${system.architecture})`],
     [t("Nodes.Cpu"), `${system.cpuModel ?? "-"} · ${system.cpuCores} ${t("Nodes.Cores")}`],
     [t("AdminOverview.Uptime"), formatTimeSpan(system.uptime)],
-    [t("Nodes.DaemonVersion"), `v${system.daemonVersion} · ${t("Nodes.Protocol")} ${system.protocolVersion}`],
+    [t("Nodes.DemonVersion"), `v${system.demonVersion} · ${t("Nodes.Protocol")} ${system.protocolVersion}`],
     [t("Nodes.Latency"), `${data.latencyMs} ms`],
   ];
 

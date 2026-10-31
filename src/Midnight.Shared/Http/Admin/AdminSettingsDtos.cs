@@ -25,7 +25,7 @@ public class FooterLinkItem
                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeMailto);
     }
 
-    /// <summary>Absolute http(s) url, e.g. the public url of the panel used in mails and the daemon config</summary>
+    /// <summary>Absolute http(s) url, e.g. the public url of the panel used in mails and the demon config</summary>
     public static bool IsHttpUrl(string? url)
         => Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 }

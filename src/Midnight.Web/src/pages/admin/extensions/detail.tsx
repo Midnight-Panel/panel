@@ -105,7 +105,7 @@ export default function ExtensionDetailPage() {
       setParsedValues(parsed);
       setJsonError(null);
     } catch (e: unknown) {
-      setJsonError(e instanceof Error ? e.message : "Ungültiges JSON-Format");
+      setJsonError(e instanceof Error ? e.message : "Invalid JSON format");
     }
   };
 
@@ -125,7 +125,7 @@ export default function ExtensionDetailPage() {
       notifySuccess(t("Extensions.SaveSuccess"));
     } catch (err: unknown) {
       if (err instanceof SyntaxError) {
-        setJsonError("Ungültiges JSON-Format. Bitte überprüfe die Syntax.");
+        setJsonError("Invalid JSON format. Please check the syntax.");
       } else {
         notifyError(err);
       }
@@ -142,7 +142,7 @@ export default function ExtensionDetailPage() {
       notifySuccess(
         t(
           "Extensions.Toggled",
-          extension?.name ?? "Erweiterung",
+          extension?.name ?? "Extension",
           checked ? t("Extensions.Enabled") : t("Extensions.Disabled"),
         ),
       );
@@ -159,7 +159,7 @@ export default function ExtensionDetailPage() {
     try {
       await extensionsApi.delete(extension.id);
       await queryClient.invalidateQueries({ queryKey: ["admin", "extensions"] });
-      notifySuccess(`Erweiterung "${extension.name}" deinstalliert.`);
+      notifySuccess(`Extension "${extension.name}" uninstalled.`);
       navigate("/admin/extensions");
     } catch (err) {
       notifyError(err);
@@ -171,7 +171,7 @@ export default function ExtensionDetailPage() {
   if (isLoading || !extension) {
     return (
       <div className="flex h-72 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-        Lade Erweiterung…
+        Loading extension…
       </div>
     );
   }
@@ -185,7 +185,7 @@ export default function ExtensionDetailPage() {
           className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400"
         >
           <ArrowLeftIcon className="size-3.5" />
-          Zurück zu Erweiterungen
+          Back to extensions
         </Link>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -221,7 +221,7 @@ export default function ExtensionDetailPage() {
                 <span>•</span>
                 <span>v{extension.version}</span>
                 <span>•</span>
-                <span>Von {extension.author}</span>
+                <span>By {extension.author}</span>
                 <span>•</span>
                 <code className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-mono dark:bg-white/5">
                   {extension.identifier}
@@ -235,7 +235,7 @@ export default function ExtensionDetailPage() {
               <>
                 <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3">
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                    {extension.isEnabled ? "Aktiviert" : "Deaktiviert"}
+                    {extension.isEnabled ? "Enabled" : "Disabled"}
                   </span>
                   <Switch
                     checked={extension.isEnabled}
@@ -271,7 +271,7 @@ export default function ExtensionDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="info" className="gap-2">
             <InfoCircleIcon className="size-4" />
-            Informationen
+            Information
           </TabsTrigger>
         </TabsList>
 
@@ -281,10 +281,10 @@ export default function ExtensionDetailPage() {
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/5">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
-                  Konfigurationswerte
+                  Configuration values
                 </h3>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  Aktuelle Einstellungen und Umgebungsparameter für {extension.name}.
+                  Current settings and environment parameters for {extension.name}.
                 </p>
               </div>
 
@@ -299,7 +299,7 @@ export default function ExtensionDetailPage() {
                         : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                     }`}
                   >
-                    Formular
+                    Form
                   </button>
                   <button
                     type="button"
@@ -320,7 +320,7 @@ export default function ExtensionDetailPage() {
               <div className="space-y-4">
                 {configKeys.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                    Keine Schlüssel konfiguriert. Wechsle zu "Raw JSON", um Parameter zu definieren.
+                    No keys configured. Switch to "Raw JSON" to define parameters.
                   </div>
                 ) : (
                   configKeys.map((key) => {
@@ -339,7 +339,7 @@ export default function ExtensionDetailPage() {
                               {key}
                             </Label>
                             <span className="block text-xs text-gray-500 dark:text-gray-400">
-                              Aktiviert oder deaktiviert diese Funktion
+                              Enables or disables this feature
                             </span>
                           </div>
                           <Switch
@@ -364,7 +364,7 @@ export default function ExtensionDetailPage() {
                               isNum ? Number(e.target.value) : e.target.value,
                             )
                           }
-                          placeholder={`Wert für ${key}`}
+                          placeholder={`Value for ${key}`}
                           className="font-mono text-sm"
                         />
                       </div>
@@ -391,7 +391,7 @@ export default function ExtensionDetailPage() {
               <div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-white/5">
                 <Button onClick={handleSaveConfig} disabled={saving || !!jsonError}>
                   <FloppyDiscIcon className="mr-1.5 size-4" />
-                  {saving ? "Speichert…" : t("Common.Save")}
+                  {saving ? "Saving…" : t("Common.Save")}
                 </Button>
               </div>
             )}
@@ -410,7 +410,7 @@ export default function ExtensionDetailPage() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Keine Dokumentation für diese Erweiterung hinterlegt.
+                No documentation provided for this extension.
               </p>
             )}
           </Card>
@@ -420,12 +420,12 @@ export default function ExtensionDetailPage() {
         <TabsContent value="info">
           <Card className="p-6">
             <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">
-              Modul-Informationen
+              Module information
             </h3>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Modul-Identifier</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Module identifier</span>
                 <p className="mt-1 font-mono text-sm font-semibold text-gray-800 dark:text-white/90">
                   {extension.identifier}
                 </p>
@@ -439,28 +439,28 @@ export default function ExtensionDetailPage() {
               </div>
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Entwickler / Autor</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Developer / author</span>
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
                   {extension.author}
                 </p>
               </div>
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Kategorie</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Category</span>
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
                   {extension.category}
                 </p>
               </div>
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Installationszeitpunkt</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Installed at</span>
                 <p className="mt-1 text-sm text-gray-800 dark:text-white/90">
                   {new Date(extension.installedAt).toLocaleString()}
                 </p>
               </div>
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Letztes Update</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Last updated</span>
                 <p className="mt-1 text-sm text-gray-800 dark:text-white/90">
                   {new Date(extension.updatedAt).toLocaleString()}
                 </p>
@@ -469,7 +469,7 @@ export default function ExtensionDetailPage() {
 
             {extension.websiteUrl && (
               <div className="mt-4 rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Offizielle Webseite</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Official website</span>
                 <div className="mt-1">
                   <a
                     href={extension.websiteUrl}

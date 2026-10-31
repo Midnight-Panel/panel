@@ -8,7 +8,7 @@ using Midnight.Shared.Protocol;
 
 namespace Midnight.ApiServer.Features.Nodes.Http;
 
-/// <summary>Authenticates daemons calling the panel with "Authorization: Bearer mdn_{tokenId}.{token}"</summary>
+/// <summary>Authenticates demons calling the panel with "Authorization: Bearer mdn_{tokenId}.{token}"</summary>
 public class NodeAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string SchemeName = "Node";
@@ -34,7 +34,7 @@ public class NodeAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 
         if (node == null)
         {
-            Logger.LogWarning("Rejected daemon request with invalid token from {Ip}", Context.Connection.RemoteIpAddress);
+            Logger.LogWarning("Rejected demon request with invalid token from {Ip}", Context.Connection.RemoteIpAddress);
             return AuthenticateResult.Fail("Invalid node token");
         }
 

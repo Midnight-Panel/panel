@@ -2,7 +2,7 @@ namespace Midnight.Shared.Protocol;
 
 /// <summary>
 /// Node tokens are sent as "Authorization: Bearer mdn_{tokenId}.{token}" in both directions
-/// (panel to daemon and daemon to panel).
+/// (panel to demon and demon to panel).
 /// </summary>
 public static class NodeToken
 {

@@ -25,8 +25,8 @@ public record StatusReport
     public string PanelVersion { get; set; } = "unknown";
     public string? PanelDomain { get; set; }
     public List<ContainerStatusInfo> Containers { get; set; } = [];
-    public string DaemonStatus { get; set; } = "unknown";
-    public string DaemonVersion { get; set; } = "unknown";
+    public string DemonStatus { get; set; } = "unknown";
+    public string DemonVersion { get; set; } = "unknown";
     public string DatabaseHealth { get; set; } = "unknown";
     public string DiskFreeSpace { get; set; } = "unknown";
     public string Architecture { get; set; } = "unknown";

@@ -8,7 +8,7 @@ public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        // Globale Flags parsen
+        // Parse global flags
         var isDryRun = args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase));
         var isYes = args.Any(a => a is "-y" or "--yes");
         var isDebug = args.Any(a => a.Equals("--debug", StringComparison.OrdinalIgnoreCase));
@@ -58,13 +58,13 @@ public static class Program
 
         var dispatcher = new CommandDispatcher(commands, console, context);
 
-        // Sauberes Abfangen von STRG+C / SIGINT
+        // Graceful handling of Ctrl+C / SIGINT
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
             cts.Cancel();
-            console.WriteWarning("\nVorgang durch Benutzer abgebrochen.");
+            console.WriteWarning("\nOperation cancelled by user.");
         };
 
         try

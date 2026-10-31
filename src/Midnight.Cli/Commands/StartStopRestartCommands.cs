@@ -8,7 +8,7 @@ public class StartCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "start";
-    public string Description => "Starte Panel (Docker Compose) oder Daemon (systemd)";
+    public string Description => "Start the panel (Docker Compose) or demon (systemd)";
 
     public StartCommand(IProcessRunner processRunner, IConsoleOutput console)
     {
@@ -22,16 +22,16 @@ public class StartCommand : ICommand
 
         if (target is "panel" or "both")
         {
-            _console.WriteInfo("Starte Panel Docker-Compose-Stack...");
+            _console.WriteInfo("Starting panel Docker Compose stack...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml up -d", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Panel gestartet.");
+            _console.WriteSuccess("Panel started.");
         }
 
-        if (target is "daemon" or "both")
+        if (target is "demon" or "both")
         {
-            _console.WriteInfo("Starte midnight-daemon Dienst...");
-            await _processRunner.RunAsync("systemctl", "start midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Daemon gestartet.");
+            _console.WriteInfo("Starting midnight-demon service...");
+            await _processRunner.RunAsync("systemctl", "start midnight-demon", isMutating: true, cancellationToken: cancellationToken);
+            _console.WriteSuccess("Demon started.");
         }
 
         return ExitCodes.Success;
@@ -44,7 +44,7 @@ public class StopCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "stop";
-    public string Description => "Stoppe Panel oder Daemon";
+    public string Description => "Stop the panel or demon";
 
     public StopCommand(IProcessRunner processRunner, IConsoleOutput console)
     {
@@ -58,16 +58,16 @@ public class StopCommand : ICommand
 
         if (target is "panel" or "both")
         {
-            _console.WriteInfo("Stoppe Panel Docker-Compose-Stack...");
+            _console.WriteInfo("Stopping panel Docker Compose stack...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml stop", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Panel gestoppt.");
+            _console.WriteSuccess("Panel stopped.");
         }
 
-        if (target is "daemon" or "both")
+        if (target is "demon" or "both")
         {
-            _console.WriteInfo("Stoppe midnight-daemon Dienst...");
-            await _processRunner.RunAsync("systemctl", "stop midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Daemon gestoppt.");
+            _console.WriteInfo("Stopping midnight-demon service...");
+            await _processRunner.RunAsync("systemctl", "stop midnight-demon", isMutating: true, cancellationToken: cancellationToken);
+            _console.WriteSuccess("Demon stopped.");
         }
 
         return ExitCodes.Success;
@@ -80,7 +80,7 @@ public class RestartCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "restart";
-    public string Description => "Starte Panel oder Daemon neu";
+    public string Description => "Restart the panel or demon";
 
     public RestartCommand(IProcessRunner processRunner, IConsoleOutput console)
     {
@@ -94,16 +94,16 @@ public class RestartCommand : ICommand
 
         if (target is "panel" or "both")
         {
-            _console.WriteInfo("Starte Panel Docker-Compose-Stack neu...");
+            _console.WriteInfo("Restarting panel Docker Compose stack...");
             await _processRunner.RunAsync("docker", "compose -f /opt/midnight/panel/docker-compose.yml restart", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Panel neu gestartet.");
+            _console.WriteSuccess("Panel restarted.");
         }
 
-        if (target is "daemon" or "both")
+        if (target is "demon" or "both")
         {
-            _console.WriteInfo("Starte midnight-daemon Dienst neu...");
-            await _processRunner.RunAsync("systemctl", "restart midnight-daemon", isMutating: true, cancellationToken: cancellationToken);
-            _console.WriteSuccess("Daemon neu gestartet.");
+            _console.WriteInfo("Restarting midnight-demon service...");
+            await _processRunner.RunAsync("systemctl", "restart midnight-demon", isMutating: true, cancellationToken: cancellationToken);
+            _console.WriteSuccess("Demon restarted.");
         }
 
         return ExitCodes.Success;
