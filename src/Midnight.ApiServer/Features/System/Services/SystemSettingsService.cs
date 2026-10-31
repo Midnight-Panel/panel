@@ -26,10 +26,10 @@ public partial class SystemSettingsService : ISystemSettingsService
     [GeneratedRegex(@"(?i)(password|pwd|user id|uid|user)=([^;]+)")]
     private static partial Regex ConnectionStringSecretRegex();
 
-    [GeneratedRegex(@"(?i)bearer\s+[a-z0-9._\-]+", RegexOptions.Compiled)]
+    [GeneratedRegex(@"(?i)bearer\s+[a-z0-9._\-]+")]
     private static partial Regex BearerTokenRegex();
 
-    [GeneratedRegex(@"(?i)(token|secret|password|key)=([^\s&"",]+)", RegexOptions.Compiled)]
+    [GeneratedRegex(@"(?i)(token|secret|password|key)=([^\s&"",]+)")]
     private static partial Regex QueryOrFormSecretRegex();
 
     public SystemSettingsService(
@@ -279,9 +279,6 @@ public partial class SystemSettingsService : ISystemSettingsService
             var storageWritable = CheckDirectoryWritable(_storagePaths.Root);
             var logsWritable = CheckDirectoryWritable(_storagePaths.Logs);
 
-            var recentCutoff = now.AddMinutes(-2);
-            var onlineNodes = await _context.Nodes.CountAsync(x => x.LastSeenAt != null && x.LastSeenAt > recentCutoff, cancellationToken);
-
             var diagnostics = new
             {
                 database = new
@@ -297,8 +294,7 @@ public partial class SystemSettingsService : ISystemSettingsService
                 },
                 nodes = new
                 {
-                    total = nodeCount,
-                    online = onlineNodes
+                    total = nodeCount
                 }
             };
 
@@ -415,7 +411,7 @@ public partial class SystemSettingsService : ISystemSettingsService
                 {
                     obj[name] = "[REDACTED]";
                 }
-                else if (name.Equals("ConnectionString", StringComparison.OrdinalIgnoreCase) && val is JsonValue strVal && strVal.TryGetValue<string>(out var connStr))
+                else if (name.Equals("ConnectionString", StringComparison.OrdinalIgnoreCase) && val is JsonValue strVal && strVal.TryGetValue<string>(out var connStr) && connStr != null)
                 {
                     obj[name] = ConnectionStringSecretRegex().Replace(connStr, "$1=[REDACTED]");
                 }
