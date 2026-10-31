@@ -55,7 +55,7 @@ public class UpdateServiceTests
     {
         // Arrange
         var service = CreateService();
-        // Health-Check schlägt fehl (Exit-Code 7 / Verbindung abgelehnt)
+        // Health check fails (exit code 7 / connection refused)
         _processRunner.CustomResults["curl -fsS http://localhost:8080/api/health"] =
             new ProcessResult(7, string.Empty, "Connection refused");
 
@@ -67,14 +67,14 @@ public class UpdateServiceTests
         Assert.Contains(_console.Messages, m => m.Contains("AUTOMATISCHEN ROLLBACK"));
 
         var state = await _stateService.LoadAsync();
-        // Version muss wieder auf vorherige Version zurückgesetzt sein
+        // Version must be reset to the previous one
         Assert.Equal("v0.1.0", state.PanelVersion);
     }
 
     [Fact]
     public async Task UpdatePanel_FallsBackToSourceBuildWhenRegistryImagePullFails()
     {
-        // Arrange: Docker Pull schlägt fehl
+        // Arrange: docker pull fails
         var service = CreateService();
         _processRunner.CustomResults["docker pull"] = new ProcessResult(1, string.Empty, "manifest unknown");
         _processRunner.CustomResults["curl -fsS http://localhost:8080/api/health"] =

@@ -9,7 +9,7 @@ public class UpdateCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "update";
-    public string Description => "Aktualisiere Panel oder Daemon mit automatischem Backup, Health-Check & Rollback";
+    public string Description => "Update panel or daemon with automatic backup, health check and rollback";
 
     public UpdateCommand(IUpdateService updateService, IConsoleOutput console)
     {
@@ -56,7 +56,7 @@ public class RollbackCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "rollback";
-    public string Description => "Setze Panel oder Daemon manuell auf die vorherige Version zurück";
+    public string Description => "Manually roll panel or daemon back to the previous version";
 
     public RollbackCommand(IUpdateService updateService, IConsoleOutput console)
     {
@@ -69,7 +69,7 @@ public class RollbackCommand : ICommand
         var target = args.FirstOrDefault(a => !a.StartsWith('-'))?.ToLowerInvariant() ?? "panel";
 
         var confirmed = _console.Confirm(
-            $"Möchtest du wirklich einen Rollback für '{target}' auf den vorherigen Stand durchführen?",
+            $"Really roll '{target}' back to the previous version?",
             defaultYes: false);
 
         if (!confirmed)

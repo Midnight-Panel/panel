@@ -1,7 +1,7 @@
 namespace Midnight.Cli.Common;
 
 /// <summary>
-/// Einheitliche Exit-Codes für das Midnight CLI.
+/// Common exit codes of the Midnight CLI.
 /// </summary>
 public static class ExitCodes
 {

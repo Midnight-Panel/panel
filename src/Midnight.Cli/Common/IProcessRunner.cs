@@ -10,8 +10,8 @@ public record ProcessResult(
 }
 
 /// <summary>
-/// Abstraktion für die Prozessausführung. Erlaubt zentrales Logging,
-/// Redaction von Secrets, Mocking in Tests und --dry-run-Unterstützung.
+/// Abstraction for running processes. Allows central logging,
+/// redaction of secrets, mocking in tests and --dry-run support.
 /// </summary>
 public interface IProcessRunner
 {

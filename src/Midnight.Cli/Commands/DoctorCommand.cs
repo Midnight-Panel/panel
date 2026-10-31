@@ -8,7 +8,7 @@ public class DoctorCommand : ICommand
     private readonly IDoctorService _doctorService;
 
     public string Name => "doctor";
-    public string Description => "Umfassende Diagnose des Systems, der Docker-Umgebung und sensibler Dateirechte";
+    public string Description => "Full diagnosis of the system, the Docker environment and sensitive file permissions";
 
     public DoctorCommand(IDoctorService doctorService)
     {

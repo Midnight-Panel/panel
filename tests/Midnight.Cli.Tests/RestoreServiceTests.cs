@@ -35,7 +35,7 @@ public class RestoreServiceTests
 
         // Assert
         Assert.False(result);
-        Assert.Contains(_console.Messages, m => m.Contains("nicht gefunden"));
+        Assert.Contains(_console.Messages, m => m.Contains("not found"));
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class RestoreServiceTests
 
         // Assert
         Assert.False(result);
-        Assert.Contains(_console.Messages, m => m.Contains("Prüfsummen-Fehler"));
+        Assert.Contains(_console.Messages, m => m.Contains("Checksum mismatch"));
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class RestoreServiceTests
         Assert.Contains(_console.Messages, m => m.Contains("Sicherheits-Backup gespeichert"));
         Assert.Contains(_console.Messages, m => m.Contains("Wiederherstellung erfolgreich abgeschlossen"));
 
-        // Docker down und up Befehle wurden aufgerufen
+        // docker down and up were called
         Assert.Contains(_processRunner.ExecutedCommands, c => c.Arguments.Contains("down"));
         Assert.Contains(_processRunner.ExecutedCommands, c => c.Arguments.Contains("up -d"));
     }

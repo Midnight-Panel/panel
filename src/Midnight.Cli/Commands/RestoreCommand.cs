@@ -9,7 +9,7 @@ public class RestoreCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "restore";
-    public string Description => "Stelle Midnight Panel und Datenbank aus einem Backup-Archiv wieder her";
+    public string Description => "Restore Midnight Panel and its database from a backup archive";
 
     public RestoreCommand(IRestoreService restoreService, IConsoleOutput console)
     {
@@ -22,7 +22,7 @@ public class RestoreCommand : ICommand
         var archivePath = args.FirstOrDefault(a => !a.StartsWith('-'));
         if (string.IsNullOrWhiteSpace(archivePath))
         {
-            _console.WriteError("Bitte Pfad zum Backup-Archiv angeben: midnight restore <archiv.tar.gz>");
+            _console.WriteError("Pass the path to the backup archive: midnight restore <archive.tar.gz>");
             return ExitCodes.InvalidArguments;
         }
 

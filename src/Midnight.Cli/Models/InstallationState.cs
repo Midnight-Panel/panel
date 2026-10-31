@@ -1,7 +1,7 @@
 namespace Midnight.Cli.Models;
 
 /// <summary>
-/// Persistenter Zustand der Installation in /etc/midnight/midnight.json.
+/// Persistent installation state in /etc/midnight/midnight.json.
 /// </summary>
 public record InstallationState
 {

@@ -9,7 +9,7 @@ public class BackupCommand : ICommand
     private readonly IConsoleOutput _console;
 
     public string Name => "backup";
-    public string Description => "Erstelle ein vollständiges Backup von Datenbank, Storage und Konfiguration (--encrypt, --keep N)";
+    public string Description => "Create a full backup of database, storage and configuration (--encrypt, --keep N)";
 
     public BackupCommand(IBackupService backupService, IConsoleOutput console)
     {
@@ -55,7 +55,7 @@ public class BackupCommand : ICommand
         }
         catch (Exception ex)
         {
-            _console.WriteError($"Fehler beim Erstellen des Backups: {ex.Message}");
+            _console.WriteError($"Failed to create the backup: {ex.Message}");
             return ExitCodes.GeneralError;
         }
     }

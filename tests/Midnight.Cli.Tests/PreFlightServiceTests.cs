@@ -54,7 +54,7 @@ public class PreFlightServiceTests
     [Fact]
     public async Task CheckRam_WarnsWhenMarginal()
     {
-        // Arrange: 1700 MB RAM (zwischen 1400 und 2000 MB)
+        // Arrange: 1700 MB RAM (between 1400 and 2000 MB)
         var service = CreateService();
         _fileSystem.Files["/proc/meminfo"] = "MemTotal:        1740800 kB\n";
 

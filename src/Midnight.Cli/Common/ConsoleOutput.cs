@@ -158,7 +158,7 @@ public class ConsoleOutput : IConsoleOutput
             if (int.TryParse(input, out var choice) && choice >= 1 && choice <= options.Count)
                 return choice - 1;
 
-            WriteWarning($"Ungültige Eingabe. Bitte Zahl von 1 bis {options.Count} eingeben.");
+            WriteWarning($"Invalid input. Enter a number from 1 to {options.Count}.");
         }
     }
 
@@ -205,7 +205,7 @@ public class ConsoleOutput : IConsoleOutput
         }
         catch
         {
-            // Ignorieren falls nicht lesbar
+            // Ignore if not readable
         }
     }
 

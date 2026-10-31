@@ -44,7 +44,7 @@ public class LogsCommand : ICommand
             return ExitCodes.Success;
         }
 
-        // Docker compose logs für Panel
+        // Docker compose logs of the panel
         var fArg = follow ? "-f" : "";
         var service = target is "db" or "caddy" ? target : "";
         await _processRunner.RunAsync("docker", $"compose -f /opt/midnight/panel/docker-compose.yml logs --tail {tail} {fArg} {service}".Trim(), cancellationToken: cancellationToken);

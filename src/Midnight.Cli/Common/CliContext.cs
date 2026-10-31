@@ -1,7 +1,7 @@
 namespace Midnight.Cli.Common;
 
 /// <summary>
-/// Hält globale CLI-Parameter und Laufzeitoptionen wie --dry-run und -y.
+/// Holds global CLI parameters and runtime options such as --dry-run and -y.
 /// </summary>
 public record CliContext
 {

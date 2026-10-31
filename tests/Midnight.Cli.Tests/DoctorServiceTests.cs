@@ -45,7 +45,7 @@ public class DoctorServiceTests
     [Fact]
     public async Task Doctor_SucceedsWhenSensitiveFileHas600Mode()
     {
-        // Arrange: .env und midnight.json haben strikt 600
+        // Arrange: .env and midnight.json are strictly 600
         var service = CreateService();
         _fileSystem.Files["/opt/midnight/panel/.env"] = "DB_PASS=123";
         _fileSystem.Permissions["/opt/midnight/panel/.env"] = "600";

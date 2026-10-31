@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace Midnight.Cli.Common;
 
 /// <summary>
-/// Verhindert zuverlässig, dass Passwörter, Hashes, API-Tokens und Secrets
-/// in Konsolen-Ausgaben, Prozess-Logs oder Fehlermeldungen landen.
+/// Makes sure passwords, hashes, API tokens and secrets
+/// never end up in console output, process logs or error messages.
 /// </summary>
 public static partial class SecretScrubber
 {

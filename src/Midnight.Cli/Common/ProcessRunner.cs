@@ -26,7 +26,7 @@ public class ProcessRunner : IProcessRunner
 
         if (_context.DryRun && isMutating)
         {
-            _console.WriteInfo($"[DRY-RUN] Würde Befehl ausführen: {fileName} {sanitizedArgs}");
+            _console.WriteInfo($"[DRY-RUN] Would run: {fileName} {sanitizedArgs}");
             LogToFile($"[DRY-RUN] {fileName} {sanitizedArgs}");
             return new ProcessResult(0, "[DRY-RUN simulation]", string.Empty);
         }
@@ -82,7 +82,7 @@ public class ProcessRunner : IProcessRunner
         }
         catch (Exception ex)
         {
-            LogToFile($"[ERROR] Ausnahme bei Ausführung von {fileName}: {ex.Message}");
+            LogToFile($"[ERROR] Exception while running {fileName}: {ex.Message}");
             return new ProcessResult(127, string.Empty, ex.Message);
         }
     }
@@ -113,7 +113,7 @@ public class ProcessRunner : IProcessRunner
         }
         catch
         {
-            // Logging-Fehler dürfen den Hauptablauf nicht blockieren
+            // Logging errors must not block the main flow
         }
     }
 }

@@ -60,10 +60,10 @@ public class BackupServiceTests
         _fileSystem.Files[$"{backupDir}/midnight-backup-v0.1.0-20261004-120000.tar.gz"] = "data";
         _fileSystem.Files[$"{backupDir}/midnight-backup-v0.1.0-20261005-120000.tar.gz"] = "data";
 
-        // Act: Behalte nur die 2 neuesten (--keep 2)
+        // Act: keep only the 2 newest (--keep 2)
         await service.CleanOldBackupsAsync(backupDir, keepCount: 2);
 
-        // Assert: Die 3 ältesten wurden gelöscht, die 2 neuesten bleiben erhalten
+        // Assert: the 3 oldest were deleted, the 2 newest are kept
         Assert.False(_fileSystem.FileExists($"{backupDir}/midnight-backup-v0.1.0-20261001-120000.tar.gz"));
         Assert.False(_fileSystem.FileExists($"{backupDir}/midnight-backup-v0.1.0-20261002-120000.tar.gz"));
         Assert.False(_fileSystem.FileExists($"{backupDir}/midnight-backup-v0.1.0-20261003-120000.tar.gz"));
