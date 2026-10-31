@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Midnight.ApiServer.Features.Nodes.Entities;
 using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.ApiServer.Features.Users.Entities;
@@ -13,6 +14,12 @@ public abstract class DataContext : DbContext
 {
     protected DataContext(DbContextOptions options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 
     public DbSet<User> Users => Set<User>();
