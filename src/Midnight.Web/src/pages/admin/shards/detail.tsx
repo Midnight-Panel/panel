@@ -136,7 +136,7 @@ export default function ShardDetailPage() {
 
   if (isLoading || !shard) {
     return (
-      <div className="flex h-72 items-center justify-center text-slate-400">
+      <div className="flex h-72 items-center justify-center text-gray-500 dark:text-gray-400">
         Loading shard details...
       </div>
     );
@@ -314,29 +314,29 @@ export default function ShardDetailPage() {
             variant="ghost"
             size="icon-sm"
             onClick={() => navigate("/admin/shards")}
-            className="text-slate-400 hover:text-white"
+            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
           >
             <ArrowLeftIcon className="size-5" />
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-white tracking-tight">{shard.name}</h1>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90 tracking-tight">{shard.name}</h1>
               <Badge variant="light" color="primary">
                 {shard.collectionName}
               </Badge>
-              <span className="text-xs text-slate-500">UUID: {shard.uuid}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">UUID: {shard.uuid}</span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">Author: {shard.author} • v{shard.version}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Author: {shard.author} • v{shard.version}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             variant="outline"
             onClick={() => shardsApi.exportShard(shard.id, shard.name)}
-            className="border-white/10 bg-slate-900/60 hover:bg-slate-800 text-slate-200"
+            className="w-full sm:w-auto"
           >
-            <DownloadIcon className="size-4 mr-1.5 text-indigo-400" />
+            <DownloadIcon className="size-4 mr-1.5 text-brand-500" />
             {t("Shards.Export")}
           </Button>
 
@@ -344,7 +344,7 @@ export default function ShardDetailPage() {
             <Button
               onClick={form.handleSubmit(handleSaveMain)}
               disabled={busy}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30"
+              className="w-full sm:w-auto"
             >
               <FloppyDiscIcon className="size-4 mr-1.5" />
               {busy ? "Saving..." : t("Common.Save")}
@@ -355,42 +355,44 @@ export default function ShardDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-[#0F172A] border border-white/10 p-1 rounded-xl">
-          <TabsTrigger value="general" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <BoxIcon className="size-4" />
-            {t("Shards.Tabs.General")}
-          </TabsTrigger>
-          <TabsTrigger value="config" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <GearIcon className="size-4" />
-            {t("Shards.Tabs.Configuration")}
-          </TabsTrigger>
-          <TabsTrigger value="variables" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <CodeIcon className="size-4" />
-            {t("Shards.Tabs.Variables")} ({shard.variables?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="script" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <CodeIcon className="size-4" />
-            {t("Shards.Tabs.InstallScript")}
-          </TabsTrigger>
-          <TabsTrigger value="images" className="gap-2 text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <BoxIcon className="size-4" />
-            {t("Shards.Tabs.DockerImages")}
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="general" className="gap-2">
+              <BoxIcon className="size-4" />
+              {t("Shards.Tabs.General")}
+            </TabsTrigger>
+            <TabsTrigger value="config" className="gap-2">
+              <GearIcon className="size-4" />
+              {t("Shards.Tabs.Configuration")}
+            </TabsTrigger>
+            <TabsTrigger value="variables" className="gap-2">
+              <CodeIcon className="size-4" />
+              {t("Shards.Tabs.Variables")} ({shard.variables?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="script" className="gap-2">
+              <CodeIcon className="size-4" />
+              {t("Shards.Tabs.InstallScript")}
+            </TabsTrigger>
+            <TabsTrigger value="images" className="gap-2">
+              <BoxIcon className="size-4" />
+              {t("Shards.Tabs.DockerImages")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* TAB 1: ALLGEMEIN */}
         <TabsContent value="general">
-          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
+          <Card className="p-5 lg:p-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">{t("Shards.General.Name")}</Label>
-                <Input {...form.register("name", { required: true })} className="mt-1.5 bg-slate-900 border-white/10" />
+                <Label>{t("Shards.General.Name")}</Label>
+                <Input {...form.register("name", { required: true })} className="mt-1.5" />
               </div>
               <div>
-                <Label className="text-slate-300">{t("Shards.General.Collection")}</Label>
+                <Label>{t("Shards.General.Collection")}</Label>
                 <select
                   {...form.register("collectionId", { required: true })}
-                  className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="mt-1.5 flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                 >
                   {collections.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -400,20 +402,20 @@ export default function ShardDetailPage() {
                 </select>
               </div>
               <div>
-                <Label className="text-slate-300">{t("Shards.General.Author")}</Label>
-                <Input {...form.register("author")} className="mt-1.5 bg-slate-900 border-white/10" />
+                <Label>{t("Shards.General.Author")}</Label>
+                <Input {...form.register("author")} className="mt-1.5" />
               </div>
               <div>
-                <Label className="text-slate-300">{t("Shards.General.Version")}</Label>
-                <Input {...form.register("version")} className="mt-1.5 bg-slate-900 border-white/10" />
+                <Label>{t("Shards.General.Version")}</Label>
+                <Input {...form.register("version")} className="mt-1.5" />
               </div>
             </div>
 
             <div>
-              <Label className="text-slate-300">{t("Common.Description")}</Label>
+              <Label>{t("Common.Description")}</Label>
               <Textarea
                 {...form.register("description")}
-                className="mt-1.5 bg-slate-900 border-white/10 text-white resize-none h-24"
+                className="mt-1.5 resize-none h-24"
               />
             </div>
           </Card>
@@ -422,22 +424,25 @@ export default function ShardDetailPage() {
         {/* TAB 2: KONFIGURATION */}
         <TabsContent value="config">
           <div className="space-y-6">
-            <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
-              <h3 className="text-base font-semibold text-white">Startup & Shutdown Control</h3>
+            <Card className="p-5 lg:p-6 space-y-5">
+              <div>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Startup & Shutdown Control</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Parameters defining process lifecycle and launch flags.</p>
+              </div>
 
               {/* Startup Command */}
               <div>
-                <Label className="text-slate-300">{t("Shards.Config.StartupCommand")}</Label>
+                <Label>{t("Shards.Config.StartupCommand")}</Label>
                 <Input
                   {...form.register("startupCommand", { required: true })}
-                  className="mt-1.5 font-mono text-sm bg-slate-900 border-white/10 text-indigo-300"
+                  className="mt-1.5 font-mono text-sm text-brand-600 dark:text-brand-400"
                 />
-                <p className="mt-1.5 text-xs text-slate-400">{t("Shards.Config.StartupCommandHint")}</p>
+                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t("Shards.Config.StartupCommandHint")}</p>
 
                 {/* Live Placeholders Badges */}
                 {uniquePlaceholders.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
-                    <span className="text-xs text-slate-500 mr-1">Detected placeholders:</span>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100 dark:border-white/5">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Detected placeholders:</span>
                     {uniquePlaceholders.map((ph) => {
                       const isSystem = systemEnvVars.has(ph.toUpperCase());
                       const isDefined = definedEnvVars.has(ph.toUpperCase());
@@ -459,16 +464,16 @@ export default function ShardDetailPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div>
-                  <Label className="text-slate-300">{t("Shards.Config.StopCommand")}</Label>
-                  <Input {...form.register("stopCommand")} placeholder="stop" className="mt-1.5 bg-slate-900 border-white/10" />
-                  <p className="mt-1 text-xs text-slate-400">{t("Shards.Config.StopCommandHint")}</p>
+                  <Label>{t("Shards.Config.StopCommand")}</Label>
+                  <Input {...form.register("stopCommand")} placeholder="stop" className="mt-1.5" />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("Shards.Config.StopCommandHint")}</p>
                 </div>
 
                 <div>
-                  <Label className="text-slate-300">{t("Shards.Config.StopSignal")}</Label>
+                  <Label>{t("Shards.Config.StopSignal")}</Label>
                   <select
                     {...form.register("stopSignal")}
-                    className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="mt-1.5 flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                   >
                     <option value="SIGTERM">SIGTERM (Default)</option>
                     <option value="SIGINT">SIGINT (Ctrl+C)</option>
@@ -478,24 +483,24 @@ export default function ShardDetailPage() {
               </div>
 
               <div>
-                <Label className="text-slate-300">{t("Shards.Config.StartupDone")}</Label>
+                <Label>{t("Shards.Config.StartupDone")}</Label>
                 <Input
                   {...form.register("startupDone")}
                   placeholder=") Done ("
-                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                  className="mt-1.5 font-mono text-xs"
                 />
-                <p className="mt-1 text-xs text-slate-400">{t("Shards.Config.StartupDoneHint")}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("Shards.Config.StartupDoneHint")}</p>
               </div>
             </Card>
 
             {/* Config Files */}
-            <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
-              <div className="flex items-center justify-between">
+            <Card className="p-5 lg:p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-semibold text-white">{t("Shards.Config.ConfigFiles")}</h3>
-                  <p className="text-xs text-slate-400">Files automatically patched before server startup.</p>
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">{t("Shards.Config.ConfigFiles")}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Files automatically patched before server startup.</p>
                 </div>
-                <Button size="sm" onClick={handleOpenAddConfigFile} className="bg-indigo-600 hover:bg-indigo-500">
+                <Button size="sm" onClick={handleOpenAddConfigFile} className="w-full sm:w-auto">
                   <PlusIcon className="size-4 mr-1.5" />
                   {t("Shards.Config.AddConfigFile")}
                 </Button>
@@ -503,18 +508,18 @@ export default function ShardDetailPage() {
 
               <div className="space-y-2">
                 {form.watch("configFiles")?.length === 0 ? (
-                  <p className="text-xs text-slate-500 py-3 text-center border border-dashed border-white/5 rounded-xl">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 py-4 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
                     No configuration files defined.
                   </p>
                 ) : (
                   form.watch("configFiles")?.map((cfg, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/60 p-3 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-3 text-xs dark:border-gray-800 dark:bg-white/3"
                     >
                       <div className="space-y-0.5">
-                        <span className="font-mono font-medium text-indigo-400">{cfg.path}</span>
-                        <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                        <span className="font-mono font-medium text-brand-600 dark:text-brand-400">{cfg.path}</span>
+                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[11px]">
                           <span>Parser: {cfg.parser}</span>
                           <span>•</span>
                           <span>{Object.keys(cfg.mappings || {}).length} replacements</span>
@@ -522,10 +527,10 @@ export default function ShardDetailPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEditConfigFile(cfg, idx)}>
-                          <PencilIcon className="size-3.5 text-slate-400 hover:text-white" />
+                          <PencilIcon className="size-3.5 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" />
                         </Button>
                         <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteConfigFile(idx)}>
-                          <TrashBinIcon className="size-3.5 text-rose-400 hover:text-rose-300" />
+                          <TrashBinIcon className="size-3.5 text-rose-500 hover:text-rose-600 dark:text-rose-400" />
                         </Button>
                       </div>
                     </div>
@@ -538,13 +543,13 @@ export default function ShardDetailPage() {
 
         {/* TAB 3: VARIABLEN */}
         <TabsContent value="variables">
-          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
-            <div className="flex items-center justify-between">
+          <Card className="p-5 lg:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-white">{t("Shards.VariablesTab.Title")}</h3>
-                <p className="text-xs text-slate-400">{t("Shards.VariablesTab.Subtitle")}</p>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">{t("Shards.VariablesTab.Title")}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("Shards.VariablesTab.Subtitle")}</p>
               </div>
-              <Button size="sm" onClick={handleOpenAddVariable} className="bg-indigo-600 hover:bg-indigo-500">
+              <Button size="sm" onClick={handleOpenAddVariable} className="w-full sm:w-auto">
                 <PlusIcon className="size-4 mr-1.5" />
                 {t("Shards.VariablesTab.Add")}
               </Button>
@@ -552,30 +557,30 @@ export default function ShardDetailPage() {
 
             <div className="space-y-2.5">
               {!shard.variables || shard.variables.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
+                <div className="py-8 text-center text-xs text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
                   No variables configured for this shard yet.
                 </div>
               ) : (
                 shard.variables.map((v) => (
                   <div
                     key={v.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/5 bg-slate-900/60 p-4 transition-colors hover:border-white/10"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-white/3 dark:hover:border-gray-700"
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white text-sm">{v.name}</span>
-                        <Badge size="sm" className="font-mono bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-gray-800 dark:text-white/90 text-sm">{v.name}</span>
+                        <Badge size="sm" variant="light" color="primary" className="font-mono">
                           {v.envVariable}
                         </Badge>
                         {v.defaultValue && (
-                          <span className="text-xs text-slate-400">
-                            Default: <span className="font-mono text-slate-300">{v.defaultValue}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            Default: <span className="font-mono text-gray-700 dark:text-gray-300">{v.defaultValue}</span>
                           </span>
                         )}
                       </div>
-                      {v.description && <p className="text-xs text-slate-400">{v.description}</p>}
-                      <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1">
-                        <span>Rules: <span className="font-mono text-slate-400">{v.rules}</span></span>
+                      {v.description && <p className="text-xs text-gray-500 dark:text-gray-400">{v.description}</p>}
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-400 dark:text-gray-500 pt-1">
+                        <span>Rules: <span className="font-mono text-gray-600 dark:text-gray-400">{v.rules}</span></span>
                         <span>•</span>
                         <span>{v.userViewable ? "✓ Visible" : "✗ Hidden"}</span>
                         <span>•</span>
@@ -585,10 +590,10 @@ export default function ShardDetailPage() {
 
                     <div className="flex items-center gap-1.5 self-end sm:self-center">
                       <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEditVariable(v)}>
-                        <PencilIcon className="size-4 text-slate-400 hover:text-white" />
+                        <PencilIcon className="size-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" />
                       </Button>
                       <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteVariable(v)}>
-                        <TrashBinIcon className="size-4 text-rose-400 hover:text-rose-300" />
+                        <TrashBinIcon className="size-4 text-rose-500 hover:text-rose-600 dark:text-rose-400" />
                       </Button>
                     </div>
                   </div>
@@ -600,28 +605,28 @@ export default function ShardDetailPage() {
 
         {/* TAB 4: INSTALL SCRIPT */}
         <TabsContent value="script">
-          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-5 text-white">
+          <Card className="p-5 lg:p-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">{t("Shards.ScriptTab.ContainerImage")}</Label>
+                <Label>{t("Shards.ScriptTab.ContainerImage")}</Label>
                 <Input
                   {...form.register("installImage")}
                   placeholder="ghcr.io/midnightpanel/installers:alpine"
-                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                  className="mt-1.5 font-mono text-xs"
                 />
               </div>
               <div>
-                <Label className="text-slate-300">{t("Shards.ScriptTab.Interpreter")}</Label>
+                <Label>{t("Shards.ScriptTab.Interpreter")}</Label>
                 <Input
                   {...form.register("installInterpreter")}
                   placeholder="/bin/bash"
-                  className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                  className="mt-1.5 font-mono text-xs"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-slate-300 mb-2 block">{t("Shards.ScriptTab.ScriptCode")}</Label>
+              <Label className="mb-2 block">{t("Shards.ScriptTab.ScriptCode")}</Label>
               <CodeEditor
                 value={form.watch("installScript") || ""}
                 onChange={(code) => form.setValue("installScript", code, { shouldDirty: true })}
@@ -635,13 +640,13 @@ export default function ShardDetailPage() {
 
         {/* TAB 5: DOCKER IMAGES */}
         <TabsContent value="images">
-          <Card className="bg-[#0F172A] border-white/10 p-6 space-y-4 text-white">
-            <div className="flex items-center justify-between">
+          <Card className="p-5 lg:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-white">{t("Shards.ImagesTab.Title")}</h3>
-                <p className="text-xs text-slate-400">Available container images that the user can select.</p>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">{t("Shards.ImagesTab.Title")}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Available container images that the user can select.</p>
               </div>
-              <Button size="sm" onClick={() => setImageDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-500">
+              <Button size="sm" onClick={() => setImageDialogOpen(true)} className="w-full sm:w-auto">
                 <PlusIcon className="size-4 mr-1.5" />
                 {t("Shards.ImagesTab.Add")}
               </Button>
@@ -653,27 +658,27 @@ export default function ShardDetailPage() {
                 return (
                   <div
                     key={label}
-                    className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/60 p-3.5 text-xs"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5 text-xs dark:border-gray-800 dark:bg-white/3"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white">{label}</span>
+                        <span className="font-semibold text-gray-800 dark:text-white/90">{label}</span>
                         {isDefault && (
-                          <Badge size="sm" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                          <Badge size="sm" variant="light" color="success">
                             {t("Shards.ImagesTab.Default")}
                           </Badge>
                         )}
                       </div>
-                      <span className="font-mono text-slate-400 text-[11px]">{uri}</span>
+                      <span className="font-mono text-gray-500 dark:text-gray-400 text-[11px] break-all">{uri}</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-end sm:self-center">
                       {!isDefault && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => form.setValue("defaultDockerImage", uri, { shouldDirty: true })}
-                          className="text-xs text-slate-400 hover:text-white"
+                          className="text-xs"
                         >
                           Set as Default
                         </Button>
@@ -682,7 +687,7 @@ export default function ShardDetailPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleDeleteDockerImage(label)}
-                        className="text-rose-400 hover:text-rose-300"
+                        className="text-rose-500 hover:text-rose-600 dark:text-rose-400"
                       >
                         <TrashBinIcon className="size-4" />
                       </Button>
@@ -697,63 +702,63 @@ export default function ShardDetailPage() {
 
       {/* Variable Add / Edit Dialog */}
       <Dialog open={variableDialogOpen} onOpenChange={setVariableDialogOpen}>
-        <DialogContent className="sm:max-w-xl bg-[#0F172A] border-white/10 text-white">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
+            <DialogTitle>
               {editingVariableId ? "Edit Variable" : t("Shards.VariablesTab.Add")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={variableForm.handleSubmit(handleSaveVariable)} className="space-y-4 py-2">
             <div>
-              <Label className="text-slate-300">{t("Common.Name")}</Label>
+              <Label>{t("Common.Name")}</Label>
               <Input
                 {...variableForm.register("name", { required: true })}
                 placeholder="e.g. Server Jar File"
-                className="mt-1.5 bg-slate-900 border-white/10"
+                className="mt-1.5"
               />
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.VariablesTab.EnvVar")}</Label>
+              <Label>{t("Shards.VariablesTab.EnvVar")}</Label>
               <Input
                 {...variableForm.register("envVariable", { required: true })}
                 placeholder="SERVER_JARFILE"
-                className="mt-1.5 font-mono text-xs uppercase bg-slate-900 border-white/10"
+                className="mt-1.5 font-mono text-xs uppercase"
               />
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.VariablesTab.DefaultVal")}</Label>
+              <Label>{t("Shards.VariablesTab.DefaultVal")}</Label>
               <Input
                 {...variableForm.register("defaultValue")}
                 placeholder="server.jar"
-                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                className="mt-1.5 font-mono text-xs"
               />
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.VariablesTab.Rules")}</Label>
+              <Label>{t("Shards.VariablesTab.Rules")}</Label>
               <Input
                 {...variableForm.register("rules")}
                 placeholder="required|string|max:40"
-                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                className="mt-1.5 font-mono text-xs"
               />
-              <p className="mt-1 text-[11px] text-slate-500">Examples: required|numeric|between:1024,65535 or required|string|max:50</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">Examples: required|numeric|between:1024,65535 or required|string|max:50</p>
             </div>
             <div>
-              <Label className="text-slate-300">{t("Common.Description")}</Label>
+              <Label>{t("Common.Description")}</Label>
               <Textarea
                 {...variableForm.register("description")}
                 placeholder="Description for the user..."
-                className="mt-1.5 bg-slate-900 border-white/10 resize-none h-18 text-xs"
+                className="mt-1.5 resize-none h-18 text-xs"
               />
             </div>
             <div className="flex items-center justify-between pt-2">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-gray-300">
                 <Checkbox
                   checked={variableForm.watch("userViewable")}
                   onCheckedChange={(c) => variableForm.setValue("userViewable", !!c)}
                 />
                 {t("Shards.VariablesTab.UserViewable")}
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-gray-300">
                 <Checkbox
                   checked={variableForm.watch("userEditable")}
                   onCheckedChange={(c) => variableForm.setValue("userEditable", !!c)}
@@ -766,7 +771,7 @@ export default function ShardDetailPage() {
               <Button type="button" variant="outline" onClick={() => setVariableDialogOpen(false)}>
                 {t("Common.Cancel")}
               </Button>
-              <Button type="submit" disabled={busy} className="bg-indigo-600 hover:bg-indigo-500">
+              <Button type="submit" disabled={busy}>
                 {t("Common.Save")}
               </Button>
             </DialogFooter>
@@ -776,26 +781,26 @@ export default function ShardDetailPage() {
 
       {/* Config File Dialog */}
       <Dialog open={configFileDialogOpen} onOpenChange={setConfigFileDialogOpen}>
-        <DialogContent className="sm:max-w-lg bg-[#0F172A] border-white/10 text-white">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Configuration File</DialogTitle>
+            <DialogTitle>Configuration File</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label className="text-slate-300">{t("Shards.Config.FilePath")}</Label>
+              <Label>{t("Shards.Config.FilePath")}</Label>
               <Input
                 value={cfgPath}
                 onChange={(e) => setCfgPath(e.target.value)}
                 placeholder="server.properties or config/server.json"
-                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                className="mt-1.5 font-mono text-xs"
               />
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.Config.Parser")}</Label>
+              <Label>{t("Shards.Config.Parser")}</Label>
               <select
                 value={cfgParser}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCfgParser(e.target.value)}
-                className="mt-1.5 flex h-10 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="mt-1.5 flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
               >
                 <option value="properties">properties (Key=Value)</option>
                 <option value="yaml">yaml</option>
@@ -805,21 +810,21 @@ export default function ShardDetailPage() {
               </select>
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.Config.Mappings")}</Label>
+              <Label>{t("Shards.Config.Mappings")}</Label>
               <Textarea
                 value={cfgMappingsJson}
                 onChange={(e) => setCfgMappingsJson(e.target.value)}
                 placeholder='{"server-port": "{{SERVER_PORT}}"}'
-                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10 h-28"
+                className="mt-1.5 font-mono text-xs h-28"
               />
-              <p className="mt-1 text-[11px] text-slate-500">{t("Shards.Config.MappingsHint")}</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("Shards.Config.MappingsHint")}</p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfigFileDialogOpen(false)}>
               {t("Common.Cancel")}
             </Button>
-            <Button onClick={handleSaveConfigFile} className="bg-indigo-600 hover:bg-indigo-500">
+            <Button onClick={handleSaveConfigFile}>
               {t("Common.Save")}
             </Button>
           </DialogFooter>
@@ -828,27 +833,27 @@ export default function ShardDetailPage() {
 
       {/* Add Docker Image Dialog */}
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0F172A] border-white/10 text-white">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">{t("Shards.ImagesTab.Add")}</DialogTitle>
+            <DialogTitle>{t("Shards.ImagesTab.Add")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label className="text-slate-300">{t("Shards.ImagesTab.Label")}</Label>
+              <Label>{t("Shards.ImagesTab.Label")}</Label>
               <Input
                 value={newImageLabel}
                 onChange={(e) => setNewImageLabel(e.target.value)}
                 placeholder="e.g. Java 21 or Node.js 20"
-                className="mt-1.5 bg-slate-900 border-white/10"
+                className="mt-1.5"
               />
             </div>
             <div>
-              <Label className="text-slate-300">{t("Shards.ImagesTab.ImageUri")}</Label>
+              <Label>{t("Shards.ImagesTab.ImageUri")}</Label>
               <Input
                 value={newImageUri}
                 onChange={(e) => setNewImageUri(e.target.value)}
                 placeholder="ghcr.io/midnightpanel/yolks:java_21"
-                className="mt-1.5 font-mono text-xs bg-slate-900 border-white/10"
+                className="mt-1.5 font-mono text-xs"
               />
             </div>
           </div>
@@ -856,7 +861,7 @@ export default function ShardDetailPage() {
             <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
               {t("Common.Cancel")}
             </Button>
-            <Button onClick={handleAddDockerImage} className="bg-indigo-600 hover:bg-indigo-500">
+            <Button onClick={handleAddDockerImage}>
               {t("Common.Save")}
             </Button>
           </DialogFooter>

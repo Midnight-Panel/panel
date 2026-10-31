@@ -35,22 +35,22 @@ export function CodeEditor({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0B0F19] shadow-2xl">
+    <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-[#0B0F19] shadow-theme-xs dark:border-gray-800">
       {/* Editor Header */}
-      <div className="flex items-center justify-between border-b border-white/5 bg-slate-900/60 px-4 py-2 text-xs">
+      <div className="flex items-center justify-between border-b border-gray-800 bg-[#111827] px-4 py-2 text-xs">
         <div className="flex items-center gap-2">
           <span className="flex gap-1.5">
             <span className="size-2.5 rounded-full bg-red-500/80" />
             <span className="size-2.5 rounded-full bg-amber-500/80" />
             <span className="size-2.5 rounded-full bg-emerald-500/80" />
           </span>
-          <span className="ml-2 font-mono text-slate-400 uppercase tracking-wider">{language}</span>
+          <span className="ml-2 font-mono text-gray-400 uppercase tracking-wider">{language}</span>
         </div>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 text-xs text-slate-400 hover:text-white"
+          className="h-7 text-xs text-gray-400 hover:text-white"
           onClick={handleCopy}
         >
           {copied ? <CheckIcon className="size-3.5 text-emerald-400" /> : <CopyIcon className="size-3.5" />}
@@ -61,7 +61,7 @@ export function CodeEditor({
       {/* Editor Body with Line Numbers */}
       <div className="flex text-sm font-mono" style={{ minHeight }}>
         {/* Line Numbers */}
-        <div className="select-none bg-[#090D16] py-3 pr-3 pl-4 text-right text-xs text-slate-600 border-r border-white/5 font-mono">
+        <div className="select-none bg-[#090D16] py-3 pr-3 pl-4 text-right text-xs text-gray-500 border-r border-gray-800 font-mono">
           {lineNumbers.map((num) => (
             <div key={num} className="leading-6">
               {num}
