@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Midnight.ApiServer.Features.Branding.Entities;
+using Midnight.ApiServer.Features.Extensions.Entities;
 using Midnight.ApiServer.Features.Nodes.Entities;
 using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.ApiServer.Features.Users.Entities;
@@ -34,6 +35,7 @@ public abstract class DataContext : DbContext
     public DbSet<Shard> Shards => Set<Shard>();
     public DbSet<ShardVariable> ShardVariables => Set<ShardVariable>();
     public DbSet<BrandingSettings> BrandingSettings => Set<BrandingSettings>();
+    public DbSet<ExtensionEntity> Extensions => Set<ExtensionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -171,6 +173,16 @@ public abstract class DataContext : DbContext
             branding.Property(x => x.LogoDarkFileName).HasMaxLength(256);
             branding.Property(x => x.FaviconFileName).HasMaxLength(256);
             branding.Property(x => x.CustomCss).HasMaxLength(32768);
+        });
+
+        modelBuilder.Entity<ExtensionEntity>(ext =>
+        {
+            ext.HasKey(x => x.Id);
+            ext.HasIndex(x => x.Identifier).IsUnique();
+            ext.HasIndex(x => x.Category);
+            ext.Property(x => x.Identifier).IsRequired().HasMaxLength(64);
+            ext.Property(x => x.Name).IsRequired().HasMaxLength(128);
+            ext.Property(x => x.Category).IsRequired().HasMaxLength(64);
         });
     }
 }

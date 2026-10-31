@@ -12,6 +12,7 @@ using Midnight.ApiServer.Features.Account.Services;
 using Midnight.ApiServer.Features.Auth.Http;
 using Midnight.ApiServer.Features.Auth.Services;
 using Midnight.ApiServer.Features.Branding.Services;
+using Midnight.ApiServer.Features.Extensions.Services;
 using Midnight.ApiServer.Features.Nodes.Services;
 using Midnight.ApiServer.Features.Shards.Services;
 using Midnight.ApiServer.Features.SystemSettings.Services;
@@ -143,6 +144,7 @@ builder.Services.AddScoped<IShardVariableService, ShardVariableService>();
 builder.Services.AddScoped<IShardImportExportService, ShardImportExportService>();
 builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 builder.Services.AddScoped<IBrandingService, BrandingService>();
+builder.Services.AddScoped<IExtensionService, ExtensionService>();
 
 builder.Services.AddHttpClient(NodeClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(5));
 

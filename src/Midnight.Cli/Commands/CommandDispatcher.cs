@@ -76,6 +76,7 @@ public class CommandDispatcher
 
         KONFIGURATION & VERWALTUNG:
           configure                      Interaktiver Konfigurations-Assistent
+          extension [list|enable|disable] Verwalte installierte Erweiterungen & Plugins
           create-admin [--email <mail>]  Erstelle einen neuen Administrator-Account
           completion [bash|zsh]          Generiere Shell-Autovervollständigung
           self-update                    Aktualisiere das midnight CLI-Binary

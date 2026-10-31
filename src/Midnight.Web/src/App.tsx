@@ -18,6 +18,8 @@ import AdminSettingsPage from "@/pages/admin/settings";
 import AdminCustomizerPage from "@/pages/admin/customizer";
 import ShardDetailPage from "@/pages/admin/shards/detail";
 import ShardsPage from "@/pages/admin/shards/list";
+import ExtensionDetailPage from "@/pages/admin/extensions/detail";
+import ExtensionsPage from "@/pages/admin/extensions/list";
 import UserEditPage from "@/pages/admin/users/edit";
 import UsersLayout from "@/pages/admin/users/layout";
 import UsersPage from "@/pages/admin/users/list";
@@ -79,6 +81,8 @@ export default function App() {
 
         <Route path="admin/shards" element={<ShardsPage />} />
         <Route path="admin/shards/:id" element={<ShardDetailPage />} />
+        <Route path="admin/extensions" element={<ExtensionsPage />} />
+        <Route path="admin/extensions/:id" element={<ExtensionDetailPage />} />
         <Route path="admin/settings" element={<AdminSettingsPage />} />
         <Route path="admin/customizer" element={<AdminCustomizerPage />} />
 
