@@ -52,10 +52,48 @@ public static class DatabaseExtensions
 
         var pending = (await context.Database.GetPendingMigrationsAsync()).ToArray();
 
+        if (await SkipAlreadyAppliedExtensionPackagesAsync(context, pending, logger))
+            pending = (await context.Database.GetPendingMigrationsAsync()).ToArray();
+
         if (pending.Length > 0)
         {
             logger.LogInformation("Applying {Count} database migration(s)", pending.Length);
             await context.Database.MigrateAsync();
         }
+    }
+
+    private static readonly string[] ExtensionPackageColumns = ["InstallSource", "SourceUrl", "PackageFileName", "StoragePath"];
+
+    /// <summary>
+    /// For a while the ExtensionPackages columns were part of the Extensions migration itself, so databases created
+    /// in that time already have them and the ExtensionPackages migration would fail with "column already exists".
+    /// Those databases get the migration marked as applied instead of running it.
+    /// </summary>
+    internal static async Task<bool> SkipAlreadyAppliedExtensionPackagesAsync(DataContext context, IReadOnlyCollection<string> pending, ILogger logger)
+    {
+        var migration = pending.FirstOrDefault(id => id.EndsWith("_ExtensionPackages", StringComparison.Ordinal));
+
+        if (migration == null || await CountExistingColumnsAsync(context, "Extensions", ExtensionPackageColumns) != ExtensionPackageColumns.Length)
+            return false;
+
+        logger.LogWarning("The columns of migration {Migration} already exist, marking it as applied", migration);
+
+        await context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ({0}, {1})",
+            migration,
+            Microsoft.EntityFrameworkCore.Infrastructure.ProductInfo.GetVersion());
+
+        return true;
+    }
+
+    private static async Task<int> CountExistingColumnsAsync(DataContext context, string table, string[] columns)
+    {
+        // Parameters can't be used inside pragma_table_info on every SQLite version, the names are constants anyway
+        var names = string.Join(", ", columns.Select(c => $"'{c}'"));
+        var sql = context.Database.IsNpgsql()
+            ? $"SELECT COUNT(*)::int AS \"Value\" FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = '{table}' AND column_name IN ({names})"
+            : $"SELECT COUNT(*) AS \"Value\" FROM pragma_table_info('{table}') WHERE name IN ({names})";
+
+        return await context.Database.SqlQueryRaw<int>(sql).SingleAsync();
     }
 }
