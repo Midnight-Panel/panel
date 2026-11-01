@@ -56,6 +56,7 @@ import ServerSettingsPage from "@/pages/servers/settings";
 import ServerStartupPage from "@/pages/servers/startup";
 import AuthLayout from "@/pages/others/auth/layout";
 import { Route, Routes } from "react-router";
+import ServersPage from "@/pages/servers/list";
 
 export default function App() {
   const { ready } = useAuth();
@@ -79,6 +80,7 @@ export default function App() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
 
+        <Route path="servers" element={<ServersPage />} />
         <Route path="servers/:uuid" element={<ServerLayout />}>
           <Route index element={<ServerConsolePage />} />
           <Route path="files" element={<ServerFilesPage />} />

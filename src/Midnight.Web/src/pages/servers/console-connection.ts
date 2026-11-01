@@ -56,6 +56,8 @@ export class ConsoleConnection {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
   private failures = 0;
+  /** Last error shown, the same error of every reconnect attempt is shown only once */
+  private lastError: string | null = null;
   /** Changes on start / stop / retry so pending connects of an older run are dropped */
   private generation = 0;
   private lines: string[] = [];
@@ -190,7 +192,6 @@ export class ConsoleConnection {
 
     socket.onopen = () => {
       if (this.socket !== socket) return;
-      this.failures = 0;
       this.update({ connection: "connected" });
     };
 
@@ -228,6 +229,12 @@ export class ConsoleConnection {
 
   private handle(message: ConsoleServerMessage) {
     for (const listener of this.messageListeners) listener(message);
+
+    // The panel accepts the socket before it reached the node, only real data means the connection works
+    if (message.event !== "error") {
+      this.failures = 0;
+      this.lastError = null;
+    }
 
     switch (message.event) {
       case "history":
@@ -271,6 +278,8 @@ export class ConsoleConnection {
         break;
 
       case "error":
+        if (message.data === this.lastError) break;
+        this.lastError = message.data;
         this.push(ansi.error(message.data));
         this.handlers.onError?.(message.data);
         break;

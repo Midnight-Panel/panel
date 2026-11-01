@@ -11,6 +11,8 @@ import type { MenuType, NavItem } from "./types";
 
 interface SidebarNavGroupProps {
   labelKey: string;
+  /** Shown instead of the translated labelKey, e.g. the name of the open server */
+  label?: string;
   menuType: MenuType;
   items: NavItem[];
   openSubmenu: { type: MenuType; index: number } | null;
@@ -21,6 +23,7 @@ interface SidebarNavGroupProps {
 
 export default function SidebarNavGroup({
   labelKey,
+  label,
   menuType,
   items,
   openSubmenu,
@@ -38,7 +41,7 @@ export default function SidebarNavGroup({
           !showContent ? "xl:justify-center" : "justify-start",
         )}
       >
-        {showContent ? t(labelKey) : <HorizontalDotsIcon />}
+        {showContent ? <span className="truncate">{label ?? t(labelKey)}</span> : <HorizontalDotsIcon />}
       </SidebarGroupLabel>
       <SidebarMenu className="gap-1">
         {items.map((nav, index) => (

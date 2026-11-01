@@ -1,4 +1,4 @@
-import { BoxIcon, BrushIcon, ChipIcon, DatabaseIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon, PluginIcon } from "@/icons";
+import { BoxIcon, BrushIcon, ChipIcon, DatabaseIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon, PluginIcon, UserCircleIcon } from "@/icons";
 import { Permissions } from "@/lib/permissions";
 import type { NavItem } from "./types";
 
@@ -8,6 +8,21 @@ export const navItems: NavItem[] = [
     icon: <LayoutGridIcon className="size-6" />,
     key: "Nav.Dashboard",
     path: "/",
+  },
+  {
+    icon: <ChipIcon className="size-6" />,
+    key: "Nav.Servers",
+    path: "/servers",
+    matchPrefix: "/servers",
+  },
+  {
+    icon: <UserCircleIcon className="size-6" />,
+    key: "Nav.Account",
+    subItems: [
+      { key: "Account.Overview", path: "/account" },
+      { key: "Nav.Security", path: "/account/security" },
+      { key: "Nav.ApiKeys", path: "/account/api-keys" },
+    ],
   },
 ];
 

@@ -159,10 +159,12 @@
     "Dashboard": "Dashboard",
     "Section": {
       "Admin": "Administration",
-      "Main": "Menu"
+      "Main": "Menu",
+      "Server": "Server"
     },
     "Security": "Security",
-    "ApiKeys": "API keys"
+    "ApiKeys": "API keys",
+    "Servers": "Servers"
   },
   "NotFound": {
     "Back": "Back to dashboard",
@@ -1072,5 +1074,28 @@
     "DeleteConfirm": "Delete the database host {0}?",
     "DeleteInUse": "Delete the databases on this host first",
     "Deleted": "Database host {0} deleted"
+  },
+  "ServerList": {
+    "Description": "All servers you own or that were shared with you",
+    "Search": "Search by name, game, node or address…",
+    "Ownership": "Owner",
+    "AllServers": "All servers",
+    "Owned": "My servers",
+    "Shared": "Shared with me",
+    "SharedBadge": "Shared",
+    "State": "State",
+    "AnyState": "Any state",
+    "Running": "Running",
+    "Stopped": "Stopped",
+    "Sort": "Sort",
+    "SortName": "Name (A–Z)",
+    "SortState": "Running first",
+    "View": "View",
+    "Grid": "Tiles",
+    "List": "List",
+    "Name": "Server",
+    "Address": "Address",
+    "NoMatches": "No matching servers",
+    "NoMatchesHint": "Try another search term or reset the filters."
   }
 }

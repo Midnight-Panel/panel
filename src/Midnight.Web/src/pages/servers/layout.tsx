@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNav, type TabNavItem } from "@/components/shared/tab-nav";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useT } from "@/i18n";
-import { ArchiveIcon, BoxIcon, CalendarIcon, ChipIcon, CodeIcon, DatabaseIcon, EyeIcon, FolderIcon, GearIcon, GlobeIcon, GroupIcon, ListIcon, OctagonAlertIcon } from "@/icons";
+import { ChipIcon, EyeIcon, OctagonAlertIcon } from "@/icons";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { Permissions } from "@/lib/permissions";
 import { hasServerPermission, isReadServerPermission, ServerPermissions } from "@/lib/server-permissions";
@@ -16,6 +16,7 @@ import { Outlet, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { CopyButton, ServerStateBadge, ServerStatusBadge } from "./components/badges";
 import { PowerButtons } from "./components/power-buttons";
+import { serverNavigation } from "./navigation";
 import { powerPermissions, serverQueryKey, useConsoleConnection, type ServerContextValue, type ServerLive } from "./hooks";
 
 function ServerContent({ uuid }: { uuid: string }) {
@@ -53,7 +54,6 @@ function ServerContent({ uuid }: { uuid: string }) {
   if (!server.data) return <PageLoader />;
 
   const data = server.data;
-  const base = `/servers/${uuid}`;
   const connected = snapshot.connection === "connected";
 
   const live: ServerLive = {
@@ -95,25 +95,19 @@ function ServerContent({ uuid }: { uuid: string }) {
 
   const context: ServerContextValue = { server: data, live, connection, can: canServer, power, sendCommand };
 
-  const tabs: Array<TabNavItem & { permission?: string }> = [
-    { label: t("Servers.Tabs.Console"), to: base, icon: <CodeIcon /> },
-    { label: t("Servers.Tabs.Files"), to: `${base}/files`, icon: <FolderIcon />, permission: ServerPermissions.FileRead },
-    { label: t("Servers.Tabs.Databases"), to: `${base}/databases`, icon: <DatabaseIcon />, permission: ServerPermissions.DatabaseRead },
-    { label: t("Servers.Tabs.Schedules"), to: `${base}/schedules`, icon: <CalendarIcon />, permission: ServerPermissions.ScheduleRead },
-    { label: t("Servers.Tabs.Users"), to: `${base}/users`, icon: <GroupIcon />, permission: ServerPermissions.UserRead },
-    { label: t("Servers.Tabs.Backups"), to: `${base}/backups`, icon: <ArchiveIcon />, permission: ServerPermissions.BackupRead },
-    { label: t("Servers.Tabs.Network"), to: `${base}/network`, icon: <GlobeIcon />, permission: ServerPermissions.AllocationRead },
-    { label: t("Servers.Tabs.Startup"), to: `${base}/startup`, icon: <BoxIcon />, permission: ServerPermissions.StartupRead },
-    { label: t("Servers.Tabs.Settings"), to: `${base}/settings`, icon: <GearIcon /> },
-    { label: t("Servers.Tabs.Activity"), to: `${base}/activity`, icon: <ListIcon />, permission: ServerPermissions.ActivityRead },
-  ];
+  const tabs: Array<TabNavItem & { permission?: string }> = serverNavigation(uuid).map((entry) => ({
+    label: t(entry.key),
+    to: entry.path,
+    icon: entry.icon,
+    permission: entry.permission,
+  }));
 
   return (
     <>
       <PageHeader
         icon={<ChipIcon />}
         title={data.name}
-        crumbs={[{ label: t("Nav.Dashboard"), to: "/" }]}
+        crumbs={[{ label: t("Nav.Servers"), to: "/servers" }]}
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {data.primaryAllocation && (

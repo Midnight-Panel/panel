@@ -1,5 +1,10 @@
+import { serversApi } from "@/api/servers";
 import { Sidebar, SidebarContent, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/auth/AuthContext";
+import { hasServerPermission } from "@/lib/server-permissions";
+import { serverQueryKey } from "@/pages/servers/hooks";
+import { serverNavigation, serverUuidFromPath } from "@/pages/servers/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "react-router";
 import { adminItems, navItems } from "./data";
@@ -7,10 +12,38 @@ import AppSidebarHeader from "./sidebar-header";
 import SidebarNavGroup from "./sidebar-nav-group";
 import type { MenuType, NavItem } from "./types";
 
-const menuSections: { type: MenuType; labelKey: string; items: NavItem[] }[] = [
-  { type: "main", labelKey: "Nav.Section.Main", items: navItems },
-  { type: "admin", labelKey: "Nav.Section.Admin", items: adminItems },
-];
+interface MenuSection {
+  type: MenuType;
+  labelKey: string;
+  label?: string;
+  items: NavItem[];
+}
+
+/** Pages of the server that is open right now, only those the user may see */
+function useServerSection(pathname: string): MenuSection | null {
+  const uuid = serverUuidFromPath(pathname);
+
+  // Same query as the server layout, so this reuses its cached response
+  const server = useQuery({
+    queryKey: serverQueryKey(uuid ?? ""),
+    queryFn: () => serversApi.get(uuid!),
+    enabled: !!uuid,
+  });
+
+  if (!uuid || !server.data) return null;
+
+  const items = serverNavigation(uuid)
+    .filter((entry) => !entry.permission || hasServerPermission(server.data.permissions, entry.permission))
+    .map<NavItem>((entry, index) => ({
+      key: entry.key,
+      icon: <span className="flex [&>svg]:size-6">{entry.icon}</span>,
+      path: entry.path,
+      // The console is the server's index page, every other page also matches its sub pages
+      matchPrefix: index === 0 ? undefined : entry.path,
+    }));
+
+  return { type: "server", labelKey: "Nav.Section.Server", label: server.data.name, items };
+}
 
 export default function AppSidebar() {
   const { open, isMobile, isHovered } = useSidebar();
@@ -27,6 +60,14 @@ export default function AppSidebar() {
     );
   };
 
+  const serverSection = useServerSection(pathname);
+
+  const menuSections: MenuSection[] = [
+    { type: "main", labelKey: "Nav.Section.Main", items: navItems },
+    ...(serverSection ? [serverSection] : []),
+    { type: "admin", labelKey: "Nav.Section.Admin", items: adminItems },
+  ];
+
   const activeSections = menuSections
     .map((section) => ({ ...section, items: section.items.filter((item) => !item.permission || can(item.permission)) }))
     .filter((section) => section.items.length > 0);
@@ -42,6 +83,7 @@ export default function AppSidebar() {
               <SidebarNavGroup
                 key={section.type}
                 labelKey={section.labelKey}
+                label={section.label}
                 menuType={section.type}
                 items={section.items}
                 openSubmenu={openSubmenu}

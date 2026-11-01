@@ -1,6 +1,6 @@
 import React from "react";
 
-export type MenuType = "main" | "admin";
+export type MenuType = "main" | "server" | "admin";
 
 export interface SubItem {
   /** Translation key */
