@@ -37,7 +37,7 @@ public class Shard
 
     /// <summary>Installation script, container image, and interpreter</summary>
     public string? InstallScript { get; set; }
-    public string InstallImage { get; set; } = "ghcr.io/midnightpanel/installers:alpine";
+    public string InstallImage { get; set; } = "ghcr.io/pterodactyl/installers:alpine";
     public string InstallInterpreter { get; set; } = "/bin/bash";
 
     /// <summary>Additional features (EULA, PidLimit, FileDenylist) in JSON format</summary>

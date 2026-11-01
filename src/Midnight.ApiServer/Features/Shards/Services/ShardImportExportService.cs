@@ -307,7 +307,7 @@ public partial class ShardImportExportService : IShardImportExportService
 
         // Installation scripts
         var installScript = "";
-        var installImage = "ghcr.io/midnightpanel/installers:alpine";
+        var installImage = "ghcr.io/pterodactyl/installers:alpine";
         var installInterpreter = "/bin/bash";
 
         if (root.TryGetProperty("scripts", out var scripts) && scripts.TryGetProperty("installation", out var inst))

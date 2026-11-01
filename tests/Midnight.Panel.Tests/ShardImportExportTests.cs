@@ -22,8 +22,8 @@ public class ShardImportExportTests
                 Author = "PaperMC",
                 Version = "1.20.4",
                 StartupCommand = "java -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}",
-                DefaultDockerImage = "ghcr.io/midnightpanel/yolks:java_21",
-                DockerImages = new() { ["Java 21"] = "ghcr.io/midnightpanel/yolks:java_21" },
+                DefaultDockerImage = "ghcr.io/pterodactyl/yolks:java_21",
+                DockerImages = new() { ["Java 21"] = "ghcr.io/pterodactyl/yolks:java_21" },
                 Variables =
                 [
                     new ShardVariableExportData
