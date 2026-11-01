@@ -185,3 +185,93 @@ public class AvatarFormatTests
         Assert.Null(AvatarService.DetectExtension([]));
     }
 }
+
+public class SafeDownloadAndZipTests
+{
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("10.1.2.3")]
+    [InlineData("172.20.0.1")]
+    [InlineData("192.168.1.1")]
+    [InlineData("169.254.169.254")]
+    [InlineData("100.64.0.1")]
+    [InlineData("0.0.0.0")]
+    [InlineData("224.0.0.1")]
+    [InlineData("::1")]
+    [InlineData("::")]
+    [InlineData("fe80::1")]
+    [InlineData("fd00:ec2::254")]
+    [InlineData("::ffff:127.0.0.1")]
+    [InlineData("64:ff9b::a00:1")]
+    [InlineData("2002:c0a8:0101::1")]
+    public void IsPublicAddress_RejectsInternalAddresses(string ip)
+        => Assert.False(SafeDownloader.IsPublicAddress(System.Net.IPAddress.Parse(ip)));
+
+    [Theory]
+    [InlineData("1.1.1.1")]
+    [InlineData("140.82.112.3")]
+    [InlineData("2606:4700:4700::1111")]
+    public void IsPublicAddress_AcceptsPublicAddresses(string ip)
+        => Assert.True(SafeDownloader.IsPublicAddress(System.Net.IPAddress.Parse(ip)));
+
+    [Theory]
+    [InlineData("../evil.txt")]
+    [InlineData("a/../../evil.txt")]
+    [InlineData("/etc/passwd")]
+    [InlineData("..\\evil.txt")]
+    [InlineData("C:/evil.txt")]
+    public void ResolveEntryPath_RejectsEscapingPaths(string entryName)
+        => Assert.Throws<InvalidDataException>(() => SafeZip.ResolveEntryPath(Path.GetTempPath(), entryName));
+
+    [Fact]
+    public void ResolveEntryPath_AcceptsNestedPaths()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "midnight-zip-test");
+        Assert.Equal(Path.Combine(root, "lib", "plugin.js"), SafeZip.ResolveEntryPath(root, "lib/plugin.js"));
+    }
+
+    [Fact]
+    public async Task ExtractToDirectory_EnforcesSizeLimitAndDuplicates()
+    {
+        using var ms = new MemoryStream();
+        using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            await using (var s = zip.CreateEntry("big.bin").Open())
+                await s.WriteAsync(new byte[4096]);
+            zip.CreateEntry("dup.txt");
+            zip.CreateEntry("dup.txt");
+        }
+
+        var dir = Directory.CreateTempSubdirectory("midnight-zip-").FullName;
+        try
+        {
+            ms.Position = 0;
+            using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: true))
+                await Assert.ThrowsAsync<InvalidDataException>(() => SafeZip.ExtractToDirectoryAsync(zip, dir, 1024, 100, CancellationToken.None));
+
+            Directory.Delete(dir, true);
+            Directory.CreateDirectory(dir);
+            ms.Position = 0;
+            using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: true))
+            {
+                var ex = await Assert.ThrowsAsync<InvalidDataException>(() => SafeZip.ExtractToDirectoryAsync(zip, dir, 1_000_000, 100, CancellationToken.None));
+                Assert.Contains("duplicate", ex.Message);
+            }
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Theory]
+    [InlineData("discord-webhook", true)]
+    [InlineData("com.example.plugin", true)]
+    [InlineData("../evil", false)]
+    [InlineData("..", false)]
+    [InlineData("a/b", false)]
+    [InlineData("", false)]
+    [InlineData("Upper", false)]
+    public void ExtensionIdentifier_IsValidated(string identifier, bool expected)
+        => Assert.Equal(expected, Midnight.ApiServer.Features.Extensions.Services.ExtensionService.IsSafeIdentifier(identifier));
+}

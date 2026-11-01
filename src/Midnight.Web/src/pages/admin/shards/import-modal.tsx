@@ -136,14 +136,14 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             parsedName,
           });
         } catch (err: unknown) {
-          notifyError(`Fehler beim Laden von ${u}: ${err instanceof Error ? err.message : String(err)}`);
+          notifyError(`Failed to load ${u}: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 
       if (addedFiles.length > 0) {
         setStagedFiles((prev) => [...prev, ...addedFiles]);
         setUrlInput("");
-        notifySuccess(`${addedFiles.length} Shard(s) aus URL geladen.`);
+        notifySuccess(`Loaded ${addedFiles.length} shard(s) from URL.`);
       }
     } finally {
       setBusy(false);
@@ -159,7 +159,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
       const json = JSON.parse(trimmed);
       parsedName = json.shard?.name || json.name;
     } catch {
-      notifyError("Der eingegebene Text ist kein gültiges JSON.");
+      notifyError("The entered text is not valid JSON.");
       return;
     }
 
@@ -227,7 +227,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
 
       if (batchRes.succeededCount > 0) {
         notifySuccess(
-          `${batchRes.succeededCount} von ${batchRes.totalCount} Shard(s) erfolgreich importiert!`,
+          `Imported ${batchRes.succeededCount} of ${batchRes.totalCount} shard(s).`,
         );
         onSuccess?.();
       }
@@ -254,7 +254,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             <div>
               <DialogTitle>{t("Shards.ImportTitle")}</DialogTitle>
               <DialogDescription>
-                Lade mehrere Shards gleichzeitig als Dateien (.json oder .zip) oder per Download-Link hoch.
+                Import multiple shards at once from files (.json or .zip) or download links.
               </DialogDescription>
             </div>
           </div>
@@ -272,7 +272,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             }`}
           >
             <FileIcon className="size-4" />
-            Dateien (Multi-Upload / ZIP)
+            Files (multi-upload / ZIP)
           </button>
           <button
             type="button"
@@ -284,7 +284,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             }`}
           >
             <LinkIcon className="size-4" />
-            Per Link / URL
+            Link / URL
           </button>
           <button
             type="button"
@@ -295,7 +295,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                 : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
             }`}
           >
-            Direkt einfügen
+            Paste JSON
           </button>
         </div>
 
@@ -329,14 +329,14 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                   <UploadIcon className="size-6" />
                 </div>
                 <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90">
-                  Dateien hier ablegen oder klicken zum Auswählen
+                  Drop files here or click to select
                 </h4>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Wähle mehrere <code className="text-brand-400">.json</code> Shard-Dateien oder ein{" "}
-                  <code className="text-brand-400">.zip</code> Archiv mit Shards aus.
+                  Select multiple <code className="text-brand-400">.json</code> shard files or a{" "}
+                  <code className="text-brand-400">.zip</code> archive of shards.
                 </p>
                 <div className="mt-3 flex items-center gap-2 text-[11px] text-gray-400">
-                  <span>Midnight Shards (v1) &amp; Pterodactyl Eggs werden automatisch erkannt</span>
+                  <span>Midnight shards (v1) &amp; Pterodactyl eggs are detected automatically</span>
                 </div>
               </div>
             </div>
@@ -344,7 +344,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
 
           {activeTab === "link" && (
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Download-URLs (eine pro Zeile)</Label>
+              <Label className="text-xs font-semibold">Download URLs (one per line)</Label>
               <Textarea
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
@@ -360,7 +360,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                   disabled={!urlInput.trim() || busy}
                 >
                   <LinkIcon className="mr-1.5 size-3.5" />
-                  {busy ? "Lade…" : "Shards laden & zur Liste hinzufügen"}
+                  {busy ? "Loading…" : "Load shards & add to list"}
                 </Button>
               </div>
             </div>
@@ -368,7 +368,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
 
           {activeTab === "text" && (
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">JSON-Code einfügen</Label>
+              <Label className="text-xs font-semibold">Paste JSON</Label>
               <Textarea
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
@@ -383,7 +383,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                   onClick={handleAddTextContent}
                   disabled={!textInput.trim()}
                 >
-                  Zur Liste hinzufügen
+                  Add to list
                 </Button>
               </div>
             </div>
@@ -391,7 +391,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
 
           {/* Target Collection Selection */}
           <div>
-            <Label className="text-xs">Ziel-Sammlung (optional)</Label>
+            <Label className="text-xs">Target collection (optional)</Label>
             <select
               value={targetCollectionId ? String(targetCollectionId) : ""}
               onChange={(e) =>
@@ -399,7 +399,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
               }
               className="mt-1 flex h-11 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs outline-hidden transition-colors focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             >
-              <option value="">Automatisch (aus Shard-Vorlage oder &quot;Imported&quot;)</option>
+              <option value="">Automatic (from shard or &quot;Imported&quot;)</option>
               {collections.map((c: ShardCollection) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -413,14 +413,14 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  Bereit zum Importieren ({stagedFiles.length} Shard{stagedFiles.length > 1 ? "s" : ""}):
+                  Ready to import ({stagedFiles.length} Shard{stagedFiles.length > 1 ? "s" : ""}):
                 </span>
                 <button
                   type="button"
                   onClick={clearAllStaged}
                   className="text-xs text-red-500 hover:underline dark:text-red-400"
                 >
-                  Alle entfernen
+                  Remove all
                 </button>
               </div>
 
@@ -452,7 +452,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                         type="button"
                         onClick={() => removeStagedFile(file.id)}
                         className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                        title="Entfernen"
+                        title="Remove"
                       >
                         <TrashBinIcon className="size-3.5" />
                       </button>
@@ -469,7 +469,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
               <div className="flex items-center gap-2 font-semibold text-red-600 dark:text-red-400">
                 <OctagonAlertIcon className="size-4" />
                 <span>
-                  {importSummary.failed} von {importSummary.total} Shard(s) konnten nicht importiert werden:
+                  {importSummary.failed} of {importSummary.total} shard(s) could not be imported:
                 </span>
               </div>
               <ul className="mt-2 space-y-1 text-gray-600 dark:text-gray-300">
@@ -503,10 +503,10 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             disabled={busy || stagedFiles.length === 0}
           >
             {busy
-              ? "Importiere…"
+              ? "Importing…"
               : stagedFiles.length > 1
-              ? `${stagedFiles.length} Shards importieren`
-              : "Shard importieren"}
+              ? `Import ${stagedFiles.length} shards`
+              : "Import shard"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -92,6 +92,7 @@ public class AdminShardsController : ControllerBase
     /// <summary>Batch imports multiple shard templates simultaneously</summary>
     [HttpPost("import-batch")]
     [RequirePermission(Permissions.AdminShardsWrite)]
+    [RequestSizeLimit(ShardImportExportService.MaxUploadSize)]
     public async Task<ShardBatchImportResult> ImportBatch([FromBody] ShardBatchImportRequest request, CancellationToken cancellationToken)
     {
         var result = await _importExportService.ImportBatchAsync(request, cancellationToken);
@@ -103,6 +104,8 @@ public class AdminShardsController : ControllerBase
     /// <summary>Uploads and imports multiple shard JSON files or ZIP archive simultaneously</summary>
     [HttpPost("import-files")]
     [RequirePermission(Permissions.AdminShardsWrite)]
+    [RequestSizeLimit(ShardImportExportService.MaxUploadSize)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ShardImportExportService.MaxUploadSize)]
     public async Task<ShardBatchImportResult> ImportFiles(
         [FromForm] IFormFileCollection files,
         [FromQuery] int? targetCollectionId,

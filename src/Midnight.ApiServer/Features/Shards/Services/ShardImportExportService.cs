@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
+using Midnight.ApiServer.Core.Security;
 using Midnight.ApiServer.Features.Shards.Entities;
 using Midnight.Shared.Http.Shards;
 
@@ -439,8 +440,17 @@ public partial class ShardImportExportService : IShardImportExportService
         return name;
     }
 
+    public const int MaxBatchItems = 200;
+    public const long MaxShardFileSize = 2L * 1024 * 1024;
+    public const long MaxUploadSize = 50L * 1024 * 1024;
+    private const long MaxArchiveExtractedSize = 100L * 1024 * 1024;
+    private const int MaxArchiveEntries = 1000;
+
     public async Task<ShardBatchImportResult> ImportBatchAsync(ShardBatchImportRequest request, CancellationToken cancellationToken)
     {
+        if (request.Items.Count > MaxBatchItems)
+            throw HttpApiException.BadRequest("Too many shards", $"A batch import may contain at most {MaxBatchItems} shards.");
+
         var results = new List<ShardBatchImportItemResult>();
 
         foreach (var item in request.Items)
@@ -467,7 +477,7 @@ public partial class ShardImportExportService : IShardImportExportService
             {
                 results.Add(new ShardBatchImportItemResult
                 {
-                    FileName = item.FileName ?? "Unbekannt",
+                    FileName = item.FileName ?? "Unknown",
                     Success = false,
                     ErrorMessage = ex.Message
                 });
@@ -486,6 +496,7 @@ public partial class ShardImportExportService : IShardImportExportService
     public async Task<ShardBatchImportResult> ImportFilesAsync(IFormFileCollection files, int? targetCollectionId, CancellationToken cancellationToken)
     {
         var batchItems = new List<ShardBatchImportItem>();
+        long extractedTotal = 0;
 
         foreach (var file in files)
         {
@@ -493,34 +504,44 @@ public partial class ShardImportExportService : IShardImportExportService
 
             if (file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
             {
-                await using var stream = file.OpenReadStream();
-                using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-                foreach (var entry in archive.Entries)
+                try
                 {
-                    if (entry.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && !entry.FullName.StartsWith("__MACOSX"))
+                    await using var stream = file.OpenReadStream();
+                    using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+                    SafeZip.EnsureEntryCount(archive, MaxArchiveEntries);
+                    foreach (var entry in archive.Entries)
                     {
-                        using var reader = new StreamReader(entry.Open());
-                        var jsonText = await reader.ReadToEndAsync(cancellationToken);
+                        // Entries are only read into memory, never written to disk; still skip odd paths
+                        if (!entry.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+                            entry.FullName.StartsWith("__MACOSX", StringComparison.Ordinal) ||
+                            entry.FullName.Contains("..", StringComparison.Ordinal))
+                            continue;
+
+                        extractedTotal += Math.Min(entry.Length, MaxShardFileSize);
+                        if (extractedTotal > MaxArchiveExtractedSize)
+                            throw new InvalidDataException($"The archives exceed the maximum extracted size of {MaxArchiveExtractedSize / (1024 * 1024)} MB.");
+
+                        var jsonText = await SafeZip.ReadAllTextAsync(entry, MaxShardFileSize, cancellationToken);
                         if (!string.IsNullOrWhiteSpace(jsonText))
                         {
-                            batchItems.Add(new ShardBatchImportItem
-                            {
-                                FileName = entry.Name,
-                                Content = jsonText
-                            });
+                            AddBatchItem(batchItems, entry.Name, jsonText);
                         }
                     }
+                }
+                catch (InvalidDataException ex)
+                {
+                    throw HttpApiException.BadRequest("Invalid archive", $"{Path.GetFileName(file.FileName)}: {ex.Message}");
                 }
             }
             else if (file.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
+                if (file.Length > MaxShardFileSize)
+                    throw HttpApiException.BadRequest("File too large",
+                        $"{Path.GetFileName(file.FileName)} exceeds the maximum size of {MaxShardFileSize / 1024} KB.");
+
                 using var reader = new StreamReader(file.OpenReadStream());
                 var jsonText = await reader.ReadToEndAsync(cancellationToken);
-                batchItems.Add(new ShardBatchImportItem
-                {
-                    FileName = file.FileName,
-                    Content = jsonText
-                });
+                AddBatchItem(batchItems, Path.GetFileName(file.FileName), jsonText);
             }
         }
 
@@ -529,5 +550,12 @@ public partial class ShardImportExportService : IShardImportExportService
             TargetCollectionId = targetCollectionId,
             Items = batchItems
         }, cancellationToken);
+    }
+
+    private static void AddBatchItem(List<ShardBatchImportItem> items, string fileName, string content)
+    {
+        if (items.Count >= MaxBatchItems)
+            throw HttpApiException.BadRequest("Too many shards", $"A batch import may contain at most {MaxBatchItems} shards.");
+        items.Add(new ShardBatchImportItem { FileName = fileName, Content = content });
     }
 }

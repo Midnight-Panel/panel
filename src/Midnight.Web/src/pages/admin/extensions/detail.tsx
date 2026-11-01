@@ -165,7 +165,7 @@ export default function ExtensionDetailPage() {
         extension.id,
         extension.packageFileName || `${extension.identifier}-v${extension.version}.zip`,
       );
-      notifySuccess("Paket erfolgreich heruntergeladen!");
+      notifySuccess("Package downloaded.");
     } catch (err) {
       notifyError(err);
     } finally {
@@ -245,11 +245,11 @@ export default function ExtensionDetailPage() {
                 <span>•</span>
                 {extension.installSource === "url" ? (
                   <span className="inline-flex items-center gap-1 rounded bg-indigo-500/10 px-1.5 py-0.5 font-mono text-[11px] text-indigo-400">
-                    <LinkIcon className="size-3" /> Per Link
+                    <LinkIcon className="size-3" /> Link
                   </span>
                 ) : extension.installSource === "file" ? (
                   <span className="inline-flex items-center gap-1 rounded bg-brand-500/10 px-1.5 py-0.5 font-mono text-[11px] text-brand-400">
-                    <FileIcon className="size-3" /> Datei ({extension.packageFileName || "Paket"})
+                    <FileIcon className="size-3" /> File ({extension.packageFileName || "package"})
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-400 dark:bg-white/5">
@@ -265,10 +265,10 @@ export default function ExtensionDetailPage() {
               variant="outline"
               onClick={handleDownload}
               disabled={downloading}
-              title="Herunterladen"
+              title="Download"
             >
               <DownloadIcon className="mr-1.5 size-4 text-brand-500" />
-              Paketdatei (.zip)
+              Package (.zip)
             </Button>
 
             {can(Permissions.AdminExtensionsWrite) && (
@@ -303,7 +303,7 @@ export default function ExtensionDetailPage() {
         <TabsList className="bg-gray-100 dark:bg-white/5">
           <TabsTrigger value="files" className="gap-2">
             <FolderIcon className="size-4" />
-            Dateien ({extension.installedFiles.length})
+            Files ({extension.installedFiles.length})
           </TabsTrigger>
           <TabsTrigger value="config" className="gap-2">
             <GearIcon className="size-4" />
@@ -325,21 +325,21 @@ export default function ExtensionDetailPage() {
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/5">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
-                  Paketdateien im Dateisystem
+                  Package files
                 </h3>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  Übersicht aller entpackten Dateien für diese Erweiterung im Panel-Speicher.
+                  All files extracted for this extension in the panel storage.
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
                 <DownloadIcon className="mr-1.5 size-3.5" />
-                Als Archiv (.zip) herunterladen
+                Download as .zip
               </Button>
             </div>
 
             {extension.installedFiles.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                Keine separaten Dateien entpackt oder integriertes Systemmodul.
+                No extracted files (built-in module).
               </div>
             ) : (
               <div className="max-h-96 space-y-1.5 overflow-y-auto font-mono text-xs">
@@ -363,10 +363,10 @@ export default function ExtensionDetailPage() {
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/5">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
-                  Konfigurationsparameter
+                  Configuration
                 </h3>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  Aktuelle Einstellungen für {extension.name}.
+                  Current settings for {extension.name}.
                 </p>
               </div>
 
@@ -402,7 +402,7 @@ export default function ExtensionDetailPage() {
               <div className="space-y-4">
                 {configKeys.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                    Diese Erweiterung benötigt keine zusätzlichen Konfigurationswerte.
+                    This extension has no configuration options.
                   </div>
                 ) : (
                   configKeys.map((key) => {
@@ -421,7 +421,7 @@ export default function ExtensionDetailPage() {
                               {key}
                             </Label>
                             <span className="block text-xs text-gray-500 dark:text-gray-400">
-                              Schalter für {key}
+                              Toggle {key}
                             </span>
                           </div>
                           <Switch
@@ -514,19 +514,19 @@ export default function ExtensionDetailPage() {
               </div>
 
               <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Installationsquelle</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Install source</span>
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
                   {extension.installSource === "url"
-                    ? "Per Link (URL)"
+                    ? "Download link (URL)"
                     : extension.installSource === "file"
-                    ? "Per Datei-Upload (File)"
-                    : "Integriertes System-Modul"}
+                    ? "File upload"
+                    : "Built-in system module"}
                 </p>
               </div>
 
               {extension.sourceUrl && (
                 <div className="col-span-full rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Download-Link (URL)</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Download link (URL)</span>
                   <p className="mt-1 break-all font-mono text-xs text-brand-500 dark:text-brand-400">
                     {extension.sourceUrl}
                   </p>
@@ -535,7 +535,7 @@ export default function ExtensionDetailPage() {
 
               {extension.packageFileName && (
                 <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Paket-Dateiname</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Package file name</span>
                   <p className="mt-1 font-mono text-sm font-semibold text-gray-800 dark:text-white/90">
                     {extension.packageFileName}
                   </p>

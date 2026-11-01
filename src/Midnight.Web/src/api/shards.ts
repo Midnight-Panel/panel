@@ -96,7 +96,7 @@ export const shardsApi = {
     return api.post<ShardBatchImportResult>(`/api/admin/shards/import-files${query}`, formData);
   },
 
-  // Variablen
+  // Variables
   listVariables: (shardId: number) =>
     api.get<ShardVariable[]>(`/api/admin/shards/${shardId}/variables`),
 

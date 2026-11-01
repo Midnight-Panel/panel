@@ -67,6 +67,13 @@ public class ExtensionCommand : ICommand
             return ExitCodes.InvalidArguments;
         }
 
+        // The identifier ends up in the SQL statement, so only the characters identifiers may contain are allowed
+        if (!System.Text.RegularExpressions.Regex.IsMatch(identifier, "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"))
+        {
+            _console.WriteError($"'{identifier}' is not a valid extension identifier (letters, numbers, . _ -)");
+            return ExitCodes.InvalidArguments;
+        }
+
         var statusText = isEnable ? "true" : "false";
         var verb = isEnable ? "enabled" : "disabled";
 
@@ -89,7 +96,7 @@ public class ExtensionCommand : ICommand
         var target = args.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
         if (string.IsNullOrWhiteSpace(target))
         {
-            _console.WriteError("Bitte gib einen Dateipfad (.zip) oder einen Download-Link (URL) an: midnight extension install <pfad-oder-url>");
+            _console.WriteError("Please specify a file path (.zip) or a download URL: midnight extension install <path-or-url>");
             return ExitCodes.InvalidArguments;
         }
 
@@ -98,7 +105,15 @@ public class ExtensionCommand : ICommand
 
         if (isUrl)
         {
-            _console.WriteInfo($"Lade Erweiterung von URL '{target}' herunter...");
+            if (!Uri.TryCreate(target, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+                target.IndexOfAny(['"', '\\', '`', '$', '\n', '\r']) >= 0)
+            {
+                _console.WriteError($"Invalid download URL '{target}'.");
+                return ExitCodes.InvalidArguments;
+            }
+
+            _console.WriteInfo($"Downloading extension from '{target}'...");
             var curlRes = await _processRunner.RunAsync(
                 "docker",
                 $"compose -f /opt/midnight/panel/docker-compose.yml exec -T panel curl -fsSL -o /tmp/extension-download.zip \"{target}\"",
@@ -107,21 +122,21 @@ public class ExtensionCommand : ICommand
 
             if (!curlRes.Success)
             {
-                _console.WriteError($"Fehler beim Herunterladen der Erweiterung: {curlRes.Output}");
+                _console.WriteError($"Failed to download extension: {curlRes.Output}");
                 return ExitCodes.GeneralError;
             }
 
-            _console.WriteSuccess("Paket erfolgreich über Download-Link bereitgestellt. Aktiviere im Panel unter Erweiterungen.");
+            _console.WriteSuccess("Package downloaded. Enable it in the panel under Extensions.");
             return ExitCodes.Success;
         }
 
         if (!File.Exists(target))
         {
-            _console.WriteError($"Datei '{target}' existiert nicht.");
+            _console.WriteError($"File '{target}' does not exist.");
             return ExitCodes.InvalidArguments;
         }
 
-        _console.WriteInfo($"Kopiere Erweiterungspaket '{target}' in den Panel-Container...");
+        _console.WriteInfo($"Copying extension package '{target}' into the panel container...");
         var dest = $"/tmp/{Path.GetFileName(target)}";
 
         var cpRes = await _processRunner.RunAsync(
@@ -136,7 +151,8 @@ public class ExtensionCommand : ICommand
             return ExitCodes.GeneralError;
         }
 
-        _console.WriteSuccess($"Paket '{Path.GetFileName(target)}' erfolgreich bereitgestellt.");
+        _console.WriteSuccess($"Package '{Path.GetFileName(target)}' copied to the panel container.");
+        return ExitCodes.Success;
     }
 
     private async Task<ProcessResult> RunPostgresQueryAsync(string sqlQuery, CancellationToken cancellationToken)
@@ -160,7 +176,7 @@ public class ExtensionCommand : ICommand
           list [--json]              List all installed extensions
           enable <identifier>        Enable an extension
           disable <identifier>       Disable an extension
-          install <archive.zip>      Copy and install an extension package
+          install <archive.zip|url> Copy or download an extension package
         """);
         return ExitCodes.Success;
     }

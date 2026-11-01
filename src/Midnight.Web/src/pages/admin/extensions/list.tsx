@@ -134,7 +134,7 @@ export default function ExtensionsPage() {
         ext.id,
         ext.packageFileName || `${ext.identifier}-v${ext.version}.zip`,
       );
-      notifySuccess("Paketdatei wird heruntergeladen…");
+      notifySuccess("Downloading package…");
     } catch (err) {
       notifyError(err);
     }
@@ -284,7 +284,7 @@ export default function ExtensionsPage() {
               className="w-full sm:w-auto"
             >
               <PlusIcon className="mr-1.5 size-4" />
-              Erweiterung installieren (Datei / Link)
+              Install extension (file / link)
             </Button>
           </div>
         )}
@@ -302,7 +302,7 @@ export default function ExtensionsPage() {
             {t("Extensions.NoExtensions")}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Installiere eine Erweiterung per Datei-Upload oder über einen Download-Link.
+            Install an extension by uploading a file or from a download link.
           </p>
         </div>
       ) : (
@@ -371,7 +371,7 @@ export default function ExtensionsPage() {
                     </span>
                   ) : ext.installSource === "file" ? (
                     <span className="flex items-center gap-1 rounded-md bg-brand-500/10 px-2 py-0.5 text-brand-400">
-                      <FileIcon className="size-3" /> Datei
+                      <FileIcon className="size-3" /> File
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-gray-500 dark:bg-white/5 dark:text-gray-400">
@@ -407,7 +407,7 @@ export default function ExtensionsPage() {
                     size="icon-sm"
                     onClick={() => handleDownload(ext)}
                     className="text-gray-400 hover:text-brand-500 dark:hover:text-brand-400"
-                    title="Paketdatei herunterladen"
+                    title="Download package"
                   >
                     <DownloadIcon className="size-4" />
                   </Button>

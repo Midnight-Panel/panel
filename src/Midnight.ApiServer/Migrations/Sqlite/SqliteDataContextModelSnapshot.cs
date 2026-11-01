@@ -205,6 +205,11 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("InstallSource")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("InstalledAt")
                         .HasColumnType("INTEGER");
 
@@ -216,7 +221,19 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PackageFileName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ReadmeMarkdown")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StoragePath")
+                        .HasMaxLength(512)
                         .HasColumnType("TEXT");
 
                     b.Property<long>("UpdatedAt")

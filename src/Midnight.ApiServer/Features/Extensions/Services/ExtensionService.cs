@@ -5,14 +5,28 @@ using Microsoft.EntityFrameworkCore;
 using Midnight.ApiServer.Core.Configuration;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
+using Midnight.ApiServer.Core.Security;
 using Midnight.ApiServer.Features.Extensions.Entities;
 using Midnight.Shared.Http;
 using Midnight.Shared.Http.Extensions;
 
 namespace Midnight.ApiServer.Features.Extensions.Services;
 
-public class ExtensionService : IExtensionService
+public partial class ExtensionService : IExtensionService
 {
+    public const long MaxPackageSize = 50L * 1024 * 1024;
+    private const long MaxExtractedSize = 200L * 1024 * 1024;
+    private const int MaxArchiveEntries = 2000;
+    private const long MaxManifestSize = 1024 * 1024;
+    private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(2);
+
+    /// <summary>Identifiers are used as file and directory names, so only a safe charset is allowed</summary>
+    [GeneratedRegex("^[a-z0-9][a-z0-9._-]{0,63}$")]
+    private static partial Regex SafeIdentifierRegex();
+
+    public static bool IsSafeIdentifier(string? identifier) =>
+        !string.IsNullOrEmpty(identifier) && SafeIdentifierRegex().IsMatch(identifier);
+
     private readonly DataContext _context;
     private readonly StoragePaths _storagePaths;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -151,6 +165,8 @@ public class ExtensionService : IExtensionService
         var identifier = request.Identifier.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(identifier))
             throw HttpApiException.BadRequest("Identifier must not be empty.");
+        if (!IsSafeIdentifier(identifier))
+            throw HttpApiException.BadRequest("Invalid identifier", "Use 1-64 lowercase letters, digits, '.', '-' or '_', starting with a letter or digit.");
 
         var existing = await _context.Extensions.FirstOrDefaultAsync(x => x.Identifier == identifier, cancellationToken);
         if (existing != null)
@@ -185,53 +201,57 @@ public class ExtensionService : IExtensionService
 
     public async Task<ExtensionDetailResponse> UploadPackageAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
-        using var memoryStream = new MemoryStream();
-        await fileStream.CopyToAsync(memoryStream, cancellationToken);
-        memoryStream.Position = 0;
+        FileStream package;
+        try
+        {
+            package = await SafeDownloader.CopyToTempFileAsync(fileStream, MaxPackageSize, cancellationToken);
+        }
+        catch (SafeDownloadException ex)
+        {
+            throw HttpApiException.BadRequest("Package too large", ex.Message);
+        }
 
-        return await ProcessAndSavePackageAsync(memoryStream, fileName, installSource: "file", sourceUrl: null, cancellationToken);
+        await using var _ = package;
+
+        return await ProcessAndSavePackageAsync(package, Path.GetFileName(fileName), installSource: "file", sourceUrl: null, cancellationToken);
     }
 
     public async Task<ExtensionDetailResponse> InstallFromUrlAsync(string url, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(url) || (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
-            throw HttpApiException.BadRequest("Bitte gib eine gültige HTTP- oder HTTPS-URL an.");
+        if (!SafeDownloader.TryParseHttpUrl(url, out var uri))
+            throw HttpApiException.BadRequest("Please provide a valid http:// or https:// URL.");
 
-        var client = _httpClientFactory.CreateClient();
-        client.Timeout = TimeSpan.FromMinutes(2);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("MidnightPanel-ExtensionInstaller/1.0");
-
-        HttpResponseMessage response;
+        SafeDownloadResult download;
         try
         {
-            response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            download = await SafeDownloader.DownloadToTempFileAsync(
+                uri.AbsoluteUri, MaxPackageSize, DownloadTimeout, "MidnightPanel-ExtensionInstaller/1.0", cancellationToken);
         }
-        catch (Exception ex)
+        catch (SafeDownloadException ex)
         {
-            _logger.LogError(ex, "Failed to download extension package from {Url}", url);
-            throw HttpApiException.BadRequest($"Download fehlgeschlagen: {ex.Message}");
+            _logger.LogWarning(ex, "Failed to download extension package from {Url}", uri);
+            throw HttpApiException.BadRequest("Download failed", ex.Message);
         }
 
-        var fileName = Path.GetFileName(new Uri(url).AbsolutePath);
-        if (string.IsNullOrWhiteSpace(fileName) || !fileName.Contains('.'))
+        await using (download)
         {
-            fileName = "extension.zip";
+            var fileName = Path.GetFileName(download.FinalUri.AbsolutePath);
+            if (string.IsNullOrWhiteSpace(fileName) || !fileName.Contains('.'))
+            {
+                fileName = "extension.zip";
+            }
+
+            return await ProcessAndSavePackageAsync(download.Content, fileName, installSource: "url", sourceUrl: uri.AbsoluteUri, cancellationToken);
         }
-
-        await using var downloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var memoryStream = new MemoryStream();
-        await downloadStream.CopyToAsync(memoryStream, cancellationToken);
-        memoryStream.Position = 0;
-
-        return await ProcessAndSavePackageAsync(memoryStream, fileName, installSource: "url", sourceUrl: url, cancellationToken);
     }
 
     public async Task<(Stream fileStream, string fileName, string contentType)> DownloadPackageAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await _context.Extensions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null)
-            throw HttpApiException.NotFound("Erweiterung wurde nicht gefunden.");
+            throw HttpApiException.NotFound("Extension not found.");
+        if (!IsSafeIdentifier(entity.Identifier))
+            throw HttpApiException.NotFound("No package file found for this extension.");
 
         var packagePath = Path.Combine(_storagePaths.ExtensionPackages, $"{entity.Identifier}.zip");
         if (File.Exists(packagePath))
@@ -240,7 +260,7 @@ public class ExtensionService : IExtensionService
             return (stream, entity.PackageFileName ?? $"{entity.Identifier}-v{entity.Version}.zip", "application/zip");
         }
 
-        // Falls Paketdatei nicht existiert, aber Ordner installiert ist: on-the-fly zippen
+        // No stored package but an installed directory: zip it on the fly
         var installedDir = Path.Combine(_storagePaths.ExtensionInstalled, entity.Identifier);
         if (Directory.Exists(installedDir))
         {
@@ -250,7 +270,7 @@ public class ExtensionService : IExtensionService
             return (ms, $"{entity.Identifier}-v{entity.Version}.zip", "application/zip");
         }
 
-        throw HttpApiException.NotFound("Keine Paketdatei für diese Erweiterung gefunden.");
+        throw HttpApiException.NotFound("No package file found for this extension.");
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -261,6 +281,12 @@ public class ExtensionService : IExtensionService
 
         _context.Extensions.Remove(entity);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (!IsSafeIdentifier(entity.Identifier))
+        {
+            _logger.LogInformation("Deleted extension {Identifier}", entity.Identifier);
+            return;
+        }
 
         try
         {
@@ -279,7 +305,7 @@ public class ExtensionService : IExtensionService
     }
 
     private async Task<ExtensionDetailResponse> ProcessAndSavePackageAsync(
-        MemoryStream stream,
+        FileStream stream,
         string fileName,
         string installSource,
         string? sourceUrl,
@@ -288,53 +314,58 @@ public class ExtensionService : IExtensionService
         Directory.CreateDirectory(_storagePaths.ExtensionPackages);
         Directory.CreateDirectory(_storagePaths.ExtensionInstalled);
 
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
-        var manifestEntry = archive.GetEntry("extension.json") ?? archive.GetEntry("manifest.json");
+        if (string.IsNullOrWhiteSpace(fileName))
+            fileName = "extension.zip";
+        if (fileName.Length > 255)
+            fileName = fileName[^255..];
 
-        ExtensionInstallRequest? manifest = null;
-        if (manifestEntry != null)
+        ZipArchive archive;
+        try
         {
+            archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
+        }
+        catch (InvalidDataException)
+        {
+            throw HttpApiException.BadRequest("Invalid package", "The file is not a valid ZIP archive.");
+        }
+
+        using var _ = archive;
+        string identifier;
+        string installDir;
+        ExtensionInstallRequest manifest;
+        try
+        {
+            SafeZip.EnsureEntryCount(archive, MaxArchiveEntries);
+            manifest = await ReadManifestAsync(archive, fileName, cancellationToken);
+            identifier = manifest.Identifier.Trim().ToLowerInvariant();
+            if (!IsSafeIdentifier(identifier))
+                throw HttpApiException.BadRequest("Invalid identifier",
+                    $"The extension identifier '{manifest.Identifier}' may only contain lowercase letters, digits, '.', '-' and '_' (max. 64 characters).");
+
+            // 1. Extract into a temporary directory first so a broken package never replaces a working install
+            installDir = Path.Combine(_storagePaths.ExtensionInstalled, identifier);
+            var tempDir = Path.Combine(_storagePaths.ExtensionInstalled, $".tmp-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempDir);
             try
             {
-                using var mStream = manifestEntry.Open();
-                manifest = await JsonSerializer.DeserializeAsync<ExtensionInstallRequest>(mStream, cancellationToken: cancellationToken);
+                await SafeZip.ExtractToDirectoryAsync(archive, tempDir, MaxExtractedSize, MaxArchiveEntries, cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogWarning(ex, "Failed to parse extension.json in archive {FileName}", fileName);
+                Directory.Delete(tempDir, recursive: true);
+                throw;
             }
-        }
 
-        // Falls kein Manifest gefunden wurde, erzeuge ein valides Standard-Manifest aus dem Dateinamen
-        if (manifest == null || string.IsNullOrWhiteSpace(manifest.Identifier))
+            if (Directory.Exists(installDir))
+                Directory.Delete(installDir, recursive: true);
+            Directory.Move(tempDir, installDir);
+        }
+        catch (InvalidDataException ex)
         {
-            var rawName = Path.GetFileNameWithoutExtension(fileName);
-            var sanitizedIdentifier = Regex.Replace(rawName.ToLowerInvariant(), @"[^a-z0-9-_]", "-").Trim('-');
-            if (string.IsNullOrWhiteSpace(sanitizedIdentifier))
-                sanitizedIdentifier = "extension-" + Guid.NewGuid().ToString("N")[..8];
-
-            manifest = new ExtensionInstallRequest
-            {
-                Identifier = sanitizedIdentifier,
-                Name = rawName.Replace('-', ' ').Replace('_', ' '),
-                Description = $"Aus Paket '{fileName}' installiert.",
-                Version = "1.0.0",
-                Author = "Community",
-                Category = "Tools",
-                Icon = "plugin"
-            };
+            throw HttpApiException.BadRequest("Invalid package", ex.Message);
         }
 
-        var readmeEntry = archive.GetEntry("README.md") ?? archive.GetEntry("readme.md") ?? archive.GetEntry("README.txt");
-        if (readmeEntry != null)
-        {
-            using var reader = new StreamReader(readmeEntry.Open());
-            manifest = manifest with { ReadmeMarkdown = await reader.ReadToEndAsync(cancellationToken) };
-        }
-
-        var identifier = manifest.Identifier.Trim().ToLowerInvariant();
-
-        // 1. Speichere das ZIP-Paket
+        // 2. Store the ZIP package
         var packagePath = Path.Combine(_storagePaths.ExtensionPackages, $"{identifier}.zip");
         stream.Position = 0;
         await using (var fileOut = new FileStream(packagePath, FileMode.Create, FileAccess.Write))
@@ -342,16 +373,7 @@ public class ExtensionService : IExtensionService
             await stream.CopyToAsync(fileOut, cancellationToken);
         }
 
-        // 2. Entpacke die Dateien
-        var installDir = Path.Combine(_storagePaths.ExtensionInstalled, identifier);
-        if (Directory.Exists(installDir))
-        {
-            Directory.Delete(installDir, recursive: true);
-        }
-        Directory.CreateDirectory(installDir);
-        archive.ExtractToDirectory(installDir, overwriteFiles: true);
-
-        // 3. Datenbank-Eintrag anlegen oder aktualisieren
+        // 3. Create or update the database entry
         var existing = await _context.Extensions.FirstOrDefaultAsync(x => x.Identifier == identifier, cancellationToken);
         if (existing != null)
         {
@@ -392,7 +414,7 @@ public class ExtensionService : IExtensionService
             IsEnabled = true,
             ConfigSchemaJson = manifest.ConfigSchemaJson,
             ConfigValuesJson = manifest.ConfigValuesJson ?? "{}",
-            ReadmeMarkdown = manifest.ReadmeMarkdown ?? $"# {manifest.Name}\n\nInstalliert aus Paket `{fileName}`.",
+            ReadmeMarkdown = manifest.ReadmeMarkdown ?? $"# {manifest.Name}\n\nInstalled from package `{fileName}`.",
             InstalledAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -403,8 +425,60 @@ public class ExtensionService : IExtensionService
         return MapToDetail(entity, GetInstalledFiles(identifier));
     }
 
+    private async Task<ExtensionInstallRequest> ReadManifestAsync(ZipArchive archive, string fileName, CancellationToken cancellationToken)
+    {
+        var manifestEntry = archive.GetEntry("extension.json") ?? archive.GetEntry("manifest.json");
+
+        ExtensionInstallRequest? manifest = null;
+        if (manifestEntry != null)
+        {
+            try
+            {
+                var json = await SafeZip.ReadAllTextAsync(manifestEntry, MaxManifestSize, cancellationToken);
+                manifest = JsonSerializer.Deserialize<ExtensionInstallRequest>(json, JsonDefaults.Options);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse extension.json in archive {FileName}", fileName);
+            }
+        }
+
+        // No manifest found: build a valid default manifest from the file name
+        if (manifest == null || string.IsNullOrWhiteSpace(manifest.Identifier))
+        {
+            var rawName = Path.GetFileNameWithoutExtension(fileName);
+            var sanitizedIdentifier = Regex.Replace(rawName.ToLowerInvariant(), @"[^a-z0-9-_]", "-").Trim('-', '_');
+            if (sanitizedIdentifier.Length > 64)
+                sanitizedIdentifier = sanitizedIdentifier[..64].TrimEnd('-', '_');
+            if (string.IsNullOrWhiteSpace(sanitizedIdentifier))
+                sanitizedIdentifier = "extension-" + Guid.NewGuid().ToString("N")[..8];
+
+            manifest = new ExtensionInstallRequest
+            {
+                Identifier = sanitizedIdentifier,
+                Name = rawName.Replace('-', ' ').Replace('_', ' '),
+                Description = $"Installed from package '{fileName}'.",
+                Version = "1.0.0",
+                Author = "Community",
+                Category = "Tools",
+                Icon = "plugin"
+            };
+        }
+
+        var readmeEntry = archive.GetEntry("README.md") ?? archive.GetEntry("readme.md") ?? archive.GetEntry("README.txt");
+        if (readmeEntry != null)
+        {
+            manifest = manifest with { ReadmeMarkdown = await SafeZip.ReadAllTextAsync(readmeEntry, MaxManifestSize, cancellationToken) };
+        }
+
+        return manifest;
+    }
+
     private List<string> GetInstalledFiles(string identifier)
     {
+        if (!IsSafeIdentifier(identifier))
+            return [];
+
         try
         {
             var dir = Path.Combine(_storagePaths.ExtensionInstalled, identifier);
@@ -431,7 +505,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "discord-webhook",
                 Name = "Discord Webhook Notifier",
-                Description = "Sendet automatische Ereignis- und Status-Mitteilungen an konfigurierte Discord-Webhooks.",
+                Description = "Sends automatic event and status notifications to configured Discord webhooks.",
                 Category = "Integration",
                 Version = "1.2.0",
                 Author = "Midnightpanel Team",
@@ -444,13 +518,13 @@ public class ExtensionService : IExtensionService
                   "type": "object",
                   "properties": {
                     "webhookUrl": { "type": "string", "title": "Discord Webhook URL", "format": "uri" },
-                    "notifyOnServerStart": { "type": "boolean", "title": "Bei Server-Start benachrichtigen", "default": true },
-                    "notifyOnServerCrash": { "type": "boolean", "title": "Bei Server-Crash benachrichtigen", "default": true }
+                    "notifyOnServerStart": { "type": "boolean", "title": "Notify on server start", "default": true },
+                    "notifyOnServerCrash": { "type": "boolean", "title": "Notify on server crash", "default": true }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"webhookUrl": "", "notifyOnServerStart": true, "notifyOnServerCrash": true}""",
-                ReadmeMarkdown = "# Discord Webhook Notifier\n\nVerbinde deine Spieleserver mit Discord.",
+                ReadmeMarkdown = "# Discord Webhook Notifier\n\nConnect your game servers to Discord.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -458,7 +532,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "backup-scheduler",
                 Name = "Automated Backup Scheduler",
-                Description = "Erweiterte Backup-Pläne mit Cron-Syntax, Aufbewahrungsrichtlinien und S3-Offsite-Upload.",
+                Description = "Advanced backup schedules with cron syntax, retention policies and S3 off-site upload.",
                 Category = "Backups",
                 Version = "2.0.1",
                 Author = "Midnightpanel Team",
@@ -470,14 +544,14 @@ public class ExtensionService : IExtensionService
                 {
                   "type": "object",
                   "properties": {
-                    "cronExpression": { "type": "string", "title": "Standard-Cron-Ausdruck", "default": "0 4 * * *" },
-                    "retentionDays": { "type": "number", "title": "Aufbewahrungstage", "default": 7 },
-                    "compressLevel": { "type": "string", "title": "Kompressionsstufe", "enum": ["Fast", "Optimal", "Maximum"], "default": "Optimal" }
+                    "cronExpression": { "type": "string", "title": "Default cron expression", "default": "0 4 * * *" },
+                    "retentionDays": { "type": "number", "title": "Retention days", "default": 7 },
+                    "compressLevel": { "type": "string", "title": "Compression level", "enum": ["Fast", "Optimal", "Maximum"], "default": "Optimal" }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"cronExpression": "0 4 * * *", "retentionDays": 7, "compressLevel": "Optimal"}""",
-                ReadmeMarkdown = "# Automated Backup Scheduler\n\nErweiterte Backup-Verwaltung für Midnightpanel.",
+                ReadmeMarkdown = "# Automated Backup Scheduler\n\nAdvanced backup management for Midnightpanel.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             },
@@ -485,7 +559,7 @@ public class ExtensionService : IExtensionService
             {
                 Identifier = "cloudflare-dns",
                 Name = "Cloudflare DNS Manager",
-                Description = "Automatisches Anlegen von Subdomains (SRV/A-Records) für neu erstellte Gameserver.",
+                Description = "Automatically creates subdomains (SRV/A records) for newly created game servers.",
                 Category = "Tools",
                 Version = "1.0.4",
                 Author = "Midnightpanel Team",
@@ -499,12 +573,12 @@ public class ExtensionService : IExtensionService
                   "properties": {
                     "apiToken": { "type": "string", "title": "Cloudflare API Token", "format": "password" },
                     "zoneId": { "type": "string", "title": "Cloudflare Zone ID" },
-                    "baseDomain": { "type": "string", "title": "Basis-Domain", "default": "arwenagg.de" }
+                    "baseDomain": { "type": "string", "title": "Base domain", "default": "arwenagg.de" }
                   }
                 }
                 """,
                 ConfigValuesJson = """{"apiToken": "", "zoneId": "", "baseDomain": "arwenagg.de"}""",
-                ReadmeMarkdown = "# Cloudflare Subdomain Automator\n\nAutomatische DNS-Einträge für deine Server.",
+                ReadmeMarkdown = "# Cloudflare Subdomain Automator\n\nAutomatic DNS records for your servers.",
                 InstalledAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             }

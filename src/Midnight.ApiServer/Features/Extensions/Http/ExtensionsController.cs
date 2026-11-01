@@ -55,6 +55,8 @@ public class ExtensionsController : ControllerBase
 
     [HttpPost("upload")]
     [RequirePermission(Permissions.AdminExtensionsWrite)]
+    [RequestSizeLimit(ExtensionService.MaxPackageSize + 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ExtensionService.MaxPackageSize + 1024 * 1024)]
     public async Task<ExtensionDetailResponse> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
@@ -63,6 +65,7 @@ public class ExtensionsController : ControllerBase
 
     [HttpPost("url")]
     [RequirePermission(Permissions.AdminExtensionsWrite)]
+    [RequestSizeLimit(64 * 1024)]
     public Task<ExtensionDetailResponse> InstallUrl([FromBody] ExtensionInstallUrlRequest request, CancellationToken cancellationToken)
         => _extensionService.InstallFromUrlAsync(request.Url, cancellationToken);
 

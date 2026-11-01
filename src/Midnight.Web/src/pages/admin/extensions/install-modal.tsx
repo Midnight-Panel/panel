@@ -36,7 +36,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
     try {
       const res = await extensionsApi.uploadPackage(selectedFile);
       await queryClient.invalidateQueries({ queryKey: ["admin", "extensions"] });
-      notifySuccess(`Erweiterung "${res.name}" erfolgreich aus Datei installiert!`);
+      notifySuccess(`Extension "${res.name}" installed from file.`);
       setSelectedFile(null);
       onOpenChange(false);
     } catch (err) {
@@ -53,7 +53,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
     try {
       const res = await extensionsApi.installFromUrl(trimmed);
       await queryClient.invalidateQueries({ queryKey: ["admin", "extensions"] });
-      notifySuccess(`Erweiterung "${res.name}" erfolgreich per Link installiert!`);
+      notifySuccess(`Extension "${res.name}" installed from link.`);
       setUrl("");
       onOpenChange(false);
     } catch (err) {
@@ -74,13 +74,13 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
             <div>
               <DialogTitle>{t("Extensions.Install")}</DialogTitle>
               <DialogDescription>
-                Installiere ein Erweiterungspaket direkt als Datei oder über einen Download-Link.
+                Install an extension package from a file or a download link.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Tab Switcher: Nur Datei oder Link */}
+        {/* Tab switcher: file or link */}
         <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50/50 p-1 text-xs dark:border-gray-800 dark:bg-white/2">
           <button
             type="button"
@@ -92,7 +92,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
             }`}
           >
             <FileIcon className="size-4" />
-            Datei-Upload (File)
+            File upload
           </button>
           <button
             type="button"
@@ -104,7 +104,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
             }`}
           >
             <LinkIcon className="size-4" />
-            Per Link installieren (URL)
+            Install from link (URL)
           </button>
         </div>
 
@@ -129,16 +129,16 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
                 <FileIcon className="size-6" />
               </div>
               <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90">
-                {selectedFile ? selectedFile.name : "Klicke hier, um eine Datei auszuwählen"}
+                {selectedFile ? selectedFile.name : "Click to select a file"}
               </h4>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Unterstützte Formate: <code className="text-brand-400">.zip</code> oder{" "}
+                Supported formats: <code className="text-brand-400">.zip</code> or{" "}
                 <code className="text-brand-400">.midnight-ext</code>
               </p>
               {selectedFile && (
                 <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-500">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
-                  Bereit: {(selectedFile.size / 1024).toFixed(1)} KB
+                  Ready: {(selectedFile.size / 1024).toFixed(1)} KB
                 </div>
               )}
             </div>
@@ -148,7 +148,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
                 {t("Common.Cancel")}
               </Button>
               <Button onClick={handleUploadFile} disabled={!selectedFile || busy}>
-                {busy ? "Installiere Datei…" : "Datei installieren"}
+                {busy ? "Installing…" : "Install file"}
               </Button>
             </DialogFooter>
           </div>
@@ -166,16 +166,16 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
                 />
               </div>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                Gib eine direkte Download-URL zu einer Erweiterungsdatei an (z.B. GitHub Release Asset oder Web-URL).
+                Enter a direct download URL to an extension package (e.g. a GitHub release asset).
               </p>
             </div>
 
             <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3.5 text-xs text-gray-600 dark:border-white/5 dark:bg-white/2 dark:text-gray-300">
               <span className="font-semibold text-gray-800 dark:text-white/90">
-                Automatischer Download:
+                Automatic download:
               </span>{" "}
-              Das Panel lädt das Paket im Hintergrund herunter, prüft die Integrität und entpackt alle
-              benötigten Dateien automatisch in dein System.
+              The panel downloads the package in the background, validates it and extracts its
+              files automatically.
             </div>
 
             <DialogFooter>
@@ -186,7 +186,7 @@ export function InstallModal({ open, onOpenChange }: InstallModalProps) {
                 onClick={handleInstallFromUrl}
                 disabled={!url.trim() || busy}
               >
-                {busy ? "Lade herunter & installiere…" : "Per Link installieren"}
+                {busy ? "Downloading & installing…" : "Install from link"}
               </Button>
             </DialogFooter>
           </div>

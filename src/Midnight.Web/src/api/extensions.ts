@@ -51,7 +51,7 @@ export const extensionsApi = {
       },
       credentials: "same-origin",
     });
-    if (!response.ok) throw new Error("Download fehlgeschlagen");
+    if (!response.ok) throw new Error("Download failed");
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
