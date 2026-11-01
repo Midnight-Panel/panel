@@ -79,6 +79,46 @@ public class UpdateService : IUpdateService
         state.UseImages = shouldUseImages;
         await _stateService.SaveAsync(state);
 
+        // Visitors see the maintenance page of the proxy until the update (or the rollback) is done
+        await SetMaintenanceAsync(true);
+
+        try
+        {
+            return await RunPanelUpdateAsync(state, version, currentVersion, shouldUseImages, preUpdateBackupPath, cancellationToken);
+        }
+        finally
+        {
+            await SetMaintenanceAsync(false);
+        }
+    }
+
+    /// <summary>Flag file read by the proxy (see the installer's Caddyfile), every request gets the maintenance page while it exists</summary>
+    public const string MaintenanceFlag = "/opt/midnight/panel/maintenance/enabled";
+
+    private async Task SetMaintenanceAsync(bool enabled)
+    {
+        try
+        {
+            if (enabled)
+                await _fileSystem.WriteAllTextAsync(MaintenanceFlag, $"{DateTimeOffset.UtcNow:O}\n");
+            else if (_fileSystem.FileExists(MaintenanceFlag))
+                _fileSystem.DeleteFile(MaintenanceFlag);
+        }
+        catch (Exception ex)
+        {
+            // Never block an update because of the maintenance page
+            _console.WriteWarning($"Could not {(enabled ? "show" : "hide")} the maintenance page: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> RunPanelUpdateAsync(
+        Models.InstallationState state,
+        string version,
+        string currentVersion,
+        bool shouldUseImages,
+        string preUpdateBackupPath,
+        CancellationToken cancellationToken)
+    {
         var updateSuccess = false;
 
         // 2. Method: either Docker registry images or source build

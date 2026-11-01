@@ -51,6 +51,45 @@ public class UpdateServiceTests
     }
 
     [Fact]
+    public async Task UpdatePanel_ShowsTheMaintenancePageWhileTheStackRestarts()
+    {
+        // Arrange: remember whether the flag file existed when the stack was restarted
+        var service = CreateService();
+        var flagDuringRestart = false;
+        _processRunner.CustomHandler = (fileName, arguments) =>
+        {
+            if (arguments.Contains("up -d"))
+                flagDuringRestart = _fileSystem.FileExists(UpdateService.MaintenanceFlag);
+
+            return new ProcessResult(0, "{\"status\":\"ok\"}", string.Empty);
+        };
+
+        // Act
+        var result = await service.UpdatePanelAsync("v0.2.0");
+
+        // Assert: on while restarting, off afterwards
+        Assert.True(result);
+        Assert.True(flagDuringRestart);
+        Assert.False(_fileSystem.FileExists(UpdateService.MaintenanceFlag));
+    }
+
+    [Fact]
+    public async Task UpdatePanel_HidesTheMaintenancePageAfterARollback()
+    {
+        // Arrange: the health check never succeeds
+        var service = CreateService();
+        _processRunner.CustomResults["curl -fsS http://localhost:8080/api/health"] =
+            new ProcessResult(7, string.Empty, "Connection refused");
+
+        // Act
+        var result = await service.UpdatePanelAsync("v0.2.0");
+
+        // Assert: the old version runs again, so visitors get the panel back
+        Assert.False(result);
+        Assert.False(_fileSystem.FileExists(UpdateService.MaintenanceFlag));
+    }
+
+    [Fact]
     public async Task UpdatePanel_TriggersAutoRollbackWhenHealthCheckFails()
     {
         // Arrange

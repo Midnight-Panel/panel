@@ -12,6 +12,7 @@ import { BrowserRouter } from "react-router";
 import { Toaster } from "sonner";
 import App from "./App.tsx";
 import "./index.css";
+import { MaintenanceOverlay } from "@/components/shared/maintenance-overlay";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 5_000 } },
@@ -39,6 +40,7 @@ createRoot(document.getElementById("root")!).render(
                 </TooltipProvider>
               </QueryClientProvider>
               <ThemedToaster />
+              <MaintenanceOverlay />
             </BrandingProvider>
           </I18nProvider>
         </HelmetProvider>

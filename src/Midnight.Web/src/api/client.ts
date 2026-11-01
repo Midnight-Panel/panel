@@ -1,3 +1,4 @@
+import { trackedFetch } from "@/lib/maintenance";
 import type { LoginResponse, PagedQuery } from "./types";
 
 /** Error response of the api, parsed from ProblemDetails */
@@ -84,7 +85,7 @@ class TokenManager {
   }
 
   private async refreshNow(): Promise<boolean> {
-    const response = await fetch("/api/auth/refresh", { method: "POST", credentials: "same-origin" });
+    const response = await trackedFetch("/api/auth/refresh", { method: "POST", credentials: "same-origin" });
 
     if (!response.ok) {
       this.accessToken = null;
@@ -128,13 +129,13 @@ async function send(method: string, url: string, body?: unknown): Promise<Respon
   };
 
   let token = await tokens.getAccessToken();
-  let response = await fetch(url, build(token));
+  let response = await trackedFetch(url, build(token));
 
   // The token may have been invalidated server side (password change, logout everywhere), retry once
   if (response.status === 401 && token && !tokens.isImpersonating) {
     token = await tokens.getAccessToken(true);
 
-    if (token) response = await fetch(url, build(token));
+    if (token) response = await trackedFetch(url, build(token));
   }
 
   if (response.ok) return response;
