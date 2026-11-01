@@ -154,7 +154,8 @@
       "Customizer": "Customizer",
       "Settings": "Settings",
       "Servers": "Servers",
-      "DatabaseHosts": "Database hosts"
+      "DatabaseHosts": "Database hosts",
+      "ApplicationApi": "Application API"
     },
     "Dashboard": "Dashboard",
     "Section": {
@@ -1097,5 +1098,72 @@
     "Address": "Address",
     "NoMatches": "No matching servers",
     "NoMatchesHint": "Try another search term or reset the filters."
+  },
+  "ApplicationApi": {
+    "Description": "Keys for billing systems and automation to manage users, servers and nodes over the application API.",
+    "Reference": "API reference",
+    "Create": "Create API key",
+    "Edit": "Edit API key",
+    "Delete": "Delete API key",
+    "DeleteConfirm": "The key {0} stops working immediately. Integrations using it will lose access.",
+    "Deleted": "API key {0} deleted",
+    "Empty": "No application API keys",
+    "EmptyHint": "Create a key to connect a billing system or your own automation with the panel.",
+    "Key": "Key",
+    "Permissions": "Permissions",
+    "AllowedIps": "Allowed IPs",
+    "AnyIp": "Any IP",
+    "MoreIps": "+{0} more",
+    "CreatedBy": "Created by",
+    "DeletedUser": "Deleted user",
+    "Created": "Created",
+    "LastUsed": "Last used",
+    "NeverUsed": "Never",
+    "NoAccess": "No access",
+    "Summary": {
+      "Read": "{0}: read",
+      "ReadWrite": "{0}: read & write"
+    },
+    "Access": {
+      "None": "None",
+      "Read": "Read",
+      "ReadWrite": "Read & write"
+    },
+    "Resources": {
+      "Users": "Users",
+      "Servers": "Servers",
+      "Nodes": "Nodes",
+      "Allocations": "Allocations",
+      "Shards": "Shards",
+      "DatabaseHosts": "Database hosts"
+    },
+    "ResourceHints": {
+      "Users": "List, create, update and delete users",
+      "Servers": "Create, configure, suspend and delete servers",
+      "Nodes": "Manage nodes and read their configuration",
+      "Allocations": "Add and remove IP/port allocations",
+      "Shards": "Read shards, their variables and Docker images",
+      "DatabaseHosts": "Read database hosts (passwords are never returned)"
+    },
+    "Form": {
+      "Hint": "The key acts with these permissions. Actions are logged as the admin who created it.",
+      "DescriptionPlaceholder": "e.g. WHMCS billing",
+      "PermissionsHint": "You can only grant access you have yourself.",
+      "SetAll": "Set all:",
+      "MissingPermission": "You don't have the admin permission to grant this",
+      "NoneSelected": "This key has no access yet.",
+      "AllowedIpsHint": "One IPv4/IPv6 address or CIDR range per line, max. {0}. Empty = any IP.",
+      "InvalidIps": "Not a valid IP or CIDR range: {0}",
+      "TooManyIps": "At most {0} entries"
+    },
+    "Token": {
+      "Title": "API key created",
+      "WarningTitle": "Copy the key now",
+      "Warning": "For security reasons the full key is only shown once and can't be displayed again.",
+      "Token": "API key",
+      "Example": "Example request",
+      "Copied": "Copied",
+      "Done": "I've copied the key"
+    }
   }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Midnight.ApiServer.Core;
 using Midnight.ApiServer.Core.Configuration;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
@@ -16,6 +17,9 @@ using Midnight.Shared.Http.Demon;
 using Midnight.Shared.Http.Servers;
 
 namespace Midnight.ApiServer.Features.Servers.Services;
+
+/// <summary>Exact filters of the admin server list (application api), combined with AND. Name is a contains search.</summary>
+public record ServerListFilter(string? Name = null, Guid? Uuid = null, string? ExternalId = null, int? OwnerId = null, int? NodeId = null);
 
 /// <summary>
 /// Creates and changes servers. The panel is the source of truth: changes that affect the container are saved in a
@@ -60,9 +64,44 @@ public class ServerService
         => await Detailed().FirstOrDefaultAsync(x => x.Uuid == uuid, cancellationToken)
            ?? throw HttpApiException.NotFound("Server not found");
 
-    public async Task<PagedResult<AdminServerSummaryResponse>> ListAsync(PagedQuery query, CancellationToken cancellationToken)
+    public async Task<Server> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken)
+    {
+        var normalized = ExternalIds.Normalize(externalId) ?? throw HttpApiException.NotFound("Server not found");
+
+        return await Detailed().FirstOrDefaultAsync(x => x.ExternalId == normalized, cancellationToken)
+               ?? throw HttpApiException.NotFound("Server not found");
+    }
+
+    public Task<PagedResult<AdminServerSummaryResponse>> ListAsync(PagedQuery query, CancellationToken cancellationToken)
+        => ListAsync(query, null, cancellationToken);
+
+    public async Task<PagedResult<AdminServerSummaryResponse>> ListAsync(PagedQuery query, ServerListFilter? filter, CancellationToken cancellationToken)
     {
         var servers = _context.Servers.AsNoTracking();
+
+        if (filter != null)
+        {
+            if (!string.IsNullOrWhiteSpace(filter.Name))
+            {
+                var name = filter.Name.Trim().ToLower();
+                servers = servers.Where(x => x.Name.ToLower().Contains(name));
+            }
+
+            if (filter.Uuid.HasValue)
+                servers = servers.Where(x => x.Uuid == filter.Uuid.Value);
+
+            if (!string.IsNullOrWhiteSpace(filter.ExternalId))
+            {
+                var externalId = filter.ExternalId.Trim();
+                servers = servers.Where(x => x.ExternalId == externalId);
+            }
+
+            if (filter.OwnerId.HasValue)
+                servers = servers.Where(x => x.OwnerId == filter.OwnerId.Value);
+
+            if (filter.NodeId.HasValue)
+                servers = servers.Where(x => x.NodeId == filter.NodeId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -142,8 +181,14 @@ public class ServerService
 
     // ─── Admin: create and update ───────────────────────────────────────────
 
-    public async Task<Server> CreateAsync(CreateServerRequest request, CancellationToken cancellationToken)
+    public Task<Server> CreateAsync(CreateServerRequest request, CancellationToken cancellationToken)
+        => CreateAsync(request, null, cancellationToken);
+
+    public async Task<Server> CreateAsync(CreateServerRequest request, string? externalId, CancellationToken cancellationToken)
     {
+        externalId = ExternalIds.Normalize(externalId);
+        await EnsureExternalIdAvailableAsync(externalId, null, cancellationToken);
+
         if (!await _context.Users.AnyAsync(x => x.Id == request.OwnerId, cancellationToken))
             throw HttpApiException.BadRequest("Owner not found", "The selected user does not exist");
 
@@ -164,6 +209,7 @@ public class ServerService
             Uuid = Guid.NewGuid(),
             Name = request.Name.Trim(),
             Description = NullIfEmpty(request.Description),
+            ExternalId = externalId,
             OwnerId = request.OwnerId,
             Node = node,
             Shard = shard,
@@ -199,9 +245,20 @@ public class ServerService
         return server;
     }
 
-    public async Task<Server> UpdateDetailsAsync(int id, UpdateServerDetailsRequest request, CancellationToken cancellationToken)
+    public Task<Server> UpdateDetailsAsync(int id, UpdateServerDetailsRequest request, CancellationToken cancellationToken)
+        => UpdateDetailsAsync(id, request, null, cancellationToken);
+
+    /// <param name="externalId">null = keep the current external id</param>
+    public async Task<Server> UpdateDetailsAsync(int id, UpdateServerDetailsRequest request, ExternalIdChange? externalId, CancellationToken cancellationToken)
     {
         var server = await GetAsync(id, cancellationToken);
+
+        if (externalId != null)
+        {
+            var normalized = ExternalIds.Normalize(externalId.Value);
+            await EnsureExternalIdAvailableAsync(normalized, server.Id, cancellationToken);
+            server.ExternalId = normalized;
+        }
 
         if (server.OwnerId != request.OwnerId)
         {
@@ -546,6 +603,7 @@ public class ServerService
         response.PrimaryAllocation = FormatPrimary(server);
         response.Limits = ServerConfigurationBuilder.ToLimits(server);
         response.CreatedAt = server.CreatedAt;
+        response.ExternalId = server.ExternalId;
         return response;
     }
 
@@ -611,6 +669,12 @@ public class ServerService
     }
 
     // ─── Validation and helpers ─────────────────────────────────────────────
+
+    public async Task EnsureExternalIdAvailableAsync(string? externalId, int? exceptServerId, CancellationToken cancellationToken)
+    {
+        if (externalId != null && await _context.Servers.AnyAsync(x => x.Id != exceptServerId && x.ExternalId == externalId, cancellationToken))
+            throw ExternalIds.InUse();
+    }
 
     private async Task<Shard> LoadShardAsync(int shardId, CancellationToken cancellationToken)
         => await _context.Shards.Include(x => x.Variables).FirstOrDefaultAsync(x => x.Id == shardId, cancellationToken)

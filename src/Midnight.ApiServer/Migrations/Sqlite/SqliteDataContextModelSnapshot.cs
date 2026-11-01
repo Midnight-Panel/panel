@@ -17,6 +17,55 @@ namespace Midnight.ApiServer.Migrations.Sqlite
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
+            modelBuilder.Entity("Midnight.ApiServer.Features.Application.Entities.ApplicationKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.PrimitiveCollection<string>("AllowedIps")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("LastUsedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PermissionsJson")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("Identifier")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationKeys");
+                });
+
             modelBuilder.Entity("Midnight.ApiServer.Features.Branding.Entities.BrandingSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -526,6 +575,10 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("InstalledAt")
                         .HasColumnType("INTEGER");
 
@@ -579,6 +632,9 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.HasIndex("NodeId");
 
@@ -1000,6 +1056,10 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsLocked")
                         .HasColumnType("INTEGER");
 
@@ -1035,6 +1095,9 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("ExternalId")
                         .IsUnique();
 
                     b.HasIndex("Username")
@@ -1099,6 +1162,16 @@ namespace Midnight.ApiServer.Migrations.Sqlite
                     b.HasIndex("UsersId");
 
                     b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("Midnight.ApiServer.Features.Application.Entities.ApplicationKey", b =>
+                {
+                    b.HasOne("Midnight.ApiServer.Features.Users.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedBy");
                 });
 
             modelBuilder.Entity("Midnight.ApiServer.Features.Databases.Entities.DatabaseHost", b =>

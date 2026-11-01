@@ -23,6 +23,57 @@ namespace Midnight.ApiServer.Migrations.Postgres
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Midnight.ApiServer.Features.Application.Entities.ApplicationKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.PrimitiveCollection<List<string>>("AllowedIps")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PermissionsJson")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("Identifier")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationKeys");
+                });
+
             modelBuilder.Entity("Midnight.ApiServer.Features.Branding.Entities.BrandingSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -552,6 +603,10 @@ namespace Midnight.ApiServer.Migrations.Postgres
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(191)
+                        .HasColumnType("character varying(191)");
+
                     b.Property<DateTimeOffset?>("InstalledAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -605,6 +660,9 @@ namespace Midnight.ApiServer.Migrations.Postgres
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.HasIndex("NodeId");
 
@@ -1046,6 +1104,10 @@ namespace Midnight.ApiServer.Migrations.Postgres
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(191)
+                        .HasColumnType("character varying(191)");
+
                     b.Property<bool>("IsLocked")
                         .HasColumnType("boolean");
 
@@ -1081,6 +1143,9 @@ namespace Midnight.ApiServer.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("ExternalId")
                         .IsUnique();
 
                     b.HasIndex("Username")
@@ -1147,6 +1212,16 @@ namespace Midnight.ApiServer.Migrations.Postgres
                     b.HasIndex("UsersId");
 
                     b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("Midnight.ApiServer.Features.Application.Entities.ApplicationKey", b =>
+                {
+                    b.HasOne("Midnight.ApiServer.Features.Users.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedBy");
                 });
 
             modelBuilder.Entity("Midnight.ApiServer.Features.Databases.Entities.DatabaseHost", b =>

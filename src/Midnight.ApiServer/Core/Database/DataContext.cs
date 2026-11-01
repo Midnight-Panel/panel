@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Midnight.ApiServer.Features.Application.Entities;
 using Midnight.ApiServer.Features.Branding.Entities;
 using Midnight.ApiServer.Features.Databases.Entities;
 using Midnight.ApiServer.Features.Extensions.Entities;
@@ -47,6 +48,7 @@ public abstract class DataContext : DbContext
     public DbSet<ServerActivity> ServerActivities => Set<ServerActivity>();
     public DbSet<DatabaseHost> DatabaseHosts => Set<DatabaseHost>();
     public DbSet<ServerDatabase> ServerDatabases => Set<ServerDatabase>();
+    public DbSet<ApplicationKey> ApplicationKeys => Set<ApplicationKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,6 +62,10 @@ public abstract class DataContext : DbContext
             user.Property(x => x.Username).HasMaxLength(32);
             user.Property(x => x.Email).HasMaxLength(256);
             user.Property(x => x.SecurityStamp).HasMaxLength(64);
+
+            // Several users without external id are fine: null values are distinct in unique indexes (Sqlite and PostgreSQL)
+            user.HasIndex(x => x.ExternalId).IsUnique();
+            user.Property(x => x.ExternalId).HasMaxLength(191);
 
             user.HasMany(x => x.Roles)
                 .WithMany(x => x.Users)
@@ -94,6 +100,21 @@ public abstract class DataContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<ApplicationKey>(key =>
+        {
+            key.HasIndex(x => x.Identifier).IsUnique();
+            key.Property(x => x.Identifier).HasMaxLength(32);
+            key.Property(x => x.KeyHash).HasMaxLength(128);
+            key.Property(x => x.Description).HasMaxLength(255);
+            key.Property(x => x.PermissionsJson).HasMaxLength(1024);
+
+            // The key outlives its creator, actions are then no longer attributed to a user
+            key.HasOne(x => x.CreatedBy)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedById)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<Node>(node =>
         {
             node.HasIndex(x => x.Name).IsUnique();
@@ -123,6 +144,8 @@ public abstract class DataContext : DbContext
         {
             server.HasIndex(x => x.Uuid).IsUnique();
             server.HasIndex(x => x.PrimaryAllocationId).IsUnique();
+            server.HasIndex(x => x.ExternalId).IsUnique();
+            server.Property(x => x.ExternalId).HasMaxLength(191);
 
             server.Property(x => x.Name).HasMaxLength(64);
             server.Property(x => x.Description).HasMaxLength(512);

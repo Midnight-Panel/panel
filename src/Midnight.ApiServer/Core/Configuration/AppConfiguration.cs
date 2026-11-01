@@ -83,6 +83,9 @@ public class ApiConfiguration
 {
     /// <summary>Global toggle to enable or disable user API keys and API access for regular users.</summary>
     public bool UserApiEnabled { get; set; } = true;
+
+    /// <summary>Requests per minute and application key on /api/application (429 with Retry-After above)</summary>
+    public int ApplicationRateLimitPerMinute { get; set; } = 240;
 }
 
 public class FeaturesConfiguration

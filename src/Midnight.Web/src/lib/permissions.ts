@@ -22,7 +22,9 @@ export const Permissions = {
   AdminImagesRead: "admin.images.read",
   AdminImagesWrite: "admin.images.write",
   AdminServersRead: "admin.servers.read",
-  AdminServersWrite: "admin.servers.write"
+  AdminServersWrite: "admin.servers.write",
+  AdminApiRead: "admin.api.read",
+  AdminApiWrite: "admin.api.write"
 } as const;
 
 export interface PermissionGroup {
@@ -40,7 +42,8 @@ export const PermissionGroups: PermissionGroup[] = [
   { name: "admin.shards", permissions: [Permissions.AdminShardsRead, Permissions.AdminShardsWrite] },
   { name: "admin.extensions", permissions: [Permissions.AdminExtensionsRead, Permissions.AdminExtensionsWrite] },
   { name: "admin.images", permissions: [Permissions.AdminImagesRead, Permissions.AdminImagesWrite] },
-  { name: "admin.servers", permissions: [Permissions.AdminServersRead, Permissions.AdminServersWrite] }
+  { name: "admin.servers", permissions: [Permissions.AdminServersRead, Permissions.AdminServersWrite] },
+  { name: "admin.api", permissions: [Permissions.AdminApiRead, Permissions.AdminApiWrite] }
 ];
 
 export function matchesPermission(granted: string, required: string): boolean {

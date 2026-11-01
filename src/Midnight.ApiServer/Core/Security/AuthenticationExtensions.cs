@@ -17,22 +17,18 @@ public static class AuthenticationExtensions
         services.AddSingleton<UserAuthCache>();
         services.AddSingleton<AccessTokenService>();
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, ApplicationAccessAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, SessionAuthorizationHandler>();
 
         services
             .AddAuthentication(DefaultScheme)
-            // Selects the api key or jwt handler depending on the token format
+            // Selects the api key, application key or jwt handler depending on the token format
             .AddPolicyScheme(DefaultScheme, DefaultScheme, options =>
             {
-                options.ForwardDefaultSelector = context =>
-                {
-                    var token = ApiKeyAuthenticationHandler.GetBearerToken(context.Request);
-
-                    return token != null && token.StartsWith(ApiKeyAuthenticationHandler.KeyPrefix, StringComparison.Ordinal)
-                        ? ApiKeyAuthenticationHandler.SchemeName
-                        : JwtBearerDefaults.AuthenticationScheme;
-                };
+                options.ForwardDefaultSelector = context => SelectScheme(ApiKeyAuthenticationHandler.GetBearerToken(context.Request));
             })
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationHandler.SchemeName, null)
+            .AddScheme<AuthenticationSchemeOptions, ApplicationKeyAuthenticationHandler>(ApplicationKeyAuthenticationHandler.SchemeName, null)
             .AddScheme<AuthenticationSchemeOptions, NodeAuthenticationHandler>(NodeAuthenticationHandler.SchemeName, null)
             .AddJwtBearer(options =>
             {
@@ -48,6 +44,18 @@ public static class AuthenticationExtensions
         services.AddAuthorization();
 
         return services;
+    }
+
+    /// <summary>The handler for a bearer token: mdp_ = personal api key, mda_ = application key, everything else = jwt</summary>
+    public static string SelectScheme(string? token)
+    {
+        if (token != null && token.StartsWith(ApiKeyAuthenticationHandler.KeyPrefix, StringComparison.Ordinal))
+            return ApiKeyAuthenticationHandler.SchemeName;
+
+        if (token != null && token.StartsWith(ApplicationKeyAuthenticationHandler.KeyPrefix, StringComparison.Ordinal))
+            return ApplicationKeyAuthenticationHandler.SchemeName;
+
+        return JwtBearerDefaults.AuthenticationScheme;
     }
 
     /// <summary>

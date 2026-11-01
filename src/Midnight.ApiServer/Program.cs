@@ -9,6 +9,8 @@ using Midnight.ApiServer.Core.Http;
 using Midnight.ApiServer.Core.Mail;
 using Midnight.ApiServer.Core.Security;
 using Midnight.ApiServer.Features.Account.Services;
+using Midnight.ApiServer.Features.Application.Http;
+using Midnight.ApiServer.Features.Application.Services;
 using Midnight.ApiServer.Features.Auth.Http;
 using Midnight.ApiServer.Features.Auth.Services;
 using Midnight.ApiServer.Features.Branding.Services;
@@ -73,14 +75,24 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddControllers()
     .AddJsonOptions(options => JsonDefaults.Apply(options.JsonSerializerOptions));
 
-builder.Services.AddOpenApi(options =>
+// Two documents: "v1" (panel api: access tokens and personal api keys) and "application" (application keys, /api/application/v1).
+// The application controllers are put into their document with [ApiExplorerSettings(GroupName = "application")].
+builder.Services.AddOpenApi("v1", options =>
 {
+    options.ShouldInclude = description => description.GroupName == null && !IsApplicationRoute(description.RelativePath);
+
     options.AddDocumentTransformer((document, _, _) =>
     {
         document.Info.Title = "Midnight Panel API";
         document.Info.Description = "Authenticate with \"Authorization: Bearer <access token or api key>\".";
         return Task.CompletedTask;
     });
+});
+
+builder.Services.AddOpenApi(ApplicationControllerBase.OpenApiDocument, options =>
+{
+    options.ShouldInclude = description => description.GroupName == ApplicationControllerBase.OpenApiDocument && IsApplicationRoute(description.RelativePath);
+    options.AddDocumentTransformer<ApplicationOpenApiTransformer>();
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -97,8 +109,13 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
+    // Per application key (falls back to the ip without a valid key), see ApplicationRateLimit
+    options.AddApplicationPolicy(configuration.Api.ApplicationRateLimitPerMinute);
+
     options.OnRejected = async (context, cancellationToken) =>
     {
+        ApplicationRateLimit.SetRetryAfter(context);
+
         await context.HttpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status429TooManyRequests,
@@ -137,6 +154,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<ApiKeyService>();
+builder.Services.AddScoped<ApplicationKeyService>();
 builder.Services.AddScoped<AvatarService>();
 builder.Services.AddScoped<NodeService>();
 builder.Services.AddScoped<AllocationService>();
@@ -204,8 +222,9 @@ app.UseRouting();
 if (configuration.Security.CorsOrigins.Count > 0)
     app.UseCors();
 
-app.UseRateLimiter();
+// Authentication first: the application api is rate limited per key
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -221,7 +240,9 @@ app.MapGet("/api/health", async (DataContext context, CancellationToken cancella
 app.MapOpenApi("/api/openapi/{documentName}.json");
 app.MapScalarApiReference("/api/reference", options => options
     .WithTitle("Midnight Panel API")
-    .WithOpenApiRoutePattern("/api/openapi/{documentName}.json"));
+    .WithOpenApiRoutePattern("/api/openapi/{documentName}.json")
+    .AddDocument("v1", "Panel API", isDefault: true)
+    .AddDocument(ApplicationControllerBase.OpenApiDocument, "Application API"));
 
 // Unknown api routes must not fall through to the client
 app.MapFallback("/api/{**path}", () => Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "Endpoint not found"));
@@ -235,6 +256,9 @@ if (args.Length > 0 && args[0] == "create-admin")
 
 await app.RunAsync();
 return 0;
+
+static bool IsApplicationRoute(string? relativePath)
+    => relativePath != null && relativePath.StartsWith(ApplicationControllerBase.RoutePrefix, StringComparison.OrdinalIgnoreCase);
 
 // Accessible for WebApplicationFactory based tests
 public partial class Program;

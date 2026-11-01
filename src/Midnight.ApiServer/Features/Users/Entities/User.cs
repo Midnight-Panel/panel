@@ -29,6 +29,9 @@ public class User
     /// </summary>
     public string SecurityStamp { get; set; } = "";
 
+    /// <summary>Id in an external system (billing), unique when set. Managed via the application api.</summary>
+    public string? ExternalId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastLoginAt { get; set; }
 

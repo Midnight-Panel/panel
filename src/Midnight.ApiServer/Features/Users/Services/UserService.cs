@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Midnight.ApiServer.Core;
 using Midnight.ApiServer.Core.Database;
 using Midnight.ApiServer.Core.Http;
 using Midnight.ApiServer.Core.Security;
@@ -8,6 +9,9 @@ using Midnight.Shared.Http;
 using Midnight.Shared.Http.Admin;
 
 namespace Midnight.ApiServer.Features.Users.Services;
+
+/// <summary>Exact filters of the user list (application api), combined with AND</summary>
+public record UserListFilter(string? Email = null, string? Username = null, string? ExternalId = null);
 
 public class UserService
 {
@@ -26,12 +30,17 @@ public class UserService
         _timeProvider = timeProvider;
     }
 
-    public async Task<User> CreateAsync(string username, string email, string password, IEnumerable<int> roleIds, CancellationToken cancellationToken)
+    public Task<User> CreateAsync(string username, string email, string password, IEnumerable<int> roleIds, CancellationToken cancellationToken)
+        => CreateAsync(username, email, password, roleIds, null, cancellationToken);
+
+    public async Task<User> CreateAsync(string username, string email, string password, IEnumerable<int> roleIds, string? externalId, CancellationToken cancellationToken)
     {
         username = username.Trim();
         email = NormalizeEmail(email);
+        externalId = ExternalIds.Normalize(externalId);
 
         await EnsureUniqueAsync(username, email, null, cancellationToken);
+        await EnsureExternalIdAvailableAsync(externalId, null, cancellationToken);
 
         var user = new User
         {
@@ -39,6 +48,7 @@ public class UserService
             Email = email,
             PasswordHash = _passwordHasher.Hash(password),
             SecurityStamp = SecureTokens.Generate(16),
+            ExternalId = externalId,
             CreatedAt = _timeProvider.GetUtcNow(),
             Roles = await LoadRolesAsync(roleIds, cancellationToken)
         };
@@ -49,9 +59,30 @@ public class UserService
         return user;
     }
 
-    public async Task<PagedResult<AdminUserResponse>> ListAsync(PagedQuery query, CancellationToken cancellationToken)
+    public Task<PagedResult<AdminUserResponse>> ListAsync(PagedQuery query, CancellationToken cancellationToken)
+        => ListAsync(query, null, cancellationToken);
+
+    public async Task<PagedResult<AdminUserResponse>> ListAsync(PagedQuery query, UserListFilter? filter, CancellationToken cancellationToken)
     {
         var users = _context.Users.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter?.Email))
+        {
+            var email = NormalizeEmail(filter.Email);
+            users = users.Where(x => x.Email == email);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.Username))
+        {
+            var username = filter.Username.Trim().ToLower();
+            users = users.Where(x => x.Username.ToLower() == username);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.ExternalId))
+        {
+            var externalId = filter.ExternalId.Trim();
+            users = users.Where(x => x.ExternalId == externalId);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -96,7 +127,21 @@ public class UserService
                ?? throw HttpApiException.NotFound("User not found");
     }
 
-    public async Task<User> UpdateAsync(int id, UpdateUserRequest request, int actingUserId, CancellationToken cancellationToken)
+    public async Task<User> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken)
+    {
+        var normalized = ExternalIds.Normalize(externalId) ?? throw HttpApiException.NotFound("User not found");
+
+        return await _context.Users
+                   .Include(x => x.Roles)
+                   .FirstOrDefaultAsync(x => x.ExternalId == normalized, cancellationToken)
+               ?? throw HttpApiException.NotFound("User not found");
+    }
+
+    public Task<User> UpdateAsync(int id, UpdateUserRequest request, int actingUserId, CancellationToken cancellationToken)
+        => UpdateAsync(id, request, actingUserId, null, cancellationToken);
+
+    /// <param name="externalId">null = keep the current external id</param>
+    public async Task<User> UpdateAsync(int id, UpdateUserRequest request, int actingUserId, ExternalIdChange? externalId, CancellationToken cancellationToken)
     {
         var user = await GetAsync(id, cancellationToken);
 
@@ -104,6 +149,13 @@ public class UserService
         var email = NormalizeEmail(request.Email);
 
         await EnsureUniqueAsync(username, email, user.Id, cancellationToken);
+
+        if (externalId != null)
+        {
+            var normalized = ExternalIds.Normalize(externalId.Value);
+            await EnsureExternalIdAvailableAsync(normalized, user.Id, cancellationToken);
+            user.ExternalId = normalized;
+        }
 
         if (user.Id == actingUserId && request.IsLocked)
             throw HttpApiException.BadRequest("You can't lock your own account");
@@ -236,7 +288,8 @@ public class UserService
         RoleIds = user.Roles.Select(x => x.Id).ToList(),
         RoleNames = user.Roles.Select(x => x.Name).ToList(),
         CreatedAt = user.CreatedAt,
-        LastLoginAt = user.LastLoginAt
+        LastLoginAt = user.LastLoginAt,
+        ExternalId = user.ExternalId
     };
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
@@ -250,6 +303,42 @@ public class UserService
 
         if (await _context.Users.AnyAsync(x => x.Id != exceptUserId && x.Email == email, cancellationToken))
             throw HttpApiException.Conflict("Email is already in use");
+    }
+
+    public async Task EnsureExternalIdAvailableAsync(string? externalId, int? exceptUserId, CancellationToken cancellationToken)
+    {
+        if (externalId != null && await _context.Users.AnyAsync(x => x.Id != exceptUserId && x.ExternalId == externalId, cancellationToken))
+            throw ExternalIds.InUse();
+    }
+
+    /// <summary>
+    /// Changing, deleting or resetting 2FA of a user with more permissions than the actor would allow taking
+    /// over that account (e.g. setting the password of an administrator). 404 when the user doesn't exist.
+    /// </summary>
+    public async Task EnsureCanManageAsync(int targetId, IReadOnlyCollection<string> actorPermissions, CancellationToken cancellationToken)
+    {
+        var target = await _authCache.GetAsync(targetId, cancellationToken)
+                     ?? throw HttpApiException.NotFound("User not found");
+
+        if (target.Permissions.Any(x => !Permissions.Has(actorPermissions, x)))
+            throw HttpApiException.Forbidden("You can't manage a user with more permissions than yourself");
+    }
+
+    /// <summary>Only roles whose permissions the actor has himself can be assigned (the caller checks admin.roles.write)</summary>
+    public async Task EnsureCanAssignRolesAsync(IEnumerable<int> roleIds, IReadOnlyCollection<string> actorPermissions, CancellationToken cancellationToken)
+    {
+        var ids = roleIds.Distinct().ToList();
+
+        if (ids.Count == 0)
+            return;
+
+        var rolePermissions = await _context.Roles.AsNoTracking()
+            .Where(x => ids.Contains(x.Id))
+            .Select(x => x.Permissions)
+            .ToListAsync(cancellationToken);
+
+        if (rolePermissions.SelectMany(x => x).Any(x => !Permissions.Has(actorPermissions, x)))
+            throw HttpApiException.Forbidden("Missing permission", "You can't assign a role with permissions you don't have yourself");
     }
 
     private async Task<List<Role>> LoadRolesAsync(IEnumerable<int> roleIds, CancellationToken cancellationToken)

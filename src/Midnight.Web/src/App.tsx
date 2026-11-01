@@ -23,6 +23,7 @@ import AdminServerDetailsPage from "@/pages/admin/servers/details";
 import AdminServerLayout from "@/pages/admin/servers/layout";
 import AdminServersPage from "@/pages/admin/servers/list";
 import DatabaseHostsPage from "@/pages/admin/database-hosts";
+import ApplicationApiPage from "@/pages/admin/application-api";
 import AdminServerManagePage from "@/pages/admin/servers/manage";
 import AdminServerOverviewPage from "@/pages/admin/servers/overview";
 import AdminServerStartupPage from "@/pages/admin/servers/startup";
@@ -135,6 +136,14 @@ export default function App() {
         <Route path="admin/extensions" element={<ExtensionsPage />} />
         <Route path="admin/extensions/:id" element={<ExtensionDetailPage />} />
         <Route path="admin/settings" element={<AdminSettingsPage />} />
+        <Route
+          path="admin/api"
+          element={
+            <RequirePermission permission={Permissions.AdminApiRead}>
+              <ApplicationApiPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="admin/customizer"
           element={

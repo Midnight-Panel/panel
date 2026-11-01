@@ -14,6 +14,9 @@ public class AdminUserResponse
     public List<string> RoleNames { get; set; } = [];
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>Id of the user in an external system (e.g. a billing system), set via the application api</summary>
+    public string? ExternalId { get; set; }
 }
 
 public class CreateUserRequest

@@ -15,15 +15,11 @@ namespace Midnight.ApiServer.Features.Users.Http;
 public class AdminUsersController : ControllerBase
 {
     private readonly UserService _userService;
-    private readonly RoleService _roleService;
-    private readonly UserAuthCache _authCache;
     private readonly ILogger<AdminUsersController> _logger;
 
-    public AdminUsersController(UserService userService, RoleService roleService, UserAuthCache authCache, ILogger<AdminUsersController> logger)
+    public AdminUsersController(UserService userService, ILogger<AdminUsersController> logger)
     {
         _userService = userService;
-        _roleService = roleService;
-        _authCache = authCache;
         _logger = logger;
     }
 
@@ -145,26 +141,13 @@ public class AdminUsersController : ControllerBase
             throw HttpApiException.Forbidden("Missing permission", $"Changing roles requires '{Permissions.AdminRolesWrite}'");
 
         // ... and only roles whose permissions the actor has himself (e.g. no Administrators role for a moderator)
-        var ids = roleIds.ToHashSet();
-        var actorPermissions = User.GetPermissions().ToList();
-        var roles = await _roleService.ListAsync(cancellationToken);
-
-        if (roles.Where(x => ids.Contains(x.Id)).SelectMany(x => x.Permissions).Any(x => !Permissions.Has(actorPermissions, x)))
-            throw HttpApiException.Forbidden("Missing permission", "You can't assign a role with permissions you don't have yourself");
+        await _userService.EnsureCanAssignRolesAsync(roleIds, User.GetPermissions().ToList(), cancellationToken);
     }
 
     /// <summary>
     /// Changing, deleting or resetting 2FA of a user with more permissions than the actor would allow taking
     /// over that account (e.g. setting the password of an administrator)
     /// </summary>
-    private async Task EnsureCanManageUserAsync(int id, CancellationToken cancellationToken)
-    {
-        var target = await _authCache.GetAsync(id, cancellationToken)
-                     ?? throw HttpApiException.NotFound("User not found");
-
-        var actorPermissions = User.GetPermissions().ToList();
-
-        if (target.Permissions.Any(x => !Permissions.Has(actorPermissions, x)))
-            throw HttpApiException.Forbidden("You can't manage a user with more permissions than yourself");
-    }
+    private Task EnsureCanManageUserAsync(int id, CancellationToken cancellationToken)
+        => _userService.EnsureCanManageAsync(id, User.GetPermissions().ToList(), cancellationToken);
 }

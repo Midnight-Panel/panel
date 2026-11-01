@@ -15,6 +15,16 @@ public static class MidnightClaims
 
     public const string AuthTypeSession = "session";
     public const string AuthTypeApiKey = "apikey";
+    public const string AuthTypeApplicationKey = "application";
+
+    /// <summary>Id of the application key (only application keys)</summary>
+    public const string ApplicationKeyId = "app_key";
+
+    /// <summary>"mda_{identifier}" of the application key, for logs</summary>
+    public const string ApplicationKeyIdentifier = "app_key_identifier";
+
+    /// <summary>"{Resource}:{Access}" for every resource the application key can access, e.g. "Servers:ReadWrite"</summary>
+    public const string ApplicationAccess = "app_access";
 }
 
 public static class ClaimsPrincipalExtensions
@@ -38,6 +48,10 @@ public static class ClaimsPrincipalExtensions
     public static bool IsApiKey(this ClaimsPrincipal principal)
         => principal.FindFirstValue(MidnightClaims.AuthType) == MidnightClaims.AuthTypeApiKey;
 
+    public static bool IsApplicationKey(this ClaimsPrincipal principal)
+        => principal.Identity?.IsAuthenticated == true &&
+           principal.FindFirstValue(MidnightClaims.AuthType) == MidnightClaims.AuthTypeApplicationKey;
+
     public static IEnumerable<string> GetPermissions(this ClaimsPrincipal principal)
         => principal.FindAll(MidnightClaims.Permission).Select(x => x.Value);
 
@@ -49,6 +63,10 @@ public static class ClaimsPrincipalExtensions
     public static bool HasPermission(this ClaimsPrincipal principal, string permission)
     {
         if (principal.Identity?.IsAuthenticated != true)
+            return false;
+
+        // Application keys only work on the application api, which checks their resource access instead
+        if (principal.IsApplicationKey())
             return false;
 
         if (!Permissions.Has(principal.GetPermissions(), permission))

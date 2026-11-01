@@ -42,6 +42,10 @@ public static class Permissions
     public const string AdminServersRead = "admin.servers.read";
     public const string AdminServersWrite = "admin.servers.write";
 
+    /// <summary>Manage application api keys (they can act on everything their permissions allow)</summary>
+    public const string AdminApiRead = "admin.api.read";
+    public const string AdminApiWrite = "admin.api.write";
+
     /// <summary>Permissions every authenticated user has without any role.</summary>
     public static readonly string[] UserDefaults =
     [
@@ -62,7 +66,8 @@ public static class Permissions
         new("admin.shards", [AdminShardsRead, AdminShardsWrite]),
         new("admin.extensions", [AdminExtensionsRead, AdminExtensionsWrite]),
         new("admin.images", [AdminImagesRead, AdminImagesWrite]),
-        new("admin.servers", [AdminServersRead, AdminServersWrite])
+        new("admin.servers", [AdminServersRead, AdminServersWrite]),
+        new("admin.api", [AdminApiRead, AdminApiWrite])
     ];
 
     public static IEnumerable<string> All => Groups.SelectMany(x => x.Permissions);

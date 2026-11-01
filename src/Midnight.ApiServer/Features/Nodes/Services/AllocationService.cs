@@ -101,6 +101,26 @@ public class AllocationService
     {
         var ports = new SortedSet<int>();
 
+        foreach (var range in ParsePortRanges(input))
+        {
+            if (ports.Count + (range.End - range.Start + 1) > MaxPortsPerRequest)
+                throw HttpApiException.BadRequest("Too many ports", $"At most {MaxPortsPerRequest} ports can be added at once");
+
+            for (var port = range.Start; port <= range.End; port++)
+                ports.Add(port);
+        }
+
+        if (ports.Count == 0)
+            throw HttpApiException.BadRequest("Invalid ports", "Enter at least one port");
+
+        return ports.ToList();
+    }
+
+    /// <summary>Parses "25565, 25570-25600" into ranges without expanding them (no size limit), empty input = no ranges</summary>
+    public static List<PortRange> ParsePortRanges(string input)
+    {
+        var ranges = new List<PortRange>();
+
         foreach (var rawPart in input.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries))
         {
             var part = rawPart.Trim();
@@ -118,16 +138,84 @@ public class AllocationService
             if (end < start)
                 throw HttpApiException.BadRequest("Invalid ports", $"'{part}' ends before it starts");
 
-            if (ports.Count + (end - start + 1) > MaxPortsPerRequest)
-                throw HttpApiException.BadRequest("Too many ports", $"At most {MaxPortsPerRequest} ports can be added at once");
-
-            for (var port = start; port <= end; port++)
-                ports.Add(port);
+            ranges.Add(new PortRange(start, end));
         }
 
-        if (ports.Count == 0)
-            throw HttpApiException.BadRequest("Invalid ports", "Enter at least one port");
+        return ranges;
+    }
 
-        return ports.ToList();
+    /// <summary>
+    /// Picks free allocations for a new server: 1 + <paramref name="additionalCount"/> free allocations of the same node and ip
+    /// whose ports are in one of the ranges (no ranges = any port). Of the matching nodes the one with the fewest servers wins,
+    /// then the lowest ports. No nodes given = every node. 409 when nothing matches.
+    /// </summary>
+    public async Task<DeployAllocations> FindDeployAllocationsAsync(IReadOnlyCollection<int> nodeIds, IReadOnlyCollection<PortRange> ports, int additionalCount,
+        CancellationToken cancellationToken)
+    {
+        if (additionalCount < 0)
+            throw HttpApiException.BadRequest("Invalid number of additional allocations");
+
+        var nodes = nodeIds.Distinct().ToList();
+
+        if (nodes.Count > 0)
+        {
+            var existing = await _context.Nodes.Where(x => nodes.Contains(x.Id)).Select(x => x.Id).ToListAsync(cancellationToken);
+            var missing = nodes.Except(existing).ToList();
+
+            if (missing.Count > 0)
+                throw HttpApiException.BadRequest("Node not found", $"Node(s) {string.Join(", ", missing)} do not exist");
+        }
+
+        var free = _context.Allocations.AsNoTracking().Where(x => x.ServerId == null);
+
+        if (nodes.Count > 0)
+            free = free.Where(x => nodes.Contains(x.NodeId));
+
+        if (ports.Count > 0)
+        {
+            // Narrowed in the database, the exact ranges are checked below
+            var min = ports.Min(x => x.Start);
+            var max = ports.Max(x => x.End);
+            free = free.Where(x => x.Port >= min && x.Port <= max);
+        }
+
+        var candidates = (await free.Select(x => new { x.Id, x.NodeId, x.IpAddress, x.Port }).ToListAsync(cancellationToken))
+            .Where(x => ports.Count == 0 || ports.Any(r => x.Port >= r.Start && x.Port <= r.End))
+            .ToList();
+
+        var needed = 1 + additionalCount;
+
+        var groups = candidates
+            .GroupBy(x => (x.NodeId, x.IpAddress))
+            .Where(x => x.Count() >= needed)
+            .ToList();
+
+        if (groups.Count == 0)
+            throw HttpApiException.Conflict("No free allocation", "No node has enough free allocations matching the deploy options");
+
+        var groupNodeIds = groups.Select(x => x.Key.NodeId).Distinct().ToList();
+
+        var serverCounts = await _context.Servers
+            .Where(x => groupNodeIds.Contains(x.NodeId))
+            .GroupBy(x => x.NodeId)
+            .Select(x => new { NodeId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.NodeId, x => x.Count, cancellationToken);
+
+        var chosen = groups
+            .OrderBy(x => serverCounts.GetValueOrDefault(x.Key.NodeId))
+            .ThenBy(x => x.Key.NodeId)
+            .ThenBy(x => x.Min(a => a.Port))
+            .ThenBy(x => x.Key.IpAddress, StringComparer.Ordinal)
+            .First()
+            .OrderBy(x => x.Port)
+            .Take(needed)
+            .ToList();
+
+        return new DeployAllocations(chosen[0].NodeId, chosen[0].Id, chosen.Skip(1).Select(x => x.Id).ToList());
     }
 }
+
+public readonly record struct PortRange(int Start, int End);
+
+/// <summary>Allocations picked by <see cref="AllocationService.FindDeployAllocationsAsync"/></summary>
+public record DeployAllocations(int NodeId, int PrimaryAllocationId, List<int> AdditionalAllocationIds);

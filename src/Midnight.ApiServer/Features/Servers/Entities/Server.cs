@@ -14,6 +14,9 @@ public class Server
     public string Name { get; set; } = "";
     public string? Description { get; set; }
 
+    /// <summary>Id in an external system (billing), unique when set. Managed via the application api.</summary>
+    public string? ExternalId { get; set; }
+
     public int OwnerId { get; set; }
     public User Owner { get; set; } = null!;
 

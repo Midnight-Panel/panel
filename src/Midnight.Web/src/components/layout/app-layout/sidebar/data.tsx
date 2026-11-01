@@ -1,4 +1,4 @@
-import { BoxIcon, BrushIcon, ChipIcon, DatabaseIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon, PluginIcon, UserCircleIcon } from "@/icons";
+import { BoxIcon, BrushIcon, ChipIcon, CodeIcon, DatabaseIcon, GearIcon, GroupIcon, LayerIcon, LayoutGridIcon, PieChartIcon, PluginIcon, UserCircleIcon } from "@/icons";
 import { Permissions } from "@/lib/permissions";
 import type { NavItem } from "./types";
 
@@ -74,6 +74,13 @@ export const adminItems: NavItem[] = [
     path: "/admin/extensions",
     matchPrefix: "/admin/extensions",
     permission: Permissions.AdminExtensionsRead,
+  },
+  {
+    icon: <CodeIcon className="size-6" />,
+    key: "Nav.Admin.ApplicationApi",
+    path: "/admin/api",
+    matchPrefix: "/admin/api",
+    permission: Permissions.AdminApiRead,
   },
   {
     icon: <BrushIcon className="size-6" />,

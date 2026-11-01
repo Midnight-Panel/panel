@@ -95,6 +95,9 @@ public class AdminServerSummaryResponse
 
     public ServerLimitsDto Limits { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>Id of the server in an external system (e.g. a billing system), set via the application api</summary>
+    public string? ExternalId { get; set; }
 }
 
 public class AdminServerDetailResponse : AdminServerSummaryResponse
