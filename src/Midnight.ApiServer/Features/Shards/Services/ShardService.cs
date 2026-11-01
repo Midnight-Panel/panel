@@ -143,7 +143,7 @@ public class ShardService : IShardService
             StopSignal = string.IsNullOrWhiteSpace(request.StopSignal) ? "SIGTERM" : request.StopSignal.Trim(),
             StartupDone = request.StartupDone?.Trim() ?? "",
             InstallScript = request.InstallScript,
-            InstallImage = string.IsNullOrWhiteSpace(request.InstallImage) ? "ghcr.io/pterodactyl/installers:alpine" : request.InstallImage.Trim(),
+            InstallImage = string.IsNullOrWhiteSpace(request.InstallImage) ? "ghcr.io/midnight-panel/installers:alpine" : request.InstallImage.Trim(),
             InstallInterpreter = string.IsNullOrWhiteSpace(request.InstallInterpreter) ? "/bin/bash" : request.InstallInterpreter.Trim(),
             CreatedAt = now,
             UpdatedAt = now
@@ -202,7 +202,7 @@ public class ShardService : IShardService
         shard.StopSignal = string.IsNullOrWhiteSpace(request.StopSignal) ? "SIGTERM" : request.StopSignal.Trim();
         shard.StartupDone = request.StartupDone?.Trim() ?? "";
         shard.InstallScript = request.InstallScript;
-        shard.InstallImage = string.IsNullOrWhiteSpace(request.InstallImage) ? "ghcr.io/pterodactyl/installers:alpine" : request.InstallImage.Trim();
+        shard.InstallImage = string.IsNullOrWhiteSpace(request.InstallImage) ? "ghcr.io/midnight-panel/installers:alpine" : request.InstallImage.Trim();
         shard.InstallInterpreter = string.IsNullOrWhiteSpace(request.InstallInterpreter) ? "/bin/bash" : request.InstallInterpreter.Trim();
         shard.UpdatedAt = _timeProvider.GetUtcNow();
 

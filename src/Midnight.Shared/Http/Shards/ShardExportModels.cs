@@ -40,7 +40,7 @@ public class ShardExportData
     public string StartupDone { get; set; } = "";
 
     public string? InstallScript { get; set; }
-    public string InstallImage { get; set; } = "ghcr.io/pterodactyl/installers:alpine";
+    public string InstallImage { get; set; } = "ghcr.io/midnight-panel/installers:alpine";
     public string InstallInterpreter { get; set; } = "/bin/bash";
 
     public ShardFeaturesDto Features { get; set; } = new();

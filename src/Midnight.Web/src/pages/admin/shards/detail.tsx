@@ -90,7 +90,7 @@ export default function ShardDetailPage() {
       defaultDockerImage: "",
       dockerImages: {},
       installScript: "",
-      installImage: "ghcr.io/pterodactyl/installers:alpine",
+      installImage: "ghcr.io/midnight-panel/installers:alpine",
       installInterpreter: "/bin/bash",
       configFiles: [],
       features: { eula: false, fileDenylist: [] },
@@ -606,7 +606,7 @@ export default function ShardDetailPage() {
                 <Label>{t("Shards.ScriptTab.ContainerImage")}</Label>
                 <Input
                   {...form.register("installImage")}
-                  placeholder="ghcr.io/pterodactyl/installers:alpine"
+                  placeholder="ghcr.io/midnight-panel/installers:alpine"
                   className="mt-1.5 font-mono text-xs"
                 />
               </div>
@@ -847,7 +847,7 @@ export default function ShardDetailPage() {
               <Input
                 value={newImageUri}
                 onChange={(e) => setNewImageUri(e.target.value)}
-                placeholder="ghcr.io/pterodactyl/yolks:java_21"
+                placeholder="ghcr.io/midnight-panel/java:21"
                 className="mt-1.5 font-mono text-xs"
               />
             </div>
