@@ -11,7 +11,7 @@ Open-source panel for hosting game and app servers on Docker. This repository co
 On a fresh Linux server (Debian, Ubuntu, RHEL family) as root:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Midnight-Panel/installer/main/install.sh)
+bash <(curl -fsSL https://get.midnightpanel.xyz)
 ```
 
 The [installer](https://github.com/Midnight-Panel/installer) runs the panel as Docker Compose stack (panel, PostgreSQL,
