@@ -158,6 +158,8 @@
       "ApplicationApi": "Application API"
     },
     "Dashboard": "Dashboard",
+    "AdminDropdown": "Admin",
+    "BackToDashboard": "Back to Dashboard",
     "Section": {
       "Admin": "Administration",
       "Main": "Menu",

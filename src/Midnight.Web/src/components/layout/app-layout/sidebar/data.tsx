@@ -2,6 +2,24 @@ import { BoxIcon, BrushIcon, ChipIcon, CodeIcon, DatabaseIcon, GearIcon, GroupIc
 import { Permissions } from "@/lib/permissions";
 import type { NavItem } from "./types";
 
+export const adminNavItem: NavItem = {
+  icon: <PieChartIcon className="size-6" />,
+  key: "Nav.AdminDropdown",
+  matchPrefix: "/admin",
+  subItems: [
+    { key: "Nav.Admin.Overview", path: "/admin", permission: Permissions.AdminOverview },
+    { key: "Nav.Admin.Users", path: "/admin/users", permission: Permissions.AdminUsersRead },
+    { key: "Nav.Admin.Nodes", path: "/admin/nodes", permission: Permissions.AdminNodesRead },
+    { key: "Nav.Admin.Servers", path: "/admin/servers", permission: Permissions.AdminServersRead },
+    { key: "Nav.Admin.DatabaseHosts", path: "/admin/database-hosts", permission: Permissions.AdminServersRead },
+    { key: "Nav.Admin.Shards", path: "/admin/shards", permission: Permissions.AdminShardsRead },
+    { key: "Nav.Admin.Extensions", path: "/admin/extensions", permission: Permissions.AdminExtensionsRead },
+    { key: "Nav.Admin.ApplicationApi", path: "/admin/api", permission: Permissions.AdminApiRead },
+    { key: "Nav.Admin.Customizer", path: "/admin/customizer", permission: Permissions.AdminSystemWrite },
+    { key: "Nav.Admin.Settings", path: "/admin/settings", permission: Permissions.AdminSystemRead },
+  ],
+};
+
 // TODO: Phase 7 - modules and plugins register their entries here
 export const navItems: NavItem[] = [
   {
@@ -15,6 +33,7 @@ export const navItems: NavItem[] = [
     path: "/servers",
     matchPrefix: "/servers",
   },
+  adminNavItem,
   {
     icon: <UserCircleIcon className="size-6" />,
     key: "Nav.Account",

@@ -15,18 +15,17 @@ interface SidebarNavGroupProps {
   label?: string;
   menuType: MenuType;
   items: NavItem[];
-  openSubmenu: { type: MenuType; index: number } | null;
+  openSubmenuKey: string | null;
   showContent: boolean;
   pathname: string;
-  onToggleSubmenu: (index: number, menuType: MenuType) => void;
+  onToggleSubmenu: (key: string, isCurrentlyOpen: boolean) => void;
 }
 
 export default function SidebarNavGroup({
   labelKey,
   label,
-  menuType,
   items,
-  openSubmenu,
+  openSubmenuKey,
   showContent,
   pathname,
   onToggleSubmenu,
@@ -44,18 +43,24 @@ export default function SidebarNavGroup({
         {showContent ? <span className="truncate">{label ?? t(labelKey)}</span> : <HorizontalDotsIcon />}
       </SidebarGroupLabel>
       <SidebarMenu className="gap-1">
-        {items.map((nav, index) => (
-          <SidebarMenuItem
-            key={nav.key}
-            nav={nav}
-            isOpen={
-              openSubmenu?.type === menuType && openSubmenu?.index === index
-            }
-            showContent={showContent}
-            pathname={pathname}
-            onToggle={() => onToggleSubmenu(index, menuType)}
-          />
-        ))}
+        {items.map((nav) => {
+          const isSubItemActive = (subPath: string) =>
+            subPath === pathname ||
+            (subPath !== "/" && subPath !== "/admin" && pathname.startsWith(subPath + "/"));
+          const hasActiveChild = Boolean(nav.subItems?.some((subItem) => isSubItemActive(subItem.path)));
+          const isOpen = openSubmenuKey !== null ? openSubmenuKey === nav.key : hasActiveChild;
+
+          return (
+            <SidebarMenuItem
+              key={nav.key}
+              nav={nav}
+              isOpen={isOpen}
+              showContent={showContent}
+              pathname={pathname}
+              onToggle={() => onToggleSubmenu(nav.key, isOpen)}
+            />
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

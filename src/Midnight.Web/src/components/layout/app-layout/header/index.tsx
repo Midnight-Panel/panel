@@ -3,16 +3,20 @@ import UserDropdown from "@/components/shared/header/user-dropdown";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useT } from "@/i18n";
-import { HorizontalDotsIcon, MenuTwoIcon, XIcon } from "@/icons";
+import { ArrowLeftIcon, HorizontalDotsIcon, MenuTwoIcon, XIcon } from "@/icons";
 import { cn } from "@/utils";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
+import { serverUuidFromPath } from "@/pages/servers/navigation";
 import { PageSearch } from "./page-search";
 
 export default function AppHeader() {
   const { t } = useT();
+  const { pathname } = useLocation();
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const { openMobile, toggleSidebar } = useSidebar();
+
+  const isServer = Boolean(serverUuidFromPath(pathname));
 
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
@@ -36,6 +40,17 @@ export default function AppHeader() {
               <MenuTwoIcon className="size-auto! rtl:-scale-x-100" />
             )}
           </Button>
+
+          {isServer && (
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50/80 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:border-brand-500/30 hover:bg-brand-500/5 hover:text-brand-500 dark:border-gray-800 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:border-brand-500/30 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
+              title={t("Nav.BackToDashboard")}
+            >
+              <ArrowLeftIcon className="size-3.5" />
+              <span>{t("Nav.BackToDashboard")}</span>
+            </Link>
+          )}
 
           <Link to="/" className="xl:hidden">
             <img

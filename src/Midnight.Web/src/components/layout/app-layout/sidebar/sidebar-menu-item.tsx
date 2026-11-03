@@ -28,8 +28,12 @@ export default function SidebarMenuItem({
 }: SidebarMenuItemProps) {
   const { t } = useT();
 
+  const isSubItemActive = (subPath: string) =>
+    subPath === pathname ||
+    (subPath !== "/" && subPath !== "/admin" && pathname.startsWith(subPath + "/"));
+
   const hasSubItems = Boolean(nav.subItems?.length);
-  const hasActiveChild = Boolean(nav.subItems?.some((subItem) => subItem.path === pathname));
+  const hasActiveChild = Boolean(nav.subItems?.some((subItem) => isSubItemActive(subItem.path)));
   const isDirectActive = Boolean(
     (nav.path && nav.path === pathname) ||
       (nav.matchPrefix && pathname.startsWith(nav.matchPrefix)),
@@ -75,7 +79,7 @@ export default function SidebarMenuItem({
                 <SidebarSubmenuItem
                   key={subItem.key}
                   subItem={subItem}
-                  isActive={subItem.path === pathname}
+                  isActive={isSubItemActive(subItem.path)}
                 />
               ))}
             </ul>
