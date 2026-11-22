@@ -1,0 +1,18 @@
+# Add one banned word or phrase per line.
+# Lines beginning with # are ignored.
+# Matching is case-insensitive.
+nigger
+neger
+negger
+nutte
+arschloch
+bastard
+fick
+fuck
+nutten ficker
+adolf
+adolf hitler
+sex
+ficken
+phonk
+test wort
